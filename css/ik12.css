@@ -1,0 +1,831 @@
+.filtering
+{
+    background-color:#ffffff;
+    text-align:center;
+    text-transform:capitalize;
+    font-size:16px;
+    font-weight:200;
+}
+.filtering table
+{
+    background:#eee;
+    border:1px #000 solid;
+}
+
+.filtering input[type="text"] {
+    width: 130px;
+    height: 20px;
+}
+
+.filtering input[type="reset"] {
+    width: 80px;
+    height: 25px;
+    font-size:12px;
+}
+
+.filtering input[type="date"] {
+    width: 130px;
+    height: 25px;
+    font-size:12px;
+}
+
+.filtering button
+{
+    color:#a6c9e2;
+    background-color: #8f0000;
+    font-size:12px;
+
+}
+.filtering table thead
+{
+    background:#E6E6F0;
+    text-transform:uppercase;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+    text-align:center;
+    font-size:12px;
+    font-weight:bold;
+}
+.filtering table thead th
+{
+    cursor:pointer;
+}
+.filtering table td
+{
+    width:300px;
+}
+.filtering table tbody
+{
+    background:#F6F6FA;
+    text-align:center;
+    text-transform:capitalize;
+    font-size:12px;
+    font-weight:100;
+}
+
+/*
+ * Start jtable customizations
+*/
+
+#jtable-create-form {
+    display: block;
+    width: 550px;
+    -moz-column-gap:40px;
+    -webkit-column-gap:40px;
+    column-gap:40px;
+    -moz-column-count:2;
+    -webkit-column-count:2;
+    column-count:2;
+}
+
+#jtable-edit-form {
+    display: block;
+    width: 550px;
+    -moz-column-gap:50px;
+    -webkit-column-gap:50px;
+    column-gap:50px;
+    -moz-column-count:2;
+    -webkit-column-count:2;
+    column-count:2;
+}
+
+
+.jtable-data-row {
+    font-size: 10px;
+    color: #222;
+}
+
+#Edit-description {
+     width: 250px;
+ }
+#Edit-brief_descript {
+    width: 250px;
+}
+#Edit-email_address {
+    width: 250px;
+}
+#Edit-online_demo {
+    width: 250px;
+}
+#Edit-video_url {
+    width: 250px;
+}
+#Edit-geoff_comment {
+    width: 250px;
+}
+#Edit-tim_comment {
+    width: 250px;
+}
+#Edit-karen_comment {
+    width: 250px;
+}
+#Edit-x_comment {
+    width: 250px;
+}
+#Edit-app_discussion {
+    width: 250px;
+}
+#Edit-geoff_int_notes {
+    width: 250px;
+}
+#Edit-tim_int_notes {
+    width: 250px;
+}
+#Edit-karen_int_notes {
+    width: 250px;
+}
+#Edit-x_int_notes {
+    width: 250px;
+}
+#Edit-int_discussion {
+    width: 250px;
+}
+#Edit-email_content {
+    width: 250px;
+}
+/***********************************************************/
+
+
+#Edit-url {
+    width: 250px;
+}
+#Edit-location {
+    width: 250px;
+}
+
+.jtable-title-text {
+    font-size: 12px;
+}
+.jtable-column-header {
+    font-size: 10px;
+    height: 35px;
+}
+
+/*
+ * End jtable customizations
+*/
+/*
+ * IK12 styles
+ */
+body {
+    margin: 0;
+}
+
+/*
+ * IK12 ids / classes
+ */
+#deathTable {
+    border: 5px solid red;
+    padding: 10px;
+    text-align: center;
+
+}
+
+.ik12head {
+    border: 0px solid black;
+    margin: 0px 0px 0px 0px;
+    padding-bottom: 110px;
+    background-color:#e3effe;
+}
+.ik12head table thead
+{
+    border: 0px solid black;
+    background:#e3effe;
+    text-transform:uppercase;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+    text-align:center;
+    font-size:12px;
+    font-weight:bold;
+}
+.ik12head table thead th
+{
+    cursor:pointer;
+}
+
+.ik12head table tbody
+{
+    border: 0px solid black;
+    background:#e3effe;
+    text-align:center;
+    /*text-transform:capitalize;*/
+    font-size:12px;
+    font-weight:100;
+}
+
+.ik12page {
+    background-color: #f2faf7;
+    font-weight: normal;
+    /* background-color:#ffffff; */
+    align-items: center;
+    text-align: center;
+    margin: 0 auto;
+}
+
+
+.ik12confirmation {
+    color: #FF0000;
+
+}
+/*
+ *  Events
+ */
+
+.ik12event table thead th
+{
+    /*cursor:pointer;*/
+}
+.ik12event table td
+{
+    /*width:200px;*/
+}
+.ik12event table tbody
+{
+    background:#F6F6FA;
+    text-align:left;
+    /*text-transform:capitalize;*/
+    font-family: 'Montesserat', sans-serif;
+    font-size:14px;
+    color: #1a6796;
+    font-weight:100;
+}
+
+.ik12showandtellpage {
+    /* background-color: #f2faf7; */
+    /* background: #8fffff; */
+    font-family: 'Montesserat', sans-serif;
+    /*font-family:"Times New Roman", Verdana, Arial, Helvetica, sans-serif;*/
+    font-weight: normal;
+    /* background-color:#ffffff;*/
+    align-items: center;
+    /* text-align: center; */
+    margin: 0 auto;
+
+}
+.ik12showandtellpage h1{text-align: left;}
+.ik12showandtellpage h3{text-align: left;}
+
+.ik12showandtellpage ul {
+
+    list-style-type: circle;
+    margin-left: 2em;
+    /*padding-left: 2em;*/
+}
+
+.ik12showandtellpage ol {
+
+    padding-left: 2em;
+    padding-bottom: 0em;
+    padding-top: 1em;
+    margin-bottom: 1em;
+}
+
+.ik12showandtellpage li {
+    margin-bottom: .5em;
+    list-style-position: outside;
+}
+
+.ik12showandtellpage input[type="text"] {
+    width: 300px;
+}
+
+
+.ik12pokernightpage {
+
+    background: #8f0000;
+    font-family:"Times New Roman", Verdana, Arial, Helvetica, sans-serif;
+    font-weight: normal;
+    align-items: center;
+    margin: 0 0 0 0;
+    border: 0px solid black;
+    width: 900px;
+    height: 50%;
+}
+.ik12pokernightpage h1{text-align: left;}
+.ik12pokernightpage h3{text-align: left;}
+
+#satwrap{
+    float: left;
+    background: #FFFFFF; /* Set content background to white */
+    width: 560px; /* Set the width of our content area */
+    margin: 0 auto; /* Center our content in our browser */
+    margin-top: 20px; /* Margin top to make some space between the header and the content */
+    padding: 10px; /* Padding to make some more space for our text */
+    border: 1px solid #DFDFDF; /* Small border for the finishing touch */
+    text-align: center; /* Center our content text */
+}
+
+#satwrap h3{
+    font: italic 22px Georgia; /* Set font for our heading 2 that will be displayed in our wrap */
+}
+
+.RSVPbutton
+{
+    color:#a6c9e2;
+    background-color: #8f0000;
+    font-size:18px;
+
+}
+/* Events End */
+
+
+.ik12feed {
+    border: 2px solid black;
+    border-spacing: 10px;
+    padding: 10px;
+    text-align: left;
+    vertical-align: bottom;
+    font-size: 100%;
+    font-weight: normal;
+    width: 70%;
+    margin: 0 auto;
+
+}
+.ik12feed td {
+    border: 0px solid black;
+    vertical-align: top;
+}
+/*
+ * Logs styling
+ */
+.ik12logs {
+    border: 5px solid black;
+    border-spacing: 5px;
+    padding: 10px;
+    text-align: left;
+    vertical-align: bottom;
+    font-size: 100%;
+    font-weight: normal;
+    width: 85%;
+    margin: 0 auto;
+
+}
+.ik12logs th {
+    background-color: lightblue;
+    vertical-align: top;
+}
+.ik12logs td {
+    border: 2px solid black;
+    word-wrap: break-word;
+    word-break: break-all;
+    max-width: 300px;
+    vertical-align: top;
+}
+.ik12logs tr {
+    border: 0px solid black;
+    vertical-align: top;
+}
+
+
+.logsButton {
+    -moz-box-shadow: 0px 10px 14px -7px #276873;
+    -webkit-box-shadow: 0px 10px 14px -7px #276873;
+    box-shadow: 0px 10px 14px -7px #276873;
+    background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #599bb3), color-stop(1, #408c99));
+    background:-moz-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:-webkit-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:-o-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:-ms-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:linear-gradient(to bottom, #599bb3 5%, #408c99 100%);
+    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#599bb3', endColorstr='#408c99',GradientType=0);
+    background-color:#599bb3;
+    -moz-border-radius:8px;
+    -webkit-border-radius:8px;
+    border-radius:8px;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:arial;
+    font-size:20px;
+    /*font-weight:bold;*/
+    padding:8px 16px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #3d768a;
+}
+.logsButton:hover {
+    background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #408c99), color-stop(1, #599bb3));
+    background:-moz-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:-webkit-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:-o-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:-ms-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:linear-gradient(to bottom, #408c99 5%, #599bb3 100%);
+    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#408c99', endColorstr='#599bb3',GradientType=0);
+    background-color:#408c99;
+}
+.logsButton:active {
+    position:relative;
+    top:1px;
+}
+
+/*********** Logs *****************/
+
+#container {
+    width: 1000px ;
+    margin-left: auto ;
+    margin-right: auto ;
+}
+#content {
+    margin-left:  50px;
+    font-family:"Times New Roman", Verdana, Arial, Helvetica, sans-serif;
+}
+#navbar {
+    font-family:"Times New Roman", Verdana, Arial, Helvetica, sans-serif;
+    float: left;
+    width: 200px;
+}
+
+.appstatus_container {
+    width: 1000px;
+    clear: both;
+    /*height: 500px; */
+    margin-left: auto ;
+    margin-right: auto ;
+}
+.appstatus_right {
+    margin-left: 300px;
+}
+
+.appstatus_left {
+    float: left;
+    width: 200px;
+}
+
+#companiescontainer {
+    width: 1500px ;
+    margin-left: auto ;
+    margin-right: auto ;
+}
+#companiescontent {
+    margin-left:  230px;
+
+}
+#companiesnavbar {
+    float: left;
+    width: 220px;
+
+}
+
+/*
+ * Introductions
+ */
+
+#introCohortTable {
+    border:1px solid black;
+    border-collapse: collapse;
+
+}
+
+#introCohortTable tr {
+    border: 1px dotted slategray;
+}
+
+#introCohortTable td {
+    border-left: 1px dotted slategray;
+}
+
+
+/*
+#introCohortTable tr:nth-child(even) {
+    background: #c3ecff;
+}
+
+#introCohortTable tr:nth-child(odd) {
+    background: #EAF4FF;
+}
+*/
+#introTable {
+    border:0px solid black;
+    border-collapse: collapse;
+
+}
+#introTable tr {
+    border: 0px dotted slategray;
+}
+#introTable td {
+    border-left: 0px dotted slategray;
+}
+/*
+#introTable tr:nth-child(odd) {
+    background: white;
+}
+
+#introTable tr:nth-child(even) {
+    background: rgba(116, 153, 125, 0.47);
+}
+*/
+
+/****************************************************************/
+
+/* Global Styles */
+
+*{
+    padding: 0; /* Reset all padding to 0 */
+    margin: 0; /* Reset all margin to 0 */
+}
+
+body{
+    background: #F9F9F9; /* Set HTML background color */
+    font: 14px "Lucida Grande";  /* Set global font size & family */
+    /* color: #464646; /* Set global text color */
+    color: black; /* Set global text color */
+}
+
+p{
+    margin: 10px 0px 10px 0px; /* Add some padding to the top and bottom of the <p> tags */
+}
+
+/* Header */
+
+#header{
+    height: 45px; /* Set header height */
+    background: #464646; /* Set header background color */
+}
+
+#header h3{
+    color: #FFFFF3; /* Set header heading(top left title ) color */
+    padding: 10px; /* Set padding, to center it within the header */
+    font-weight: normal; /* Set font weight to normal, default it was set to bold */
+}
+
+
+#wrap{
+    background: #FFFFFF; /* Set content background to white */
+    width: 715px; /* Set the width of our content area */
+    margin: 0 auto; /* Center our content in our browser */
+    margin-top: 50px; /* Margin top to make some space between the header and the content */
+    padding: 10px; /* Padding to make some more space for our text */
+    border: 1px solid #DFDFDF; /* Small border for the finishing touch */
+    text-align: center; /* Center our content text */
+}
+
+#wrap h3{
+    font: italic 22px Georgia; /* Set font for our heading 2 that will be displayed in our wrap */
+}
+
+html, body {
+    height: 100%;
+}
+.ik12wrapper {
+    min-height: 100%;
+    height: auto !important;
+    /*height: 100%;*/
+    margin: 0 auto -4em;
+}
+
+.ik12footer, .ik12push {
+    clear: both;
+    height: 4em;
+    color:#7489fe;
+    font-size:60%;
+    text-align: center;
+}
+
+/* Form & Input field styles */
+
+form{
+    margin-top: 10px; /* Make some more distance away from the description text */
+}
+
+form .submit_button{
+    background: #F9F9F9; /* Set button background */
+    border: 1px solid #DFDFDF; /* Small border around our submit button */
+    padding: 8px; /* Add some more space around our button text */
+}
+
+input{
+    font: normal 16px Georgia; /* Set font for our input fields */
+    border: 1px solid #DFDFDF; /* Small border around our input field */
+    padding: 8px; /* Add some more space around our text */
+}
+
+/* button, .pokerbutton, input[type=submit] { */
+button, .pokerbutton {
+    border: 0;
+    background: #5786c1;
+    color: white;
+    padding: 8px 14px;
+    font-weight: bold;
+    font-size: 18px;
+    text-decoration: none;
+    display: inline-block; /* needed for anchors */
+    position: relative;
+    box-shadow: 1px 0px #3a587f, 0px 1px #4171ae,
+    2px 1px #3a587f, 1px 2px #4171ae,
+    3px 2px #3a587f, 2px 3px #4171ae,
+    4px 3px #3a587f, 3px 4px #4171ae,
+    5px 4px #3a587f, 4px 5px #4171ae,
+    6px 5px #3a587f, 5px 6px #4171ae;
+&:hover, &:focus,
+&.hover, &.focus {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 0px #3a587f, 0px 1px #4171ae,
+    2px 1px #3a587f, 1px 2px #4171ae,
+    3px 2px #3a587f, 2px 3px #4171ae,
+    4px 3px #3a587f, 3px 4px #4171ae;
+}
+&:active,
+&.active {
+    transform: translate(4px, 4px);
+    box-shadow: 1px 0px #3a587f, 0px 1px #4171ae,
+    2px 1px #3a587f, 1px 2px #4171ae;
+  }
+}
+
+
+/*
+ * Live validation styling
+ */
+.LV_validation_message{
+    font-weight:bold;
+    margin:0 0 0 5px;
+}
+
+.LV_valid {
+    color:#00CC00;
+}
+
+.LV_invalid {
+    color:#CC0000;
+}
+
+.LV_valid_field,
+input.LV_valid_field:hover,
+input.LV_valid_field:active,
+textarea.LV_valid_field:hover,
+textarea.LV_valid_field:active {
+    border: 1px solid #00CC00;
+}
+
+.LV_invalid_field,
+input.LV_invalid_field:hover,
+input.LV_invalid_field:active,
+textarea.LV_invalid_field:hover,
+textarea.LV_invalid_field:active {
+    border: 1px solid #CC0000;
+}
+
+/*
+ * Registration styling
+ */
+#regTable {
+    float: left;
+    text-align:left;
+    width: 200px;
+    margin:0 0 0 0px;
+    padding:3px;
+/*    border: 1px solid #DFDFDF; */
+}
+
+/*
+ * Login styling
+ */
+#loginTable {
+    text-align:left;
+    margin:0 0 0 200px;
+    /*    border: 1px solid #DFDFDF; */
+}
+
+#loginTableEntry {
+    float: left;
+    text-align:left;
+    width: 200px;
+    margin:0 0 0 0px;
+    padding:3px;
+    /*    border: 1px solid #DFDFDF; */
+}
+
+#loginButton {
+    text-align:left;
+    margin:0 0 0 140px;
+    /*    border: 1px solid #DFDFDF; */
+}
+/*
+ * Stats styling
+ */
+.ik12stats {
+    border: 2px solid black;
+}
+.ik12stats table thead
+{
+    background:#E6E6F0;
+    text-transform:uppercase;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+    text-align:center;
+    font-size:12px;
+    font-weight:bold;
+}
+.ik12stats table thead th
+{
+    cursor:pointer;
+}
+
+.ik12stats table td
+{
+    width:300px;
+    font-weight:normal;
+
+}
+.ik12stats table tbody
+{
+    background:#F6F6FA;
+    text-align:center;
+    /* text-transform:capitalize; */
+    font-size:12px;
+    font-weight:100;
+}
+
+
+
+
+/*
+ * Reg and login styles
+ */
+.ik12rlError
+{
+    text-align:center;
+    font-weight:100;
+    color:#FF0000;
+    font-size:75%;
+    border: 1px solid red;
+    width:50%;
+    margin: 0 0 0 160px;
+    padding: 5px;
+}
+
+/* base nav styles */
+nav { display:block; float:right; margin:0 auto 20px; border:0px solid #222; position:relative; background-color:#e3effe; font-size:11px; }
+nav ul { padding:0; margin:0; z-index: 100; }
+nav li { position:relative; float:left; list-style-type:none; z-index: 100; }
+nav ul:after { content:"."; display:block; height:0; clear:both; visibility:hidden; }
+nav li a { display:block; padding:5px 10px; border-left:1px solid #999; border-right:0px solid #222; text-decoration:none; }
+nav li a:focus { outline:none; text-decoration:underline; }
+nav li:first-child a { border-left:none; }
+nav li.last a { border-right:none; }
+nav a span { display:block; float:right; margin-left:5px; }
+nav ul ul { display:none; width:100%; position:absolute; left:0; background:#e3effe; }
+nav ul ul li { float:left; }
+nav ul ul a { padding:5px 2px; border-left:none; border-right:none; font-size:10px; }
+nav ul ul a:hover { background-color: #e9e6fe; }
+nav li:hover ul { display:block; }
+
+/*
+ * External-facing for Investment and Updates
+ */
+
+#investmentTable td {
+    border: 5px solid black;
+    background:#e3effe;
+   /* text-transform:uppercase; */
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+    text-align:center;
+    font-size:12px;
+    /* font-weight:bold; */
+    cursor:pointer;
+    text-align:left;
+}
+
+#ik12stats2 {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    font-size:14px;
+}
+
+#ik12stats2 td, #ik12stats2 th {
+    border: 1px solid #ccc;
+    padding: 3px 7px 2px 7px;
+}
+
+#ik12stats2 th
+{
+    background-color: #dddddd;
+	color:#808080;
+    text-transform:uppercase;
+    text-align:center;
+    font-size:1.1em;
+	vertical-align: middle;
+	cursor:pointer;
+}
+
+#ik12stats2 tr.alt td {
+	color: #000000;
+    background-color: #eeeeee;
+}
+
+
+#ik12update
+{
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #dddddd;
+    text-transform:uppercase;
+    text-align:center;
+	font-size:1.1em;
+	vertical-align:middle;
+	cursor:pointer;
+	width:100%;
+	color:#808080;
+	padding-top:5px;
+	padding-bottom:5px;
+}
+
+.ik12UpdateInput input {
+    font-size:11px;
+}
+

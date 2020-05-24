@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<link href='/css/angel.css' rel='stylesheet'>
+
+<html>
+<head>
+<title>Angelcalc Help: Options</title>
+</head>
+<body class="legal">
+
+
+<H1>Options Explanation</H1>
+Options are short hand for "incentive stock options", which are the right to purchase shares of stock
+at a pre-defined "strike" price in the future. That price is set based on the current company value when the
+shares are issued, and if all goes well that price will rise and thus the value of the options. This is a very
+common way to compensate high-tech workers and more especially early startup employees.
+
+<H3>Option Pool (Pool Size)</H3>
+This is the total number of shares of common stock set aside to be granted as options to employees (and potentially
+others).
+
+<H3>Granted Options</H3>
+This is the number of shares of options which have already been granted. It should never be larger than the pool.
+
+<H3>Promised Options</H3>
+This is the number of options promised to key employees prior to an equity round, but not yet granted. This number
+plus the number of granted options may actually be larger than the pool, in which case the excess IS treated as
+part of the pre-money fully diluted share count. Note, this number may well be zero.
+
+<H3>Unissued Options</H3>
+
+Unissued options are options which have been allocated in the option pool, but
+not yet issued or promised to an individual. This number is generally equal to Pool Size - Granted Options - Promised
+Options. Note that in the case where promised options plus granted options is greater than the pool size, unissued options
+will be zero.
+
+<p></p>
+These options ARE included in fully diluted, pre-money shares. However, they are part of the
+option pool following an equity round, therefore if new option shares are included in the denominator
+of a convertible's (or the vc's) price calculation, you will see these shares subtracted from that total.
+<p></p>
+An example will make this a bit more clear. If a 10% option pool is negotiated, this will go in the pre-money.
+If this will comprise 500,000 shares and there are 50,000 unissued shares, then 450,000 (500,000 - 50,000)
+new options will be authorized and added to the pre-money share count (and thus the price
+calculations mentioned above).
+
+
+</body>

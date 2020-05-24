@@ -1,0 +1,1447 @@
+/*
+ * Angel CSS
+ */
+
+.displayTable { display: table; }
+.displayRow { display: table-row; }
+.displayCell { display: table-cell; }
+
+a {
+    color: #337ab7;
+    text-decoration: none;
+    cursor: auto;
+    background-color: transparent;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+#angelOfDeathTable {
+    border: 5px solid red;
+    font-size: 18px;
+    padding: 30px;
+    border-spacing: 20px;
+    text-align: center;
+
+}
+
+.angelfooter, .angelpush {
+    clear: both;
+    /*position: absolute;     oh jeez, this used to work, and now it doesn't </div>s added and this now gone*/
+    bottom: 0px;
+    left: 500px;
+    height: 4em;
+    color:#7489fe;
+    font-size:60%;
+    text-align: center;
+}
+
+body {
+    /*background-color: #EDEDDF;*/
+    background-color:   #F6F6EA;
+}
+
+.angelwrapper {
+    min-height: 100%;
+    height: auto !important;
+    /*height: 100%;*/
+    margin: 0 auto -4em;
+}
+
+.angelfooter, .angelpush {
+    clear: both;
+    height: 4em;
+    color:#7489fe;
+    font-size:60%;
+    text-align: center;
+}
+/*
+ * Options and dropdowns
+ */
+.optionsArrow {
+    width: 14px;
+    height: 20px;
+    background: url('/img/optionsTransBoth.png') bottom;
+}
+.optionsArrow:hover {
+    background-position: -3px 0px;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.optionsDropdown {
+    position: absolute;
+    top: 11px;
+    left: 13px;
+    display: inline-block;
+
+}
+
+.divWithClose:before {
+    float: right;
+    display: inline-block;
+    content: "\00d7"; /* This will render the 'X' */
+}
+
+.divWithClose:hover {
+    color:#BB3333;
+    /*transform: rotate(45deg);*/
+}
+
+.circleThumbnail {
+
+    border-radius:20px;
+    -moz-border-radius:20px;
+    -webkit-border-radius:20px;
+
+}
+
+/********************************************************************************************************/
+/*
+ * jquery styling
+ */
+.ui-tooltip, .arrow:after {
+    background: black;
+    border: 2px solid white;
+}
+.ui-tooltip {
+    padding: 10px 20px;
+    color: white;
+    border-radius: 20px;
+    font: bold 14px "Helvetica Neue", Sans-Serif;
+    text-transform: uppercase;
+    box-shadow: 0 0 7px black;
+}
+.arrow {
+    width: 70px;
+    height: 16px;
+    overflow: hidden;
+    position: absolute;
+    left: 50%;
+    margin-left: -35px;
+    bottom: -16px;
+}
+.arrow.top {
+    top: -16px;
+    bottom: auto;
+}
+.arrow.left {
+    left: 20%;
+}
+.arrow:after {
+    content: "";
+    position: absolute;
+    left: 20px;
+    top: -20px;
+    width: 25px;
+    height: 25px;
+    box-shadow: 6px 5px 9px -9px black;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+.arrow.top:after {
+    bottom: -20px;
+    top: auto;
+}
+/*
+ * buttons
+ */
+.clipButton {
+    /*background-color:#599bb3;*/
+    background-color:#f3f3f3;
+    margin: 0px;
+    /*border-radius:8px;*/
+    /*display:inline-block;*/
+    /*cursor:pointer;*/
+    color:#ffffff;
+    font-family:arial;
+    /*font-size:20px;*/
+    /*font-weight:bold;*/
+    /*padding:8px 16px;*/
+    text-decoration:none;
+    /*text-shadow:0px 1px 0px #3d768a;*/
+}
+
+.clipButton:hover {
+   /* background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #408c99), color-stop(1, #599bb3));
+    background:-moz-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:-webkit-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:-o-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:-ms-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:linear-gradient(to bottom, #408c99 5%, #599bb3 100%);
+    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#408c99', endColorstr='#599bb3',GradientType=0);*/
+    background-color:darkgray;
+}
+
+/*
+ *
+ */
+.exit-reveal-if-active {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+}
+input[type="radio"]:checked ~ .exit-reveal-if-active,
+input[type="checkbox"]:checked ~ .exit-reveal-if-active {
+    opacity: 1;
+    max-height: 100px; /* little bit of a magic number :( */
+    overflow: visible;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 90px;
+    height: 80px;
+    /*box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);*/
+    box-shadow: 0px 2px 4px rgba(0,0,0,0.2);
+    border: 1px solid rgba(0,0,0,0.2);
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+    color: black;
+    padding: 2px 5px;
+    text-decoration: none;
+    display: block;
+}
+
+/*******************************************/
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {background-color: #f1f1f1}
+
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block; z-index:100;}
+
+.legal {
+    margin: 10px 4px 40px 40px;
+    background-color: #E0E0E0 ;
+    border: 0px solid blue;
+    padding: 10px 10px 10px 10px;
+    font-family: "Arial";
+    width: 600px;
+    color: black;
+}
+/*
+ * Import page styling
+ */
+.importContainer {
+    border: 3px solid lightgrey;
+    margin: 30px 350px 0px 20px;
+    padding: 30px 30px 30px 30px;
+    width: 50%;
+}
+
+.importContainer th {
+   width: 30%;
+}
+
+/*
+ * Company and dealflow styling
+*/
+.companyContainer {
+    width: 100%;
+    /*height: 600px;*/
+    background-color: #d3d3d3;
+    display:inline-block;
+}
+.companySummaryWrapper {
+    overflow-y: hidden;
+    overflow-x: hidden;
+    height:210px;
+    width: 163px;
+    float: left;
+}
+.companySummary {
+    display: table;
+    margin: 5px;
+    padding: 10px;
+    background-color: #f8f7ff;
+    border:1px solid blue;
+    float: left;
+    width: 120px;
+    height:165px;
+    font-size: 12px;
+}
+
+
+
+.dealflowCompanySummaryWrapper {
+    overflow-y: hidden;
+    overflow-x: hidden;
+    height:300px;
+    width: 260px;
+    float: left;
+}
+
+.dealflowCompanySummary {
+    display: table;
+    margin: 5px;
+    padding: 10px;
+    background-color: #f8f7ff;
+    border:1px solid blue;
+    float: left;
+    width: 230px;
+    height:265px;
+    font-size: 12px;
+    overflow: scroll;
+    max-height: 265px;
+}
+.companyFoundersSummaryDiv {
+    margin: 0px;
+    padding: 0px;
+    background-color: #f8f7ff;
+    border:0px solid blue;
+    float: left;
+    width: 75px;
+    height:75px;
+    font-size: 12px;
+}
+
+.companyPageNavDiv  {
+    font-size: 10px;
+    border-right: 1px solid blue;
+    /* background-color: #E0E0E0; */
+    background-color: #F6F6EA;
+    margin: 0px 0px 0px 0px;
+    padding: 60px 30px 10px 30px;
+    width:220px;
+    height:100%;
+    min-height: 500px;
+    float:left
+}
+.companyPageNotesDiv  {
+    font-size: 10px;
+    border: 0px solid red;
+    background-color: #F6F6EA;
+    margin: 0px 0px 0px 0px;
+    padding: 60px 30px 10px 30px;
+    width:750px;
+    height:100%;
+    float:left
+}
+
+.companyPageNoteRow {
+    display:table-row;
+    /*background-color: #C6C6AF;*/
+    background-color: #F6F6EA;
+}
+
+.simpleInvestmentsTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    width: 200px;
+    border-collapse: collapse;
+}
+
+.simpleInvestmentsTable td {
+    border-right: 0px dotted black;
+    text-align: left;
+    vertical-align: middle;
+    font-size: 10px;
+    padding: 2px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+/*
+ * Model styling
+*/
+.modelSummaryContainer {
+    width: 100%;
+    /*height: 600px;*/
+    background-color: #d3d3d3;
+    display:inline-block;
+}
+.modelSummary {
+    display: table;
+    margin: 10px 10px 10px 10px;
+    padding: 5px;
+    background-color: #f8f7ff;
+    border: 0px solid black;
+    float: left;
+    width: 320px;
+    height:160px;
+
+}
+#modelSummaryChild {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    font-size: 24px;
+}
+#modelSummaryActionSlider {
+    height: 70px;
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 50px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    /*transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
+}
+
+/* Links inside the slider */
+#modelSummaryActionSlider a {
+    color: black;
+    padding: 2px 2px;
+    text-decoration: none;
+    font-size: 12px;
+    display: block;
+}
+
+/* Change color of slider links on hover */
+#modelSummaryActionSlider a:hover {background-color: #f1f1f1}
+
+#modelSummaryCaptable {
+    position: absolute;
+    border: 2px solid blue;
+    display: none;
+    background-color: white;
+    width: 340px;
+    height:220px;
+}
+#modelSummaryCaptable table {
+    font-size: 16px;
+    color: blue;
+}
+
+.showCalc {
+    text-align:right;
+    width:100px;
+    border: 0px solid black;
+    border-right: 0px;
+    cursor:pointer
+}
+
+.modelInstructions {
+    margin: 10px 4px 40px 40px;
+    background-color: #E0E0E0 ;
+    padding: 10px 10px 10px 10px;
+    border: 5px solid blue;
+    color: black;
+    width:75%;
+    font-family: "Times New Roman";
+    font-size: 18px;
+}
+
+.angelEquationDiv {
+    margin: 10px 0px 10px 0px;
+    float:right;
+    border: 0px solid purple;
+    width:350px;
+    background-color: #E0E0E0 ;
+    font-family: "Times New Roman";
+
+}
+
+.angelEquationTable {
+    background-color: #E0E0E0 ;
+    table-layout: fixed;
+
+}
+
+.angelEquationTable td {
+    border: 0px solid black;
+    vertical-align: middle;
+    font-size: 14px;
+    padding: 0px;
+    border-spacing: 0px;
+    border: 0px solid black;
+    border-collapse: collapse;
+}
+.angelCapTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.angelCapTable td {
+    border-right: 1px solid darkgrey;
+    vertical-align: middle;
+    text-align: right;
+    font-size: 14px;
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.angelCapTable th {
+    /*background-color: lightcyan;*/
+    background-color: #E6E6F0;
+    /*background-color: #F6F6EA;*/
+    color:  #1574B1;
+    border-right: 0px solid black;
+    vertical-align: middle;
+    font-size: 16px;
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;    
+}
+
+.angelinput {
+    border: 0px solid black;
+    /*width: 60%;*/
+}
+.angelinput table thead
+{
+    background:#E6E6F0;
+    text-transform:uppercase;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+    text-align:center;
+    font-size:12px;
+    font-weight:bold;
+}
+.angelinput table thead th
+{
+    cursor:pointer;
+}
+
+.angelinput table td
+{
+    /*width:300px;*/
+    font-weight:normal;
+
+}
+.angelinput table tbody
+{
+    background:#F6F6FA;
+    text-align:center;
+    /* text-transform:capitalize; */
+    font-size:12px;
+    font-weight:100;
+}
+
+/*
+ * Angelcalc Investment css
+ */
+.angelcalcTop {
+    border: 0px solid black;
+    margin: 0px 0px 0px 0px;
+    position: fixed; /* Stay in place */
+    width:100%;
+    z-index: 100;      /* Stay on top */
+    top:  0;
+    left: 0;
+}
+.angelcalcTopNav {
+    border: 0px solid black;
+    /*background-color:#ededdf;*/
+    background-color:#EDEDDF;
+}
+.friendList {
+    font-weight:100;
+    font-size:12px;
+    margin: 0px 0px 0px 7px;
+}
+.friendList span:hover {
+    background-color: #c0c0e0;
+    cursor:pointer;
+}
+
+.angelInitialHelp {
+    opacity:    1;
+    color:      blue;
+    z-index:    99;
+    display:    none;
+    width:      250px;
+    position:   absolute;
+    top:        110px;
+    height:     250px;
+    border:     3px dotted blue;
+    margin:     0px 0px 0px 235px;
+    float:      left;
+    padding:    6px;
+}
+
+.angelcalcNav {
+    /* float:left;*/
+    border: 0px solid blue;
+    margin: 0px 0px 0px 0px;
+    font-size:14px;
+    font-weight:100;
+
+    height: 100%; /* 100% Full-height */
+    width: 220px; /* 0 width - change this with JavaScript */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Stay on top */
+    top: 70px;
+    left: 0;
+    background-color: #c0c0e0;
+    overflow-x: hidden; /* Disable horizontal scroll */
+    padding-top: 50px; /* Place content 20px from the top */
+    transition: 0.5s; /* 0.5 second transition effect to slide  in the sidenav */
+}
+.angelcalcNav td:hover {
+    background-color: #e0e0e0;
+    cursor:pointer;
+}
+
+.angelValuesTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    width: 1030px;
+    border-collapse: collapse;
+}
+
+.angelValuesTable td {
+    border-bottom: 2px dotted white;
+    border-right: 2px solid gray;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.angelValuesTable th {
+    /*background-color: lightcyan;*/
+    border-bottom: 2px solid #E6E6F0;
+    background-color: #E6E6F0;
+    background-repeat: no-repeat;
+    background-position: center right;
+    color: blue;
+    border-right: 2px solid gray;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.angelInvestmentsTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    width: 820px;
+    border-collapse: collapse;
+}
+
+.angelInvestmentsTable td {
+    border-right: 2px solid gray;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.angelInvestmentsTable th {
+    /*background-color: lightcyan;*/
+    background-color: #E6E6F0;
+    background-repeat: no-repeat;
+    background-position: center right;
+    color: blue;
+    border-right: 2px solid gray;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.angelPayoutsTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    width: 910px;
+    border-collapse: collapse;
+}
+
+.angelPayoutsTable td {
+    border-right: 2px solid gray;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.angelPayoutsTable th {
+    /*background-color: lightcyan;*/
+    background-color: #E6E6F0;
+    background-repeat: no-repeat;
+    background-position: center right;
+    color: blue;
+    border-right: 2px solid gray;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.angelPayoutsTaxTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.angelPayoutsTaxTable td {
+    border-right: 0px dotted black;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 14px;
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.angelPayoutsTaxTable th {
+    /*background-color: lightcyan;*/
+    background-color: #E6E6F0;
+    background-repeat: no-repeat;
+    background-position: center right;
+    color: blue;
+    border-right: 1px dotted black;
+    vertical-align: middle;
+    font-size: 14px;
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.angelConvertBlueLine {
+    float:left;
+    border: 2px solid blue;
+    height:1px;
+    width:470px;
+
+}
+
+.angelPaymentsTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    width: 701px;
+    border-collapse: collapse;
+}
+
+.angelPaymentsTable td {
+    border-right: 2px solid gray;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.angelPaymentsTable th {
+    /*background-color: lightcyan;*/
+    background-color: #E6E6F0;
+    background-repeat: no-repeat;
+    background-position: center right;
+    color: blue;
+    border-right: 2px solid gray;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.angelFundsTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    width: 980px;
+    border-collapse: collapse;
+}
+
+.angelFundsTable td {
+    border-right: 2px solid gray;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.angelFundsTable th {
+    /*background-color: lightcyan;*/
+    background-color: #E6E6F0;
+    background-repeat: no-repeat;
+    background-position: center right;
+    color: blue;
+    border-right: 2px solid gray;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+.fundCashflowTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    width: 875px;
+}
+
+.fundCashflowTable td {
+    border-bottom: 2px dotted white;
+    border-right: 2px solid gray;
+    line-height: 20px;
+    text-align: right;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    overflow: hidden;
+    white-space:nowrap;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.fundCashflowTable th {
+    border-right: 0px solid gray;
+    padding-left: 2px;
+    padding-right: 2px;
+    font-size: 14px;
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.fundCashflowDiv {
+    float:left;
+    border:0px solid blue;
+    margin: 0px 0px 0px 220px;
+    display:block;
+    overflow: auto;
+
+}
+
+.fundPaymentSpan {
+    color: red;
+    fond-size: 10px;
+}
+
+.angelConvertDiv {
+    padding: 10px 0px 10px 30px;
+    margin: 0px 0px 0px 20px;
+    float:left;
+    border: 6px solid #d3d3d3;
+    background-color: rgba(82, 82, 82, 0.65);
+    width: 90%;
+}
+
+.angelConvertSummaryTable {
+    border: 0px solid purple;
+    vertical-align: top;
+    font-size: 12px;
+    padding: 0px;
+    border-spacing: 0px;
+    height: 110px;
+}
+
+
+.angelAddForm {
+    display: none;
+    border: 3px solid mediumpurple ;
+    float:left; margin: 0px 0px 100px 240px;
+    padding: 0px 0px 30px 0px;
+}
+
+
+/************************************************************************************
+ *  End angelcalc investment styling
+ */
+.header {
+    background-image: url("/img/bg.gif");
+}
+.headerSortDown {
+    background-image: url("/img/asc.gif");
+}
+
+.headerSortUp {
+    background-image: url("/img/desc.gif");
+}
+
+
+/*
+ *  Model styling
+ */
+
+.modelLabel {
+    color:white;
+    background-color: #1574B1;
+    border:0px solid darkgray;
+    padding: 5px
+}
+
+.modelLabel a {
+    color:white;
+}
+
+.equityInputTable  {
+    table-layout: fixed;
+
+}
+
+.equityInputTable th {
+    border-top: 0px solid black;
+    background-color: #E6E6F0;
+    text-align: center;
+    border-collapse: collapse;
+    padding: 0px 25px 0px 25px;
+    font-size: 12px;
+}
+
+.equityInputTable td {
+    border: 0px solid black;
+    background-color: black;
+    color: white;
+    /*background-color: #e6f5f5;*/
+    text-align: center;
+    border-collapse: collapse;
+    padding: 0px 25px 0px 25px;
+    border-spacing: 10px 50px;
+    font-size: 12px;
+}
+
+.equityCompareTable  {
+    table-layout: fixed;
+
+}
+
+.equityCompareTable th {
+    border-top: 0px solid black;
+    background-color: #E6E6F0;
+    text-align: center;
+    border-collapse: collapse;
+    padding: 0px 25px 0px 25px;
+    font-size: 8px;
+}
+
+.equityCompareTable td {
+    border: 0px solid black;
+    background-color: black;
+    color: white;
+    /*background-color: #e6f5f5;*/
+    text-align: center;
+    border-collapse: collapse;
+    padding: 0px 25px 0px 25px;
+    border-spacing: 10px 50px;
+    font-size: 8px;
+}
+
+
+.convertInputTable  {
+    table-layout: fixed;
+    border: 0px solid black;
+
+}
+
+.convertInputTable th {
+    border: 0px solid black;
+    /*background-color: #e0f5dc;*/
+    background-color: #E6E6F0;
+    text-align: center;
+    border-collapse: collapse;
+    border-spacing: 0px 0px;
+    margin: 0px 20px 0px 0px;
+    padding: 0px 25px 0px 25px;
+    font-size: 12px;
+
+}
+
+.convertInputTable td {
+    border: 0px solid black;
+    background-color: #1574B1;
+    color: white;
+    /*background-color: #e6f5f5;*/
+    text-align: center;
+    border-collapse: collapse;
+    border-spacing: 0px 0px;
+    padding: 10px 25px 10px 25px;
+    font-size: 12px;
+}
+
+.convertCompareInputTable  {
+    table-layout: fixed;
+    border: 0px solid black;
+
+}
+
+.convertCompareInputTable th {
+    border: 0px solid black;
+    /*background-color: #e0f5dc;*/
+    background-color: #E6E6F0;
+    text-align: center;
+    border-collapse: collapse;
+    border-spacing: 10px 50px;
+    margin: 0px 20px 0px 0px;
+    padding: 0px 25px 0px 25px;
+    font-size: 10px;
+
+}
+
+.convertCompareInputTable td {
+    border: 0px solid black;
+    background-color: purple;
+    color: white;
+    /*background-color: #e6f5f5;*/
+    text-align: center;
+    border-collapse: collapse;
+    border-spacing: 10px 50px;
+    padding: 10px 25px 10px 25px;
+    font-size: 10px;
+}
+
+
+.equityInputTable  {
+    table-layout: fixed;
+
+}
+
+.equityInputTable th {
+    border-top: 0px solid black;
+    background-color: #E6E6F0;
+    text-align: center;
+    border-collapse: collapse;
+    padding: 0px 25px 0px 25px;
+    font-size: 12px;
+}
+
+.equityInputTable td {
+    border: 0px solid black;
+    background-color: #013E74;
+    color: white;
+    /*background-color: #e6f5f5;*/
+    text-align: center;
+    border-collapse: collapse;
+    padding: 10px 25px 10px 25px;
+    border-spacing: 10px 50px;
+    font-size: 12px;
+}
+
+
+.convertCustomTable  {
+    table-layout: fixed;
+    border: 1px solid black;
+
+}
+
+.convertCustomTable th {
+    border: 0px solid black;
+    /*background-color: #e0f5dc;*/
+    background-color: #E6E6F0;
+    text-align: left;
+    border-collapse: collapse;
+    border-spacing: 10px 50px;
+    margin: 0px 20px 0px 0px;
+    padding: 0px 25px 0px 25px;
+    font-size: 12px;
+
+}
+
+.convertCustomTable td {
+    border: 1px solid black;
+    background-color: purple;
+    color: white;
+    /*background-color: #e6f5f5;*/
+    text-align: left;
+    border-collapse: collapse;
+    border-spacing: 10px 50px;
+    padding: 10px 25px 10px 25px;
+    font-size: 12px;
+}
+/*
+ * Compare styling  (I may need to consolidate other portions of compare (equity compare?))
+ */
+
+.modelCompareTableDiv {
+    clear: both;
+    border: 0px solid red;
+    margin: 45px 0px 0px 0px;
+    padding: 0px 30px 30px 30px;
+    width:100%;
+    float: left;
+    display: inline;
+}
+
+.modelCompareDiv  {
+    font-size: 10px;
+    border: 1px solid blue;
+    background-color: #E0E0E0;
+    margin: 0px 0px 0px 25px;
+    padding: 10px 30px 10px 30px;
+    width:1150px;
+    height: 300px;
+    overflow:scroll;
+    float:left;
+}
+
+.modelCompareDiv input {
+    font-size: 12px;
+}
+
+
+
+.modelCompareTable  {
+    /*width: 100%;*/
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border: 6px solid #d3d3d3;
+}
+
+.modelCompareTable td {
+    border-right: 0px solid blue;
+    vertical-align: middle;
+    text-align: right;
+    font-size: 14px;
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.modelCompareTable th {
+    /*background-color: lightcyan;*/
+    background-color: #E6E6F0;
+    color: blue;
+    border-right: 0px solid black;
+    vertical-align: middle;
+    text-align: right;
+    font-size: 16px;
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+
+.angelbasic {
+    border: 0px solid black;
+    table-layout: fixed;
+    width: 825px;
+    font-family:"Times New Roman", Verdana, Arial, Helvetica, sans-serif;
+}
+
+.modelButton {
+    -moz-box-shadow: 0px 10px 14px -7px #276873;
+    -webkit-box-shadow: 0px 10px 14px -7px #276873;
+    box-shadow: 0px 10px 14px -7px #276873;
+    background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #599bb3), color-stop(1, #408c99));
+    background:-moz-linear-gradient(top, #013E74 5%, #1574B1 100%);
+    background:-webkit-linear-gradient(top, #013E74 5%, #1574B1 100%);
+    background:-o-linear-gradient(top, #013E74 5%, #1574B1 100%);
+    background:-ms-linear-gradient(top, #013E74 5%, #1574B1 100%);
+    background:linear-gradient(to bottom, #013E74 5%, #1574B1 100%);
+    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#599bb3', endColorstr='#408c99',GradientType=0);
+    background-color:#013E74;
+    -moz-border-radius:8px;
+    -webkit-border-radius:8px;
+    border-radius:8px;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:arial;
+    font-size:16px;
+    /*font-weight:bold;*/
+    padding:8px 16px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #3d768a;
+}
+.modelButton:hover {
+    background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #408c99), color-stop(1, #599bb3));
+    background:-moz-linear-gradient(top, #1574B1 5%, #013E74 100%);
+    background:-webkit-linear-gradient(top, #1574B1 5%, #013E74 100%);
+    background:-o-linear-gradient(top, #1574B1 5%, #013E74 100%);
+    background:-ms-linear-gradient(top, #1574B1 5%, #013E74 100%);
+    background:linear-gradient(to bottom, #1574B1 5%, #013E74 100%);
+    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#1574B1', endColorstr='#013E74',GradientType=0);
+    background-color:#1574B1;
+}
+.modelButton:active {
+    position:relative;
+    top:1px;
+}
+
+/*
+.angelbasic table thead
+{
+    background:#E6E6F0;
+    text-transform:uppercase;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+    text-align:center;
+    font-size:12px;
+    font-weight:bold;
+}
+.angelbasic table thead th
+{
+    cursor:pointer;
+}
+*/
+.angelbasic table td
+{
+    width:300px;
+    font-weight:normal;
+    border-spacing:10px;
+
+}
+.angelbasic table tbody
+{
+    background:#F6F6FA;
+    text-align:center;
+    /* text-transform:capitalize; */
+    font-size:14px;
+    font-weight:100;
+}
+
+.angelTableHeader {
+    margin: 70px 0px 0px 240px;
+    padding-left: 2px;
+}
+.angelTableBody {
+    margin: 0px 0px 0px 240px;
+    overflow:auto;
+    float:left;
+    border: 0px solid black;
+    padding-left: 0px;
+    display:inline;
+    padding-left: 2px;
+}
+
+#tableViewerContainer {
+    width: 1500px ;
+    margin-left: auto ;
+    margin-right: auto;
+}
+
+#tableViewerNavbar {
+    float: left;
+    width: 220px;
+
+}
+
+#tableViewerContainer {
+    width: 1500px ;
+    margin-left: auto ;
+    margin-right: auto ;
+}
+#tableViewerContent {
+    margin-left:  230px;
+
+}
+.angelGraphics {
+    margin: 0px 0px 0px 240px;
+    width: 455px;
+    height: 300px;
+    float:left;
+    overflow:auto;
+    background-color: white
+}
+
+/*
+ * Logs styling
+ */
+.angellogs {
+    border: 5px solid black;
+    border-spacing: 5px;
+    padding: 10px;
+    text-align: left;
+    vertical-align: bottom;
+    font-size: 100%;
+    font-weight: normal;
+    width: 85%;
+    margin: 0 auto;
+
+}
+.angellogs th {
+    background-color: lightblue;
+    vertical-align: top;
+}
+.angellogs td {
+    border-top: 1px solid black;
+    word-wrap: break-word;
+    word-break: break-all;
+    width: 300px;
+    vertical-align: top;
+}
+.angellogs tr {
+    vertical-align: top;
+}
+/*
+ * Cashflow Styling
+ */
+
+.cflowSlidecontainer {
+    width: 100%;
+}
+
+.cflowSlider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 25px;
+    background: white;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.cflowSlider:hover {
+    opacity: 1;
+}
+
+.cflowSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+.cflowSlider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+.logsButton {
+    -moz-box-shadow: 0px 10px 14px -7px #276873;
+    -webkit-box-shadow: 0px 10px 14px -7px #276873;
+    box-shadow: 0px 10px 14px -7px #276873;
+    background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #599bb3), color-stop(1, #408c99));
+    background:-moz-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:-webkit-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:-o-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:-ms-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:linear-gradient(to bottom, #599bb3 5%, #408c99 100%);
+    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#599bb3', endColorstr='#408c99',GradientType=0);
+    background-color:#599bb3;
+    -moz-border-radius:8px;
+    -webkit-border-radius:8px;
+    border-radius:8px;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:arial;
+    font-size:20px;
+    /*font-weight:bold;*/
+    padding:8px 16px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #3d768a;
+}
+.logsButton:hover {
+    background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #408c99), color-stop(1, #599bb3));
+    background:-moz-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:-webkit-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:-o-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:-ms-linear-gradient(top, #408c99 5%, #599bb3 100%);
+    background:linear-gradient(to bottom, #408c99 5%, #599bb3 100%);
+    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#408c99', endColorstr='#599bb3',GradientType=0);
+    background-color:#408c99;
+}
+.logsButton:active {
+    position:relative;
+    top:1px;
+}
+
+/*********** Logs *****************/
+
+/*
+ * table alignment stuff
+ */
+.tr1 td:nth-child(1), .tr1 th:nth-child(1),
+.tr2 td:nth-child(2), .tr2 th:nth-child(2),
+.tr3 td:nth-child(3), .tr3 th:nth-child(3),
+.tr4 td:nth-child(4), .tr4 th:nth-child(4),
+.tr5 td:nth-child(5), .tr5 th:nth-child(5),
+.tr6 td:nth-child(6), .tr6 th:nth-child(6),
+.tr7 td:nth-child(7), .tr7 th:nth-child(7),
+.tr8 td:nth-child(8), .tr8 th:nth-child(8),
+.tr9 td:nth-child(9), .tr9 th:nth-child(9),
+.tr10 td:nth-child(10), .tr10 th:nth-child(10),
+.tr11 td:nth-child(11), .tr11 th:nth-child(11),
+.tr12 td:nth-child(12), .tr12 th:nth-child(12),
+.tr13 td:nth-child(13), .tr13 th:nth-child(13) { text-align:right; }
+
+.tc1 td:nth-child(1), .tc1 th:nth-child(1),
+.tc2 td:nth-child(2), .tc2 th:nth-child(2),
+.tc3 td:nth-child(3), .tc3 th:nth-child(3),
+.tc4 td:nth-child(4), .tc4 th:nth-child(4),
+.tc5 td:nth-child(5), .tc5 th:nth-child(5),
+.tc6 td:nth-child(6), .tc6 th:nth-child(6),
+.tc7 td:nth-child(7), .tc7 th:nth-child(7),
+.tc8 td:nth-child(8), .tc8 th:nth-child(8),
+.tc9 td:nth-child(9), .tc9 th:nth-child(9),
+.tc10 td:nth-child(10), .tc10 th:nth-child(10),
+.tc11 td:nth-child(11), .tc11 th:nth-child(11),
+.tc12 td:nth-child(12), .tc12 th:nth-child(12),
+.tc13 td:nth-child(13), .tc13 th:nth-child(13) { text-align:center }
+
+.tl1 td:nth-child(1), .tl1 th:nth-child(1),
+.tl2 td:nth-child(2), .tl2 th:nth-child(2),
+.tl3 td:nth-child(3), .tl3 th:nth-child(3),
+.tl4 td:nth-child(4), .tl4 th:nth-child(4),
+.tl5 td:nth-child(5), .tl5 th:nth-child(5),
+.tl6 td:nth-child(6), .tl6 th:nth-child(6),
+.tl7 td:nth-child(7), .tl7 th:nth-child(7),
+.tl8 td:nth-child(8), .tl8 th:nth-child(8),
+.tl9 td:nth-child(9), .tl9 th:nth-child(9),
+.tl10 td:nth-child(10), .tl10 th:nth-child(10),
+.tl11 td:nth-child(11), .tl11 th:nth-child(11),
+.tl12 td:nth-child(12), .tl12 th:nth-child(12),
+.tl13 td:nth-child(13), .tl13 th:nth-child(13) { text-align:left }
+
+
