@@ -6,167 +6,25 @@
  * Time: 10:58 AM
  */
 
-class angelinvestments {
+class whoopie {
 
     public $error = "";
     public $view;
 
     function __construct() {
-        $this->view = new angelInvestments_view();
-    }
-
-    /*******************
-     * This method displays the Investment page
-     */
-    function showInvestmentsPage($investor) {
-
-
-        $this->view->error = $this->error;
-        $body = $this->view->InvestmentsPageBody($investor);
-        $this->view->outputHTML($body);
-    }
-    function showAngelcalcPage($investor, $message, $display) {
-
-
-        $this->view->error = $this->error;
-        $body = $this->view->AngelcalcPageBody($investor, $message, $display);
-        $this->view->outputHTML($body);
-    }
-
-    function showFundsPage($investor, $message, $display) {
-
-
-        $this->view->error = $this->error;
-        $body = $this->view->fundsPageBody($investor, $message, $display);
-        $this->view->outputHTML($body);
-    }
-    function showFundPaymentEmail($investor) {
-
-
-        $this->view->error = $this->error;
-        $body = $this->view->fundPaymentEmailPageBody($investor);
-        $this->view->outputHTML($body);
+        $this->view = new whoopie_view();
     }
     /*******************
-     * This method displays the Performance page
-     */
-    function showPerfPage($investor) {
-
-        $body = $this->view->PerfPageBody($investor);
-        $this->view->outputHTML($body);
-    }
-
-    /*******************
-     * This method displays the Payouts page
-     */
-    function showPayoutsPage($investor) {
-
-        $body = $this->view->PayoutsPageBody($investor);
-        $this->view->outputHTML($body);
-    }
-
-    /*******************
-     * This method displays the conversion modeling page
-     */
-    function showConversionPage($investorID, $investID,$modelID, $program, $message) {
-        $this->view->error = $this->error;
-        $body = $this->view->convertPageBody($investorID, $investID, $modelID, $program, $message);
-        $this->view->outputHTML($body);
-
-    }
-    /*******************
-     * This method displays the conversion modeling page redesign
-     */
-    function showConversionPage2($investorID, $investID,$modelID, $program, $message) {
-        $this->view->error = $this->error;
-        $body = $this->view->convertPageBody2($investorID, $investID, $modelID, $program, $message);
-        $this->view->outputHTML($body);
-
-    }
-    /*******************
+     * 
      * This method displays the logged in home page for modeling
      */
-    function showModelHomePage($investorID) {
+    function showWhoopieHomePage() {
         $this->view->error = $this->error;
-        $body = $this->view->modelHomePageBody($investorID);
+        $body = $this->view->whoopieHomePageBody();
         $this->view->outputHTML($body);
 
     }
-
-
-    /*******************
-     * This method displays the conversion modeling page
-     */
-    function showsharedModelPage($modelID, $hash, $program) {
-        $this->view->error = $this->error;
-        $body = $this->view->sharedModelPageBody($modelID,$hash, $program);
-        $this->view->outputHTML($body);
-
-    }
-
-    /*******************
-     * This method displays the model comparison page
-     */
-    function showModelComparePage($investorID) {
-        $this->view->error = $this->error;
-        $body = $this->view->modelComparePageBody($investorID);
-        $this->view->outputHTML($body);
-
-    }
-
-    /*******************
-     * This method displays the import investments page
-     */
-    function showImportPage($investorID) {
-
-        $this->view->error = $this->error;
-        $body = $this->view->ImportPageBody($investorID);
-        $this->view->outputHTML($body);
-    }
-
-    /*******************
-     * This method displays the import funds  page
-     */
-    function showImportFundsPage($investorID) {
-
-        $this->view->error = $this->error;
-        $body = $this->view->ImportFundsPageBody($investorID);
-        $this->view->outputHTML($body);
-    }
-
-    /*******************
-     * This method displays the export investments page
-     */
-    function showExportPage($investorID) {
-
-
-        $this->view->error = $this->error;
-        $body = $this->view->ExportPageBody();
-        $this->view->outputHTML($body);
-    }
-
-    /*******************
-     * This method displays the export investments page
-     */
-    function showTaxPage($investorID) {
-
-
-        $this->view->error = $this->error;
-        $body = $this->view->TaxPageBody();
-        $this->view->outputHTML($body);
-    }
-
-    /*******************
-     * This method displays the import Payout page [deprecated]
-     */
-    function showImportPayoutPage() {
-
-
-        $this->view->error = $this->error;
-        $body = $this->view->ImportPayoutPageBody();
-        $this->view->outputHTML($body);
-    }
-
+   
     /*******************
      * This method displays the help page
      */
@@ -178,19 +36,6 @@ class angelinvestments {
         $this->view->footer = "";           // only because I can't get it to work just now!!! Shows up in the middel of the page
         $this->view->outputHTML($body);
     }
-
-    /*******************
-     * This method displays the import Payout page [deprecated]
-     */
-    function showCashflowPage($investor) {
-
-
-        $this->view->error = $this->error;
-        $body = $this->view->CashflowPageBody($investor);
-        $this->view->outputHTML($body);
-    }
-
-
 
     /*******************
      * This method saves the model which lives in _POST. If the model id number is not 0 in the post this is an update
@@ -3245,7 +3090,7 @@ class angelinvestments {
  * View for angelInvestments
  */
 
-class angelInvestments_view extends angelview {
+class whoopie_view extends angelview {
 
 
     function __construct() {
@@ -3253,7 +3098,7 @@ class angelInvestments_view extends angelview {
 
 
 
-        $this->htmlHeader = "<title>Angel Investments</title>";
+        // $this->htmlHeader = "<title>Whoopie</title>";    // dunno why i'm doing this here - it's already done!
 
     }
 
@@ -6232,126 +6077,81 @@ class angelInvestments_view extends angelview {
 
     }
 
-    function modelHomePageBody($investorID) {
+    function whoopieHomePageBody() {
 
-        $body = "<script>$(document).ready( function() { initializeModelHomePage($investorID) } );</script>";  // initialize things when the page loads
-        $body .= "<div class='modelSummaryContainer'>";
+        $body = "<script>$(document).ready( function() { initializeWhoopie() } );</script>";  // initialize things when the page loads
 
-        /*
-         * slideout div of actions for each model summary
-         */
-        $body .= "<div id='modelSummaryActionSlider'>";
-        $body .= "   <table>
-                            <tr><td><a  style='color:blue' href='javascript:onclick=modelSummaryAction(\"calcModel\")'>Calc Model</a></td></tr>
-                            <tr><td><a href='javascript:onclick=modelSummaryAction(\"editModel\")'>Edit</a></td></tr>
-                            <tr><td><a href='javascript:onclick=modelSummaryAction(\"deleteModel\")'>Delete</a></td></tr>";
-
-        $body .= "   </table>
-                  </div>";
+        $body .= "<div style='overflow:hidden'>";
 
         /*
-         * Dialog for deletion of a model
+         * whoopie home page
+         * 
          */
-        $body .= "<div id='dialogDelete' title='Delete Model' style='display:none'>
-                                            <form id='modelDelete' action='' method='post' enctype='multipart/form-data'>
-                                                Permanently delete \"<span id='modelToDelete'></span>\"?
-                                            </form>
-                  </div>";
-
 
         /*
-         * popup div of a captable calculated for each model
+         * This div is where the game is played
          */
-        $body .= " <div id='modelSummaryCaptable'> <table>
-                                    <tr><td colspan=3 style='color:green' id='modelName'></td></tr>
-                                    <tr><td>  </td></tr>
+        
+        $body .= "<div id='whoopieTable' style='background-image:url(/img/cardtable.jpg); border: 5px solid blue; 
+                    width:700px; height: 400px; margin: 50px 0px 0px 20px; float:left'>";
+        $body .= "   <table>";
 
-                                    <tr><td></td><td>Valuation:</td>              <td id='postVal'></td></tr>
-                                    <tr><td></td><td>Total FD Shares:</td>        <td id='postFDShares'></td></tr>
-                                    <tr><td></td><td>Options:</td>                <td id='postOptions'></td></tr>
-                                    <tr><td></td><td>Share Price:</td>            <td id='postPrice'></td></tr>
-                                    <tr><td colspan=3><hr></td></tr>
-                                    <tr><td></td><td>VC Ownership:</td>           <td id='postVCOwnership'></td></tr>
-                                    <tr><td></td><td>Convert Ownership:</td>      <td id='postConvOwnership'></td></tr>
-                                    <tr><td></td><td>Common Ownership:</td>       <td id='postCommonOwnership'></td></tr>
-                                    <tr><td></td><td>Options:</td>                <td id='postOptionsPercent'></td></tr>
-                                     <tr><td colspan=3><hr></td></tr>
-                                    <tr><td></td><td>Total:</td>                  <td id='postOwnershipTotal'></td></tr>
-
-                                 </table></div>
-                                 ";
-
-        $mod = new angelModel();
-        $conn = $mod->connect();
-        $modelRows = $mod->getRows("modeltable", "investor_id=$investorID ORDER BY name ASC"); // get this user's models, if any
-
-        $body .= " <div class='modelSummary'><div id='modelSummaryChild'><a href='model?new'>Create New Model</a></div></div>";
-
-        if ($investorID == $GLOBALS["guestID"]) {
-            // this is a guest
-            $body .= "
-                        <div class='modelSummary' onmouseover='showModelSummaryActions(this,0,\"Sample\")'> <table class='angelConvertSummaryTable'>
-                                    <tr><td colspan=2 style='color:green'>Model: Sample</td></tr>
-
-                                    <tr><td></td><td>Created:</td>                <td>N/A</td></tr>
-                                    <tr><td></td><td>Number of Converts</td>      <td>2</td></tr>
-                                    <tr><td></td><td>Convert Investment</td>      <td>$1,100,000</td></tr>
-                                    <tr><td colspan=3><hr></td></tr>
-                                    <tr><td></td><td>VC Investment</td>           <td>$2,000,000</td></tr>
-                                    <tr><td></td><td>Pre-money Valuation</td>     <td>$8,000,000</td></tr>
-                                    <tr><td></td><td>Pre-money FD Shares</td>     <td>10,000,000</td></tr>
-                                    <tr><td></td><td>Post-Money Options Pool</td>    <td>10%</td></tr>
-                                    <tr><td></td><td>Pre-Money Options still avail:</td> <td>150,000</td></tr>
-                                     <tr><td colspan=3><hr></td></tr>
-                                    <tr><td colspan=3>Sharing is off</td></tr>
-
-                                 </table></div>
-                                 ";
-
-        } else {
-            while($m = mysqli_fetch_object($modelRows,"angelModel")) {
-
-                if ($m->sharing == true)
-                    $sharing = "On";
-                else
-                    $sharing = "Off";
-                $date = $m->creationDate;
-                $vcInvestment = number_format($m->vcInvestment);
-                $preValuation = number_format($m->preValuation);
-                $fdPreMoneyShares = number_format($m->fdPreMoneyShares);
-                $postOptionsPercent = number_format($m->postOptionsPercent,2) . '%';
-                $preUnissuedOptions = number_format($m->preUnissuedOptions);
-
-                $convertInvestment = number_format($this->getConvertTotal($m));
-
-                $modelID = $m->id;
-                $modelName = $m->name;
-                $body .= "
-                            <div class='modelSummary' onmouseover='showModelSummaryActions(this,$modelID,\"$modelName\")'> <table class='angelConvertSummaryTable'>
-                                        <tr><td colspan=2 style='color:green'>Model: $modelName</td></tr>
-
-                                        <tr><td></td><td>Created:</td>                <td>$date</td></tr>
-                                        <tr><td></td><td>Number of Converts</td>      <td>$m->numberConverts</td></tr>
-                                        <tr><td></td><td>Convert Investment</td>      <td>$convertInvestment</td></tr>
-                                        <tr><td colspan=3><hr></td></tr>
-                                        <tr><td></td><td>VC Investment</td>           <td>$vcInvestment</td></tr>
-                                        <tr><td></td><td>Pre-money Valuation</td>     <td>$preValuation</td></tr>
-                                        <tr><td></td><td>Pre-money FD Shares</td>     <td>$fdPreMoneyShares</td></tr>
-                                        <tr><td></td><td>Post-Money Options Pool</td>    <td>$postOptionsPercent</td></tr>
-                                        <tr><td></td><td>Pre-Money Options still avail:</td> <td>$preUnissuedOptions</td></tr>
-                                         <tr><td colspan=3><hr></td></tr>
-                                        <tr><td colspan=3>Sharing is $sharing</td></tr>
-
-                                     </table></div>
-                                     ";
-            }
-        }
-        $body .= "</div>";  // container
-        $body .= '<div id="modelInstructions" class="modelInstructions">';
-        $body .= file_get_contents("includes/homeInstructions.inc");        // add instructions at the end of the page
+        $body .= "   </table>";
         $body .= "</div>";
+
+
+        /*
+         * This div is where the game is scored
+         */
+        $body .= "<div id='whoopieScore' style='border: 3px solid red; width:400px; height: 250; margin: 50px 0px 0px 20px;float:left '>";
+    
+
+        $body .= "<div id='scoreTableHeaderDiv' class='angelbasic angelTableHeader' style='width:400px;margin:0px 0px 0px 0px '>
+                <table class='angelInvestmentsTable' style='border: 0px solid black; width:400px; table-layout:fixed'>
+                <thead>
+                <tr><th colspan=4>Bids</th><th style='background-color: black;width:10px'>&nbsp</th><th colspan=4>Scores</th></tr>
+                <tr>   
+                    <th id='angelTrackerHeaderCol1' mySort='companyorperson' myProp='companyID' class='header' valign=top style='width:30px'>J</th>
+                    <th id='angelTrackerHeaderCol2' mySort='string'    myProp='type'   class='header' valign=top style='width:30px'>G</th>
+                    <th id='angelTrackerHeaderCol3' mySort='date'    myProp='trackerDate'   class='header' valign=top style='width:30px'>E</th>
+                    <th id='angelTrackerHeaderCol4' mySort='nextdate'    myProp='start'   class='header' valign=top style='width:30px'>S</th>
+                    <th style='background-color: black;width:10px'>&nbsp</th>
+                
+                
+                    <th id='angelTrackerHeaderCol1' mySort='companyorperson' myProp='companyID' class='header' valign=top style='width:30px'>J</th>
+                    <th id='angelTrackerHeaderCol2' mySort='string'    myProp='type'   class='header' valign=top style='width:30px'>G</th>
+                    <th id='angelTrackerHeaderCol3' mySort='date'    myProp='trackerDate'   class='header' valign=top style='width:30px'>E</th>
+                    <th id='angelTrackerHeaderCol4' mySort='nextdate'    myProp='start'   class='header' valign=top style='width:30px'>S</th>
+                 </tr></thead></table></div>";
+
+
+        $body .= "<div id='scoreTableDiv' class='angelbasic angelTableBody' style=' width:400px;margin:0px 0px 0px 0px '>";
+        $body .= "<table id='scoreTable' class='angelInvestmentsTable tr1 tr2 tr3 tr4 tc5 tr6 tr7 tr8' style='border: 0px solid blue; width:250px; table-layout:fixed'>";
+
+        $body .= "  <thead>
+                    <tr>
+                        <th valign=top style='width:30px'>1</th>
+                        <th valign=top style='width:30px'>2</th>
+                        <th valign=top style='width:30px'>3</th>
+                        <th valign=top style='width:30px'>4</th>
+                        <th style='background-color: black;width:10px'></th>
+                        <th valign=top style='width:30px'>5</th>
+                        <th valign=top style='width:30px'>6</th>
+                        <th valign=top style='width:30px'>7</th>
+                        <th valign=top style='width:30px'>8</th>
+                    </tr></thead><tbody></tbody></table></div>";
+
+        
+        $body .= "</div>";  // whoopie score container
+
+
+/*
+        $body .= '<div id="whoopieInstructions" class="modelInstructions">';
+        $body .= file_get_contents("includes/whoopieInstructions.inc");        // add instructions at the end of the page
+        $body .= "</div>"; */
         return($body);
     }
+
 
     function getConvertTotal($mod) {
         $convList = array();

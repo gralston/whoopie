@@ -1,5 +1,5 @@
 <html><head>
-    <title>Angelcalc</title>
+    <title>Whoopie</title>
     <meta http-equiv='Content-Type' content='text/html;charset=UTF-8'>
 </head>
 <body style="margin:0px;">
@@ -11,11 +11,11 @@
                 <?php
                 $logo = $GLOBALS["logo"];
                 $path = $GLOBALS["path"];
-                echo "<td style='border: 0px solid black' align=left><a href='$path/investments?display=investments''><img height='30px' width='200px' src='$path/$logo'></a></td>";
+                echo "<td style='border: 0px solid black' align=left><a href='$path/whoopie''><img height='40px' width='125px' src='$path/$logo'></a></td>";
                 ?></td>
             <td>
-                <a title='Whats New?' onClick=window.open('/static/updatehelp.html','CO','width=700,height=700,status=0,location=no,toolbar=no,menubar=no,0'); href='javascript:void(0);'>
-                    <strong>What's New?</strong></a>
+                <a title='Whoopie IS New!' onClick=window.open('static/whoopieInstructions.html','CO','width=700,height=700,status=0,location=no,toolbar=no,menubar=no,0'); href='javascript:void(0);'>
+                    <strong>Welcome to Whoopie!</strong></a>
             </td>
 
 
@@ -33,14 +33,14 @@
                     $photo = $_SESSION["photo"];
                 else
                     $photo = "";
-                echo "<li><a href='/userProfile?id=$id' title=''> Hi " . $_SESSION["loggedInUserFname"] . '!';
+                echo "<li><a href='/userProfile?id=$id' title=''> Hey You  " . $_SESSION["loggedInUserFname"] . '!';
                 if ($photo != "")
                     echo "<br /><img src=$photo  class='circleThumbnail' height=30 width=30 />";
                 echo '</a></li>';
                 echo "
-                    <li><a href='$path/investments' >Home</a></li>
+                    <li><a href='$path/whoopie' >Home</a></li>
                     <li><a href='javascript:void(0);' NAME='HELP'  title=''
-                        onClick=window.open('/investments?help=start','Angelcalc','width=1000,height=750,0,status=0,');>Help</a></li>
+                        onClick=window.open('static/whoopieInstructions.html','Whoopie','width=1000,height=750,0,status=0,');>Help</a></li>
                     <li><a href='$path/logout' >Logout</a></li>
                 ";
                 ?>

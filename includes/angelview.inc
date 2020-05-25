@@ -30,20 +30,15 @@ class angelview {
 
         $path = $GLOBALS["path"];
 
-        if (isset($_SESSION['auth']))
-            $auth = $_SESSION['auth'];
-        else
-            $auth = "founder";  // lowest level
+        $auth = "";
 
         if ($auth == "root")
-            $this->header       = "angelAdminHeader.inc";
+            $this->header       = "whoopieAdminHeader.inc";
         else
-            $this->header       = "angelheader.inc";
+            $this->header       = "whoopieheader.inc";
 
-        if ($auth == "root")
-            $angelJS = "$path/jscript/angel.js?v=" . time();       // this will ensure we reload css every time for debug
-        else
-            $angelJS = "$path/jscript/angel.js";
+        $whoopieJS = "$path/jscript/whoopie.js?v=" . time();       // this will ensure we reload css every time for debug
+        // $whoopieJS = "$path/jscript/whoopie.js";
 
         $this->js .= "
                     <script src='$path/jscript/jquery-1.11.1.js'></script>
@@ -57,7 +52,9 @@ class angelview {
                     <script src='$path/jscript/jquery.feedback_me.js'></script>
                     <script async defer src='https://buttons.github.io/buttons.js'></script>
 
-                    <script src='$angelJS'></script>
+                    <script src='$path/jscript/cards/decktype.js'></script>
+                    <script src='$path/jscript/cards/cards.js'></script>
+                    <script src='$whoopieJS'></script>
                     <script src='https://www.gstatic.com/charts/loader.js'></script>
                     ";
 
@@ -84,6 +81,10 @@ class angelview {
             <link href='$angelCSS' rel='stylesheet'>
 
             ";
+        $this->htmlHeader = '<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />';
+
         // <link href='$path/css/bootstrap.css' rel='stylesheet'>                       <script src='$path/jscript/bootstrap.js'></script>
 
         $this->footer       = "angelfooter.inc";
