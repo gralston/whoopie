@@ -24,10 +24,48 @@ var cards = (function() {
 
   function mouseEvent(ev) {
     var card = $(this).data('card');
+    // console.debug("mouseEvent before if: " + ev.type);
     if (card.container) {
-      var handler = card.container._click;
-      if (handler) {
-        handler.func.call(handler.context || window, card, ev);
+      // console.debug("mouseEvent after if");
+      if (ev.type == "click") {
+        var handler = card.container._click;
+        if (handler) {
+          console.debug("mouseEvent click");
+          handler.func.call(handler.context || window, card, ev);
+        }
+      }
+      // Geoff added these
+      else if (ev.type == "mousedown") {
+        var handler = card.container._mousedown;
+        if (handler) {
+          console.debug("mouseEvent down");
+          handler.func.call(handler.context || window, card, ev);
+        }
+      }
+      else if (ev.type == "mouseup") {
+        var handler = card.container._mouseup;
+        if (handler) {
+          console.debug("mouseEvent up");
+          handler.func.call(handler.context || window, card, ev);
+        }
+      } else if (ev.type == "dblclick") {
+        var handler = card.container._dblclick;
+        if (handler) {
+          console.debug("mouseEvent dbl");
+          handler.func.call(handler.context || window, card, ev);
+        }
+      } else if (ev.type == "mouseenter") {
+        var handler = card.container._mouseenter;
+        if (handler) {
+          console.debug("mouseEvent enter");
+          handler.func.call(handler.context || window, card, ev);
+        }
+      } else if (ev.type == "mouseleave") {
+        var handler = card.container._mouseleave;
+        if (handler) {
+          console.debug("mouseEvent leave");
+          handler.func.call(handler.context || window, card, ev);
+        }
       }
     }
   }
@@ -42,7 +80,7 @@ var cards = (function() {
     }
     switch (opt.type) {
       case STANDARD:
-        opt.acesHigh = false;
+        // opt.acesHigh = false;
         start = opt.acesHigh ? 2 : 1;
         end = start + 12;
         break;
@@ -76,6 +114,12 @@ var cards = (function() {
     }
 
     $('.card').click(mouseEvent);
+    $('.card').mouseenter(mouseEvent);
+    $('.card').mouseleave(mouseEvent);
+    $('.card').mouseup(mouseEvent);
+    $('.card').mousedown(mouseEvent);
+    $('.card').dblclick(mouseEvent);
+
     shuffle(all);
   }
 
@@ -163,7 +207,47 @@ var cards = (function() {
 
     moveToFront: function() {
       $(this.el).css('z-index', zIndexCounter++);
+    },
+    // Geoff added
+
+    moveToBack: function() {
+      $(this.el).css('z-index', zIndexCounter--);
+    },
+
+    moveUp: function(howMuch) {
+      var pos = $(this.el).position(); 
+      //var off = $(this.el).offset(); 
+      console.debug("moveUp pos bef",pos.top, pos.left);
+      var newtop = (pos.top - howMuch) + 'px';
+      $(this.el).css({top: newtop, left: pos.left, position:'absolute'});
+      var pos = $(this.el).position(); 
+      //console.debug("moveUp 2",rect.top, rect.right, rect.bottom, rect.left);
+      console.debug("moveUp pos aft",pos.top, pos.left);
+      //console.debug("moveUp 4",off.top, off.left);
+      
+    },
+
+    moveDown: function(howMuch) {
+      var pos = $(this.el).position(); 
+      console.debug("moveDown pos bef",pos.top, pos.left);
+      var newtop = (pos.top + howMuch) + 'px';
+      $(this.el).css({top: newtop, left: pos.left, position:'absolute'});
+      var pos = $(this.el).position(); 
+      console.debug("moveDown  pos aft",pos.top, pos.left);
+    },
+
+    moveLeft: function(howMuch) {
+      $(this.el).css('z-index', zIndexCounter--);
+    },
+
+    moveRight: function(howMuch) {
+      $(this.el).css('z-index', zIndexCounter--);
+    },
+
+    hide: function() {
+      $(this.el).fadeOut();
     }
+
   };
 
   function Container() {
@@ -230,8 +314,35 @@ var cards = (function() {
       };
     },
 
+    // geoff added these two
+    dblclick: function(func, context) {
+      this._dblclick = {
+        func: func,
+        context: context
+      };
+    },
+
+    mouseenter: function(func, context) {
+      this._mouseenter = {
+        func: func,
+        context: context
+      };
+    },
+
+    mouseleave: function(func, context) {
+      this._mouseleave = {
+        func: func,
+        context: context
+      };
+    },
+
     render: function(options) {
       options = options || {};
+      // (geoff) if cards are facedown, they don't need to be spread out much
+      if (this.faceUp)
+        opt.cardSize.padding = 18;   
+      else
+       opt.cardSize.padding = 5;
       var speed = options.speed || opt.animationSpeed;
       this.calcPosition(options);
       for (var i = 0; i < this.length; i++) {
@@ -341,6 +452,7 @@ var cards = (function() {
       var width = opt.cardSize.width + (this.length - 1) * opt.cardSize.padding;
       var left = Math.round(this.x - width / 2);
       var top = Math.round(this.y - opt.cardSize.height / 2, 0);
+      
       for (var i = 0; i < this.length; i++) {
         this[i].targetTop = top;
         this[i].targetLeft = left + i * opt.cardSize.padding;

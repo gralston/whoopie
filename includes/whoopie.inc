@@ -6097,6 +6097,21 @@ class whoopie_view extends angelview {
         $body .= "   <table>";
 
         $body .= "   </table>";
+        
+        for ($i=0; $i < 10; $i++ ) { 
+            $body .= "<div id='player$i' style='display:none'><img id='playerIMG$i' src='img/photos/gdr1980.jpg' height='50px' width='50px'>";
+
+            $body .= "<table class='whoopieBidTrickTable'>
+                        <tr>
+                            <td>B</td><td>T</td> 
+                        </tr>
+                        <tr>
+                             <td id='bidID$i'>10</td><td id='trickID$i'>10</td>
+                        </tr>";
+        
+            $body .= "</table></div>";
+        }
+        
         $body .= "</div>";
 
 
@@ -6106,27 +6121,27 @@ class whoopie_view extends angelview {
         $body .= "<div id='whoopieScore' style='border: 3px solid red; width:400px; height: 250; margin: 50px 0px 0px 20px;float:left '>";
     
 
-        $body .= "<div id='scoreTableHeaderDiv' class='angelbasic angelTableHeader' style='width:400px;margin:0px 0px 0px 0px '>
-                <table class='angelInvestmentsTable' style='border: 0px solid black; width:400px; table-layout:fixed'>
+        $body .= "<div id='scoreTableHeaderDiv' class='' style='width:400px;margin:0px 0px 0px 0px '>
+                <table class='whoopieScoringTable' style='border: 2px solid black;'>
                 <thead>
                 <tr><th colspan=4>Bids</th><th style='background-color: black;width:10px'>&nbsp</th><th colspan=4>Scores</th></tr>
                 <tr>   
-                    <th id='angelTrackerHeaderCol1' mySort='companyorperson' myProp='companyID' class='header' valign=top style='width:30px'>J</th>
-                    <th id='angelTrackerHeaderCol2' mySort='string'    myProp='type'   class='header' valign=top style='width:30px'>G</th>
-                    <th id='angelTrackerHeaderCol3' mySort='date'    myProp='trackerDate'   class='header' valign=top style='width:30px'>E</th>
-                    <th id='angelTrackerHeaderCol4' mySort='nextdate'    myProp='start'   class='header' valign=top style='width:30px'>S</th>
+                    <th id='angelTrackerHeaderCol1'  class='' valign=top style='width:30px'>J</th>
+                    <th id='angelTrackerHeaderCol2'  class='' valign=top style='width:30px'>G</th>
+                    <th id='angelTrackerHeaderCol3'  class='' valign=top style='width:30px'>E</th>
+                    <th id='angelTrackerHeaderCol4'  class='' valign=top style='width:30px'>S</th>
                     <th style='background-color: black;width:10px'>&nbsp</th>
                 
                 
-                    <th id='angelTrackerHeaderCol1' mySort='companyorperson' myProp='companyID' class='header' valign=top style='width:30px'>J</th>
-                    <th id='angelTrackerHeaderCol2' mySort='string'    myProp='type'   class='header' valign=top style='width:30px'>G</th>
-                    <th id='angelTrackerHeaderCol3' mySort='date'    myProp='trackerDate'   class='header' valign=top style='width:30px'>E</th>
-                    <th id='angelTrackerHeaderCol4' mySort='nextdate'    myProp='start'   class='header' valign=top style='width:30px'>S</th>
+                    <th id='angelTrackerHeaderCol1' mySort='companyorperson' myProp='companyID' class='' valign=top style='width:30px'>J</th>
+                    <th id='angelTrackerHeaderCol2' mySort='string'    myProp='type'   class='' valign=top style='width:30px'>G</th>
+                    <th id='angelTrackerHeaderCol3' mySort='date'    myProp='trackerDate'   class='' valign=top style='width:30px'>E</th>
+                    <th id='angelTrackerHeaderCol4' mySort='nextdate'    myProp='start'   class='' valign=top style='width:30px'>S</th>
                  </tr></thead></table></div>";
 
 
-        $body .= "<div id='scoreTableDiv' class='angelbasic angelTableBody' style=' width:400px;margin:0px 0px 0px 0px '>";
-        $body .= "<table id='scoreTable' class='angelInvestmentsTable tr1 tr2 tr3 tr4 tc5 tr6 tr7 tr8' style='border: 0px solid blue; width:250px; table-layout:fixed'>";
+        $body .= "<div id='scoreTableDiv' class='' style=' width:400px;margin:0px 0px 0px 0px '>";
+        $body .= "<table id='scoreTable' class='whoopieScoringTable tr1 tr2 tr3 tr4 tc5 tr6 tr7 tr8 tr9' style='border: 0px solid blue;'>";
 
         $body .= "  <thead>
                     <tr>

@@ -87,7 +87,7 @@ class angelview {
 
         // <link href='$path/css/bootstrap.css' rel='stylesheet'>                       <script src='$path/jscript/bootstrap.js'></script>
 
-        $this->footer       = "angelfooter.inc";
+        $this->footer       = "whoopiefooter.inc";
 
         $this->dtd          = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html>';
         $this->title        = "";

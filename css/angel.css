@@ -44,6 +44,7 @@ body {
 .angelwrapper {
     min-height: 100%;
     height: auto !important;
+    position: fixed; /* Stay in place */
     /*height: 100%;*/
     margin: 0 auto -4em;
     overflow: hidden;
@@ -54,6 +55,7 @@ body {
     height: 4em;
     color:#7489fe;
     font-size:60%;
+    position: fixed; /* Stay in place */
     text-align: center;
 }
 /*
@@ -627,16 +629,41 @@ input[type="checkbox"]:checked ~ .exit-reveal-if-active {
     font-family: verdana,Arial,Helvetica,sans-serif;
 }
 
-.angelInvestmentsTable  {
+.whoopieBidTrickTable  {
     padding: 0px;
     border-spacing: 0px;
     table-layout: fixed;
-    width: 820px;
+    width: 50px;
     border-collapse: collapse;
 }
 
-.angelInvestmentsTable td {
+.whoopieBidTrickTable td {
     border-right: 2px solid gray;
+    border-bottom: 2px solid gray;
+    background-color: #E6E6F0;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 0px;
+    padding-right: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+
+.whoopieScoringTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    width: 400px;
+    border-collapse: collapse;
+}
+
+.whoopieScoringTable td {
+    border-right: 0px solid gray;
+    background-color: #E6E6F0;
     text-align: center;
     vertical-align: middle;
     font-size: 12px;
@@ -648,13 +675,13 @@ input[type="checkbox"]:checked ~ .exit-reveal-if-active {
     font-family: verdana,Arial,Helvetica,sans-serif;
 }
 
-.angelInvestmentsTable th {
+.whoopieScoring th {
     /*background-color: lightcyan;*/
     background-color: #E6E6F0;
     background-repeat: no-repeat;
     background-position: center right;
     color: blue;
-    border-right: 2px solid gray;
+    border-right: 0px solid gray;
     vertical-align: middle;
     font-size: 12px;
     padding-left: 4px;

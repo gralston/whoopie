@@ -3,10 +3,10 @@
 <script type="text/javascript">
 
 </script>
-<p class="angelfooter"><Copyright> &copy; Copyright 2016/2017 Geoff Ralston</Copyright> --
+<p class="angelfooter"><Copyright> &copy; Copyright 2020/2021 Geoff Ralston</Copyright> --
     <a href="javascript:void(0);"
-       NAME="Privacy"  title=" Angelcalc Privacy "
+       NAME="Privacy"  title=" Whoopie Privacy "
        onClick=window.open("/static/privacy.html","Privacy","width=700,height=400,0,status=0,scrollbars=1");>Privacy</a> --
     <a href="javascript:void(0);"
-       NAME="TOS"  title=" Angelcalc Terms of Service "
+       NAME="TOS"  title=" Whoopie Terms of Service "
        onClick=window.open("/static/tos.html","TOS","width=700,height=400,0,status=0,");>Terms</a></p>

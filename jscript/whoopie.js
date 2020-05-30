@@ -687,6 +687,63 @@ function  TotalsConstructor()  {
 /*
  * this is the main whoopie page - perhaps someday have a home page to enter, but for now, just this
  */
+function WhoopieHandConstructor()  {
+    this.cards;                 // this is the hand created from cards.js
+    this.x;                     // coordinates of this hand on the table
+    this.y;                     
+    this.bidID = "";            // the id of the span in which to put the current bid
+    this.tricksID = "";         // the id of the span in which to put the current number of tricks taken
+
+
+    this.clear = function() {
+        
+    }  
+}
+
+var seats4 = {  0 :    {x : 400, y :350},//
+                1 :    {x : 100, y :350},//
+                2 :    {x : 100, y :50},//
+                3 :    {x : 400, y :50},//           
+};
+
+var seats5 = {1 :    {x : 550, y :50},
+             2 :    {x : 400, y :50},
+             3 :    {x : 250, y :50},
+             4 :    {x : 100, y :50},
+             5 :    {x : 100, y :350},
+             6 :    {x : 250, y :350},
+             7 :    {x : 400, y :350},
+             8 :    {x : 400, y :350},
+};
+var seats6 = {1 :    {x : 550, y :50},
+             2 :    {x : 400, y :50},
+             3 :    {x : 250, y :50},
+             4 :    {x : 100, y :50},
+             5 :    {x : 100, y :350},
+             6 :    {x : 250, y :350},
+             7 :    {x : 400, y :350},
+             8 :    {x : 400, y :350},
+};
+var seats7 = {1 :    {x : 550, y :50},
+             2 :    {x : 400, y :50},
+             3 :    {x : 250, y :50},
+             4 :    {x : 100, y :50},
+             5 :    {x : 100, y :350},
+             6 :    {x : 250, y :350},
+             7 :    {x : 400, y :350},
+             8 :    {x : 400, y :350},
+};
+var seats8 = {1 :    {x : 550, y :50},
+             2 :    {x : 400, y :50},
+             3 :    {x : 250, y :50},
+             4 :    {x : 100, y :50},
+             5 :    {x : 100, y :350},
+             6 :    {x : 250, y :350},
+             7 :    {x : 400, y :350},
+             8 :    {x : 400, y :350},
+};
+
+var DeckLocation = {x:600, y:200};
 
 function initializeWhoopie() {
      
@@ -708,9 +765,14 @@ function initializeWhoopie() {
      *  End Game
      */
 
+     var tableElement = "#whoopieTable";
 
     //Start by initalizing the library
-    cards.init({table:'#whoopieTable', blackJoker:true, redJoker:true});
+    cards.init({table:'#whoopieTable', blackJoker:true, redJoker:true, acesHigh: true});
+    var tableHeight = $('#whoopieTable').innerHeight();
+    var tableWidth = $('#whoopieTable').innerWidth();
+    console.debug("table dimensions", tableHeight, tableWidth);
+
     //Create a new deck of cards
     deck = new cards.Deck(); 
     //cards.all contains all cards, put them all in the deck
@@ -718,452 +780,182 @@ function initializeWhoopie() {
     //No animation here, just get the deck onto the table.
     deck.render({immediate:true});
 
-    //Now lets create a couple of hands, one face down, one face up.
-    hand1 = new cards.Hand({faceUp:false, x:150, y:50});
-    hand2 = new cards.Hand({faceUp:false, x:450, y:50});
-    hand3 = new cards.Hand({faceUp:false, x:150, y:350});
+    var hands = [];     // array of hands
+    var whoopieHands = [];  // array of WhoopieHands
+
+    var numHands = 4;
     
-    yourhand = new cards.Hand({faceUp:true, x:450, y:350});
+    // your hand is in the lower right hand corner. harded coded for now
+    var x = 555;
+    var y = 350;
+
+    var gap = 1100/numHands;
+
+
+    var myWhoopieHand;
+
+    var seats;
+    if (numHands == 4) {
+        seats = seats4;
+    }
+    whoopieHands[0] = new WhoopieHandConstructor();
+    myWhoopieHand = whoopieHands[0];
+    myWhoopieHand.x = seats[0].x;
+    myWhoopieHand.y = seats[0].y;
+    hands[0]= new cards.Hand({faceUp:true, x:myWhoopieHand.x, y:myWhoopieHand.y});
+    myWhoopieHand.cards = hands[0];
+
+    
+    
+    for (i = 1; i < numHands; i++) {
+        whoopieHands[i] = new WhoopieHandConstructor();
+        whoopieHands[i].x = seats[i].x;
+        whoopieHands[i].y = seats[i].y;
+        hands[i]= new cards.Hand({faceUp:false, x:whoopieHands[i].x, y:whoopieHands[i].y});
+        whoopieHands[i].cards = hands[i];
+    }
+        
     
     //Deck has a built in method to deal to hands.
-    deck.deal(1, [yourhand, hand1, hand2, hand3], 20)
-    deck.x += 200;
-    //deck.y -= 50;
+    deck.deal(13, hands, 20)
+    deck.x = DeckLocation.x;      // standard deck location
+    deck.y = DeckLocation.y;
     deck.render({immediate:true});
 
     // Let's turn over the top card which is the Whoopie card
 
-    discardPile = new cards.Deck({faceUp:true});
-    discardPile.x += 200;
+    whoopieCard = new cards.Deck({faceUp:true});
+    whoopieCard.x = DeckLocation.x + 20;
     deck.render({callback:function() {
-        discardPile.addCard(deck.topCard());
-        discardPile.render();
+        whoopieCard.addCard(deck.topCard());
+        whoopieCard.render();
     }});
 
-}
-
-function modelSummaryAction(action) {
-    // console.debug("modelSummaryAction: (action, savedModelID): " + angelParens(action, SavedModelID));
-
-    $('#modelSummaryCaptable').css("display", "none");
-    if (action == "editModel") {
-        if (SavedModelID == 0)
-            url = "/model?sample";     // guest login - sample model page
-        else
-            url = "/model?editModel=" + SavedModelID;
-        window.location.href = url;
-    } else if (action == "deleteModel") {
-        if (SavedModelID == 0)
-            alert("You cannot delete this model, it's just a sample.");
-        else
-            deleteModel(SavedModelID, SavedModelName);
-    } else if (action == "calcModel") {
-        calcModelFromID(SavedModelID);
-    } else
-        console.debug("unknown modelSummaryAction: " + action);
-}
-
-function updateHomeCapTable(equity) {
-
-    var postValuation = equity.preMoneyVal + equity.totalInvested;
-    var vcOwnership  = equity.totalShares / equity.postFDShares;
-    var commonOwnership  = (equity.preFDShares-equity.preUnallocOptions) / equity.postFDShares;
-    var optOwnership  = equity.postOptions / equity.postFDShares;
     /*
-     * then all the converts
+     * we'll create a new trick for each play and then assign it to the trick winner and keep track of that
      */
-    var totalConvShares = 0;
-    for (i=0; i < ConvertList.length; i++) {
-        conv = ConvertList[i];
-        totalConvShares += conv.totalShares;
-    }
-    var convOwnership = totalConvShares / Equity.postFDShares;
+    trick = new cards.Hand({faceUp:true, x:300, y:200});
 
-    var ownershipTotal = vcOwnership+commonOwnership+optOwnership+convOwnership;
+    
+    var yourhand = hands[0];
 
-    $('#modelName').html(SavedModelName);
-    $('#postVal').html("$" + postValuation.toLocaleString());
-    $('#postFDShares').html(Number(equity.postFDShares.toFixed(0)).toLocaleString());
-    $('#postOptions').html(Number(equity.postOptions.toFixed(0)).toLocaleString());
-    $('#postPrice').html("$" + String(Equity.price.toFixed(4)));
-    $('#postVCOwnership').html((vcOwnership*100).toFixed(4) + "%");
-    $('#postConvOwnership').html((convOwnership*100).toFixed(4) + "%");
-    $('#postCommonOwnership').html((commonOwnership*100).toFixed(4) + "%");
-    $('#postOptionsPercent').html((optOwnership*100).toFixed(2) + "%");
-    $('#postOwnershipTotal').html((ownershipTotal*100).toFixed(4) + "%");
-
-    //$('#modelSummaryCaptable').css("display", "inline");
-    $("#modelSummaryCaptable").slideToggle();
-
-}
-
-function deleteModel(id, name) {
-    // var tr = $(t).closest("tr")
-    console.debug("deleteModel id: " + id);
-
-
-    var modName = document.getElementById('modelToDelete');
-    modName.innerHTML = name;
-
-
-    $("#dialogDelete").dialog({
-        resizable: false,
-        height: 200,
-        width: 350,
-        modal: true,
-        buttons: {
-            Proceed: function() {
-                proceed(id);
-                $(this).dialog("close");
-            },
-            Cancel: function() {
-                $(this).dialog("close");
-            }
-        }
+    yourhand.mouseenter(function(card){
+        console.debug("yourhand mousenter");
+        
+        card.moveUp(20);
+        
     });
 
-    function proceed(id){
+    yourhand.mouseleave(function(card){
+        console.debug("yourhand mouseleave");
+        card.moveDown(20);
+        
+    });
 
-        url = "model?deleteModel="+id;
-        window.location.href = url;
-    }
-
-}   // deleteModel
-
-var SavedModelID = 0;
-var SavedModelName = "";
-function showModelSummaryActions(element,modelID,modelName) {
-    console.debug("showModelSummaryActions");
-    var slider = document.getElementById("modelSummaryActionSlider");
-
-    //console.debug("here: " + element.className);
-    console.debug("modelID ,pos.top,pos.left: " + modelID + "," + $(element).position().top + "," + $(element).position().left);
-
-
-    SavedModelID = modelID;
-    SavedModelName = modelName;
-   // slider.style.display = "inline";
-
-    var offset = $(element).offset();
-
-    offset.left += 268;
-
-    $("#modelSummaryActionSlider").css(offset);
-    $("#modelSummaryActionSlider").css("display","inline");
-
-
-
-}
-
-function showModelSummaryCaptable(element) {
-
-    var cap = document.getElementById("modelSummaryCaptable");
-    console.debug("pos.top,pos.left: " + $(element).position().top + "," + $(element).position().left);
-
-    if (cap.style.display == "inline")
-        cap.style.display = "none";
-    else {
-        cap.style.display = "inline";
-    }
-
-    var offset = $(element).offset();
-    console.debug(offset.left + "," + offset.top);
-    offset.left += 100;
-
-
-    $("#modelSummaryCaptable").css(offset);
-
-}
-
-
-function updateModelTable(modNum) {
-
-    var postVal = document.getElementById('postVal'+modNum);
-    var postShares = document.getElementById('postFDShares'+modNum);
-    var preShares = document.getElementById('preFDShares'+modNum);
-    var postPrice = document.getElementById('postPrice'+modNum);
-    //var postOptions = document.getElementById('postOptions'+modNum);
-    var postOptionsPercent = document.getElementById('postOptionsPercent'+modNum);
-    var postVCOwnership = document.getElementById('postVCOwnership'+modNum);
-    //var postCommonOwnership = document.getElementById('postCommonOwnership'+modNum);
-    var postFounderOwnership = document.getElementById('postFounderOwnership'+modNum);
-    var postConvOwnership = document.getElementById('postConvOwnership'+modNum);
-    var postYourOwnership = document.getElementById('postYourOwnership'+modNum);
-    // var postOwnershipTotal = document.getElementById('postOwnershipTotal'+modNum);
-
-    var ownershipTotal = 0;
-
-
-    var postValuation = Equity.preMoneyVal + Equity.totalInvested;
-
-    postVal.innerHTML       = "$" + postValuation.toLocaleString();
-    // postOptions.innerHTML   = Number(Equity.postOptions.toFixed(0)).toLocaleString();
-    postShares.innerHTML    = Number(Equity.postFDShares.toFixed(0)).toLocaleString();
-    preShares.innerHTML    = Number(Equity.preFDShares.toFixed(0)).toLocaleString();
-    var newPrice = (postValuation/Equity.postFDShares);
-    postPrice.innerHTML     = "$" + String(Equity.price.toFixed(4));
-
-    var optOwnership  = Equity.postOptions / Equity.postFDShares;
-    postOptionsPercent.innerHTML = (optOwnership*100).toFixed(2) + "%";
-
-    ownershipTotal += optOwnership;
-
-    var vcOwnership  = Equity.totalShares / Equity.postFDShares;
-    postVCOwnership.innerHTML = (vcOwnership*100).toFixed(4) + "%";
-
-    ownershipTotal += vcOwnership;
-
-   /*var commonOwnership  = (Equity.preFDShares - Equity.preUnallocOptions) / Equity.postFDShares;
-    postCommonOwnership.innerHTML = (commonOwnership*100).toFixed(4) + "%";*/
-
-    var founderOwnership  = Equity.founderTotalEquity / Equity.postFDShares;
-    postFounderOwnership.innerHTML = (founderOwnership*100).toFixed(4) + "%";
-
-    ownershipTotal += founderOwnership;
-
-
-    var convOwnership = Equity.convertShares / Equity.postFDShares;
-    postConvOwnership.innerHTML = (convOwnership*100).toFixed(4) + "%";
-
-    var yourOwnership = Equity.totalYourShares / Equity.postFDShares;
-    postYourOwnership.innerHTML = (yourOwnership*100).toFixed(4) + "%";
-
-}
-
-function updateModelDifferenceTable(e1, e2) {
-
-
-    var postVal = document.getElementById('postValD');
-    var postShares = document.getElementById('postFDSharesD');
-    var preShares = document.getElementById('preFDSharesD');
-    var postPrice = document.getElementById('postPriceD');
-    //var postOptions = document.getElementById('postOptionsD');
-    var postOptionsPercent = document.getElementById('postOptionsPercentD');
-    var postVCOwnership = document.getElementById('postVCOwnershipD');
-    // var postCommonOwnership = document.getElementById('postCommonOwnershipD');
-    var postFounderOwnership = document.getElementById('postFounderOwnershipD');
-    var postConvOwnership = document.getElementById('postConvOwnershipD');
-    var postYourOwnership = document.getElementById('postYourOwnershipD');
-    // var postOwnershipTotal = document.getElementById('postOwnershipTotal'+modNum);
-
-    var ownershipTotal = 0;
-
-
-
-
-    var postValuation1 = e1.preMoneyVal + e1.totalInvested;
-    var postValuation2 = e2.preMoneyVal + e2.totalInvested;
-
-    postVal.innerHTML       = "$" + Number(postValuation1 - postValuation2).toLocaleString();
-    // postOptions.innerHTML   = Number(Equity.postOptions.toFixed(0)).toLocaleString();
-    postShares.innerHTML = Number(e1.postFDShares.toFixed(0) - e2.postFDShares.toFixed(0)).toLocaleString();
-    preShares.innerHTML = Number(e1.preFDShares.toFixed(0) - e2.preFDShares.toFixed(0)).toLocaleString();
-
-    postPrice.innerHTML     = "$" + String((e1.price-e2.price).toFixed(4));
-
-    var optOwnership1  = e1.postOptions / e1.postFDShares;
-    var optOwnership2  = e2.postOptions / e2.postFDShares;
-
-    postOptionsPercent.innerHTML = ((optOwnership1-optOwnership2)*100).toFixed(2) + "%";
-
-    var vcOwnership1  = e1.totalShares / e1.postFDShares;
-    var vcOwnership2  = e2.totalShares / e2.postFDShares;
-    postVCOwnership.innerHTML = ((vcOwnership1-vcOwnership2)*100).toFixed(4) + "%";
-
-    /*var commonOwnership1  = (e1.preFDShares-e1.preUnallocOptions) / e1.postFDShares;
-    var commonOwnership2  = (e2.preFDShares-e2.preUnallocOptions)/ e2.postFDShares;
-    postCommonOwnership.innerHTML = ((commonOwnership1-commonOwnership2)*100).toFixed(4) + "%";*/
-
-    var founderOwnership1  = (e1.founderTotalEquity) / e1.postFDShares;
-    var founderOwnership2  = (e2.founderTotalEquity)/ e2.postFDShares;
-    postFounderOwnership.innerHTML = ((founderOwnership1-founderOwnership2)*100).toFixed(4) + "%";
-
-    var convertOwnership1  = e1.convertShares / e1.postFDShares;
-    var convertOwnership2  = e2.convertShares / e2.postFDShares;
-    postConvOwnership.innerHTML = ((convertOwnership1-convertOwnership2)*100).toFixed(4) + "%";
-
-    var yourOwnership1  = e1.totalYourShares / e1.postFDShares;
-    var yourOwnership2  = e2.totalYourShares / e2.postFDShares;
-    postYourOwnership.innerHTML = ((yourOwnership1-yourOwnership2)*100).toFixed(4) + "%";
-
-}
-
-
-
-function cleanUpOutput() {
-
-    var outputDiv = document.getElementById('outputDiv');
-
-    outputDiv.style.display = "none";
-
-    /*****************************************************************
-     * Start by cleaning up -- remove saved converts and rows in output
+    /*
+     * not actually used
      */
-    var len = ConvertList.length;
+    yourhand.dblclick(function(card){
+        
+        console.debug("yourhand doubleclick");
+        card.moveToFront();
+    
+    });
 
-    var eqTable = document.getElementById("equationTable");
+    /*yourhand.click(function(card){
+        
+        console.debug("yourhand click ");
+        trick.addCard(card);
+        trick.render();
+    
+    });*/
 
+    for (i = 0; i < numHands; i++) {
+        
+        hands[i].click(function(card) {    
+            if (i == 0)
+                console.debug("yourhand  click ");
+            else
+                console.debug("other hand click");
 
-    $("#convertOwnershipTable tbody tr").remove();
-    $("#ownershipTable tbody tr").remove();
-    $("#founderOwnershipTable tbody tr").remove();
-    $("#otherCommonOwnershipTable tbody tr").remove();
-
-
-    for (i=0; i < len; i++) {
-        eqTable.deleteRow(-1);  // converts are at the end
+            trick.addCard(card);
+            trick.render();       
+        });
     }
 
-    // now kill the converts
-    for (i=0; i < len; i++)
-        ConvertList.pop();
+    
 
+    $("#player2").css({top: "10px", left: "175px", position:'absolute'});
+    $("#player2").css("display", "block");
+    $("#player3").css({top: "10px", left: "500px", position:'absolute'});
+    $("#player3").css("display", "block");
+    $("#player1").css({top: "310px", left: "175px", position:'absolute'});
+    $("#player1").css("display", "block");
+    $("#player0").css({top: "310px", left: "565px", position:'absolute'});
+    $("#player0").css("display", "block");
 
-
-    /*****************************************************************/
-
-}
-function createCommonLists(modNum) {
-    var founderCount = Number($("#founderCount"+modNum).val());
-    var otherCommonCount = Number($("#otherCommonCount"+modNum).val());
-
-    for (var i=0; i < founderCount; i++) {
-        Equity.founderEquity[i] = Number($("#founder" + i + "Shares" + modNum).val());
-        Equity.founderNames[i] = $("#founder" + i + "Name" + modNum).val();
-        Equity.founderTotalEquity += Equity.founderEquity[i];
-    }
-    Equity.numFounders = founderCount;
-    for (var i=0; i < otherCommonCount; i++) {
-        Equity.commonEquity[i] = Number($("#commonHolder" + i + "Shares" + modNum).val());
-        Equity.commonNames[i] = $("#commonHolder" + i + "Name" + modNum).val();
-        Equity.commonTotalEquity += Equity.commonEquity[i];
-    }
-    Equity.numOtherCommon = otherCommonCount;
-    console.debug("createCommonLists: (Count, TotalEquity): " + angelParens(Equity.numFounders, Equity.founderTotalEquity));
-}
-
-function createConvertList(modNum) {
-    var convertCount = Number(document.getElementById("convertCount"+modNum).value);
-
-    for (var i=0; i < convertCount; i++) {
-        conv = Object.create(Convert);
-
-        conv.yourInvestment  = Number(document.getElementById('CONV'+i+'convAmount'+modNum).value);      // amount you invested
-        conv.totalInvested   = Number(document.getElementById('CONV'+i+'convTotal'+modNum).value);       // total amount converts invested
-        conv.discount    = Number(document.getElementById('CONV'+i+'discount'+modNum).value);
-        conv.cap         = Number(document.getElementById('CONV'+i+'cap'+modNum).value);
-        conv.type         = document.getElementById('CONV'+i+'type'+modNum).value;
-        if (conv.type == "Custom") {
-            conv.custom = document.getElementById('CONV'+i+'custom'+modNum).value;
-            conv.preexist = document.getElementById('CONV'+i+'preexist'+modNum).value;
-        } else if (conv.type == "YCVC SAFE")
-            conv.preexist = document.getElementById('CONV'+i+'preexist'+modNum).value;
-        else if (conv.type == "Manual") {
-            conv.totalShares = Number(document.getElementById('CONV'+i+'shares'+modNum).value);
-            conv.price = Precision.round(conv.totalInvested / conv.totalShares);
+    $("#bidID0").html("0");
+    $("#bidID1").html("1");
+    $('#playerIMG1').attr("src","img/photos/esr1980.jpg");
+    $("#bidID2").html("2");
+    $('#playerIMG2').attr("src","img/photos/jmr1980.jpg");
+    $("#bidID3").html("3");
+    $('#playerIMG3').attr("src","img/photos/sjr1980.jpg");
+   
+    trick.click(function(card){
+        
+        console.debug("trick click ");
+        // slide the cards together
+        var pos = $(trick[0].el).position(); 
+        for (i = 1; i < trick.length; i++) {
+            var props = {
+                top: pos.top,
+                left: pos.left,
+                queue: false
+              };
+            if (i == trick.length-1) { // last card, call back function to remove trick
+                $(trick[i].el).animate(props ,1000, function() {
+                    // move all the cards together
+                    pos = $('#player0').position();
+                    var props = {
+                        top: pos.top,
+                        left: pos.left,
+                        queue: false
+                    };
+                    // move the trick to whomever took it
+                    for (i = 0; i < trick.length; i++) {
+                        $(trick[i].el).animate(props, 1000, function() {
+                            // and hide / count it (haven't counted it yet!)
+                             for (i = 0; i < trick.length; i++)
+                                 trick[i].hide();
+                           
+                          });
+                    }
+                  });
+            } else 
+                $(trick[i].el).animate(props, 1000);
+            // $(trick[i].el).css({top: pos.top+"px", left: pos.left+ "px", position:'absolute'});
         }
+       /* pos = $('#player0').position();
+        var props = {
+            top: pos.top,
+            left: pos.left,
+            queue: false
+          };
+        // move the trick to whomever took it
+        for (i = 0; i < trick.length; i++) {
+            $(trick[i].el).animate(props, 1000);
+        }*/
+        //trick.x = myWhoopieHand.x;
+        //trick.y = myWhoopieHand.y;
+        //trick.render();
 
-        conv.yourInvestment  = Number($('#CONV'+i+'convAmount'+modNum).val());
-        conv.totalInvested   = Number($('#CONV'+i+'convTotal'+modNum).val());
-        conv.discount    = Number($('#CONV'+i+'discount'+modNum).val());
-        conv.cap         = Number($('#CONV'+i+'cap'+modNum).val());
-        conv.type         = document.getElementById('CONV'+i+'type'+modNum).value;
-        if (conv.type == "Custom") {
-            conv.custom = document.getElementById('CONV'+i+'custom'+modNum).value;
-            conv.preexist = document.getElementById('CONV'+i+'preexist'+modNum).value;
-        } else if (conv.type == "YCVC SAFE")
-            conv.preexist = document.getElementById('CONV'+i+'preexist'+modNum).value;
-        else if (conv.type == "Post SAFE")
-            conv.custom = document.getElementById('CONV'+i+'custom'+modNum).value;
-        else if (conv.type == "YC POST")
-            conv.custom = document.getElementById('CONV'+i+'custom'+modNum).value;
-        else if (conv.type == "Manual") {
-            conv.totalShares = Number($('#CONV'+i+'shares'+modNum).val());
-            conv.price = Precision.round(conv.totalInvested / conv.totalShares);
-        }
+        
+    
+    });
 
-        console.debug("createConvertList: created conv of type: " + conv.type + " modNum: " + modNum);
-        ConvertList[i] = conv;
-    }
-}
 
-/**************************************
- *
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- * @param discountPrice
- * @returns {number}
- */
-function convertConverts(oSharesPost, totalFDpreShares, existingOptions, equityPrice) {
-
-    var totalShares = 0;
-    var convertPrice = 0;
-    var shares = 0;
-    var id = "";
-    var discount;  // actual percent
-    var i = 0;
-
-    for (i=0; i < ConvertList.length; i++) {
-        conv = ConvertList[i];
-        if (conv.totalInvested == 0)
-            continue;       /* empty convertible */
-
-        /*
-         * calculate price based on each type of convertible
-         */
-        if (conv.type == "SAFE" || conv.type == "YCII SAFE") {
-            if (conv.cap != 0) {
-                if (conv.discount == 0)
-                    conv = ycStdSafeCap(conv, oSharesPost, totalFDpreShares, existingOptions, equityPrice, Equity.preMoneyVal);
-                else
-                    conv = ycStdSafeCapDiscount(conv, oSharesPost, totalFDpreShares, existingOptions, equityPrice);
-            } else
-                    conv = ycStdSafeDiscount(conv, oSharesPost, totalFDpreShares, existingOptions, equityPrice, Equity.preMoneyVal);
-
-        } else {
-            if (conv.type == "Note") {
-                // I've got nothin' right now if it's not a simple one with a cap. I think the others might be the same as a SAFE!
-                if (conv.cap != 0) {
-                    if (conv.discount == 0)
-                        conv = ycStdNoteCap(conv, oSharesPost, totalFDpreShares, existingOptions, equityPrice);
-                    else
-                        conv = ycStdSafeCapDiscount(conv, oSharesPost, totalFDpreShares, existingOptions, equityPrice);
-                } else
-                        conv = ycStdSafeDiscount(conv, oSharesPost, totalFDpreShares, existingOptions, equityPrice, Equity.preMoneyVal);
-
-            } else {
-                if (conv.type == "YCVC SAFE")
-                    conv = ycvcSafe(conv, i, oSharesPost, totalFDpreShares, existingOptions, equityPrice);
-                else if (conv.type == "YC POST")
-                    conv = ycPost(conv, i, oSharesPost, totalFDpreShares, existingOptions, equityPrice);
-                else if (conv.type == "Post SAFE") {
-                    /*if (conv.discount == 0)
-                        conv = postMoneySafeCap(conv, i, oSharesPost, totalFDpreShares, existingOptions, equityPrice, Equity.preMoneyVal);
-                    else
-                        conv = postMoneySafeCapDiscount(conv, i, oSharesPost, totalFDpreShares, existingOptions, equityPrice);*/
-
-                    conv = postMoneySafeCapDiscount(conv, i, oSharesPost, totalFDpreShares, existingOptions, equityPrice, Equity.preMoneyVal);
-
-                } else if (conv.type == "Custom")
-                    conv = customConvert(conv, i, oSharesPost, totalFDpreShares, existingOptions, equityPrice);
-                else if (conv.type == "Manual") {
-                    conv.equationNumerator = "N/A";
-                    conv.equationDenominator = "";
-
-                } else
-                    console.debug("help!!!!")
-            }
-        }
-
-        totalShares += conv.totalShares;
-        // console.log("***convertConverts: convTotal=" + conv.totalInvested + " discount= " + conv.discount + " cap = " + conv.cap + " convertPrice=" + conv.price +  " shares=" + conv.totalShares);
-
-    }
-
-    return(totalShares);
-
-}
+}   // initializeWhoopie
 
 
 /***************************************************************
@@ -4818,389 +4610,6 @@ function initCookies(view) {
 
 }
 
-function updateStartPage() {
-
-
-    showFundPerformanceSorted(InvestorID, 0);        /* this sets fund performance vals */
-    showFundCashflows(InvestorID);                   /* this sets the rest of the fund perf. vals. Must come after the
-                                                        above which also resets the carryonly values set here */
-
-    var totalValue = AngelTotals.currVal + FundTotalsCarry.currVal + FundTotalsInv.currVal;
-    var totalPredValue = AngelTotals.predVal + FundTotalsCarry.predVal + FundTotalsInv.predVal;
-    var roi = 0;
-
-    var totFundsCommitted = calcTotalFundsCommitted(this.filter);
-    var totFundsInvested = calcTotalFundsInvested(this.filter);
-    var totCommitLeft = totFundsCommitted - totFundsInvested;
-
-
-    console.debug("updateStartPage: (val, predval)" + angelParens(AngelTotals.currVal, AngelTotals.predVal));
-
-    /*
-     * The summary Stats table
-     */
-    $("#startNoCompanies").html(countCompanies("all"));
-    $("#startNoActiveCompanies").html(countCompanies("active"));
-    $("#startNoFunds").html(countFunds("all"));
-    $("#startNoFundsCommit").html(countFunds("commit"));
-    $("#startCommitLeft").html("$" + totCommitLeft.toLocaleString());
-    $("#startNoFundsCarry").html(countFunds("carry"));
-
-    /*
-     * The net worth / value table
-     */
-
-    $("#startNetworthAngelCurrent").html("$" + AngelTotals.currVal.toLocaleString());
-    $("#startNetworthAngelPredicted").html("$" + AngelTotals.predVal.toLocaleString());
-
-    $("#startNetworthFundsCurrent").html("$" + FundTotalsInv.currVal.toLocaleString());
-    $("#startNetworthFundsPredicted").html("$" + FundTotalsInv.predVal.toLocaleString());
-
-    $("#startNetworthFundsCarryCurrent").html("$" + FundTotalsCarry.currVal.toLocaleString());
-    $("#startNetworthFundsCarryPredicted").html("$" + FundTotalsCarry.predVal.toLocaleString());
-
-    $("#startNetworthTotalCurrent").html("$" + totalValue.toLocaleString());
-    $("#startNetworthTotalPredicted").html("$" + totalPredValue.toLocaleString());
-
-
-
-
-    /*
-     * Now fill in the returns table
-     */
-
-    /* angel */
-    $("#startActualAngelInvest").html("$" + AngelTotals.invested.toLocaleString());
-    $("#startValueAngelInvest").html("$" + AngelTotals.invested.toLocaleString());
-    $("#startPredictedAngelInvest").html("$" + AngelTotals.invested.toLocaleString());
-
-    $("#startActualAngelReturn").html("$" + AngelTotals.returned.toLocaleString());
-    $("#startValueAngelReturn").html("$" + (AngelTotals.currVal+AngelTotals.returned).toLocaleString());
-    $("#startPredictedAngelReturn").html("$" + (AngelTotals.predVal+AngelTotals.returned).toLocaleString());
-
-    if (AngelTotals.invested == 0)
-        roi = 0;
-    else
-        roi = ((AngelTotals.returned/AngelTotals.invested)*100).toFixed(0);
-    $("#startActualAngelROI").html(roi + "%");
-
-    if (AngelTotals.invested == 0)
-        roi = 0;
-    else
-        roi = (((AngelTotals.currVal+AngelTotals.returned)/AngelTotals.invested)*100).toFixed(0);
-    $("#startValueAngelROI").html(roi + "%");
-    if (AngelTotals.invested == 0)
-        roi = 0;
-    else
-        roi = (((AngelTotals.predVal+AngelTotals.returned)/AngelTotals.invested)*100).toFixed(0);
-    $("#startPredictedAngelROI").html(roi + "%");
-
-    /* funds */
-    $("#startActualFundsInvest").html("$" + FundTotalsInv.invested.toLocaleString());
-    $("#startValueFundsInvest").html("$" + FundTotalsInv.invested.toLocaleString());
-    $("#startPredictedFundsInvest").html("$" + FundTotalsInv.invested.toLocaleString());
-
-    $("#startActualFundsReturn").html("$" + FundTotalsInv.returned.toLocaleString());
-    $("#startValueFundsReturn").html("$" + (FundTotalsInv.currVal+FundTotalsInv.returned).toLocaleString());
-    $("#startPredictedFundsReturn").html("$" + (FundTotalsInv.predVal+FundTotalsInv.returned).toLocaleString());
-
-    if (FundTotalsInv.invested == 0)
-        roi = 0;
-    else
-        roi = ((FundTotalsInv.returned/FundTotalsInv.invested)*100).toFixed(0);
-    $("#startActualFundsROI").html(roi + "%");
-    if (FundTotalsInv.invested == 0)
-        roi = 0;
-    else
-        roi = (((FundTotalsInv.currVal+FundTotalsInv.returned)/FundTotalsInv.invested)*100).toFixed(0);
-    $("#startValueFundsROI").html(roi + "%");
-    if (FundTotalsInv.invested == 0)
-        roi = 0;
-    else
-        roi = (((FundTotalsInv.predVal+FundTotalsInv.returned)/FundTotalsInv.invested)*100).toFixed(0);
-    $("#startPredictedFundsROI").html(roi + "%");
-
-    /* total */
-    var totInvested, totReturnA, totReturnV, totReturnP;
-
-    totInvested = AngelTotals.invested + FundTotalsInv.invested;
-    $("#startActualTotalInvest").html("$" + totInvested.toLocaleString());
-    $("#startValueTotalInvest").html("$" + totInvested.toLocaleString());
-    $("#startPredictedTotalInvest").html("$" + totInvested.toLocaleString());
-
-    totReturnA = AngelTotals.returned + FundTotalsInv.returned;
-    $("#startActualTotalReturn").html("$" + totReturnA.toLocaleString());
-    totReturnV = AngelTotals.currVal + AngelTotals.returned + FundTotalsInv.returned + FundTotalsInv.currVal;
-    $("#startValueTotalReturn").html("$" + totReturnV.toLocaleString());
-    totReturnP = AngelTotals.predVal + AngelTotals.returned + FundTotalsInv.returned + FundTotalsInv.predVal;
-    $("#startPredictedTotalReturn").html("$" + totReturnP.toLocaleString());
-
-    if (totInvested == 0)
-        roi = 0;
-    else
-        roi = ((totReturnA/totInvested)*100).toFixed(0);
-    $("#startActualTotalROI").html(roi + "%");
-    if (totInvested == 0)
-        roi = 0;
-    else
-        roi = ((totReturnV/totInvested)*100).toFixed(0);
-    $("#startValueTotalROI").html(roi + "%");
-    if (totInvested == 0)
-        roi = 0;
-    else
-        roi = ((totReturnP/totInvested)*100).toFixed(0);
-    $("#startPredictedTotalROI").html(roi + "%");
-
-
-
-    /*
-     * the activity over time table
-     */
-    var idString = "";
-    var tmp = 0, tmp1 = 0, tmp2 = 0;
-    var invBYTotal = 0;
-    var amtBYTotal = 0;
-    var adistBYTotal = 0;
-    var ccBYTotal = 0;
-    var fdistBYTotal = 0;
-    var fdistcBYTotal = 0;
-    var ofBYTotal = 0;
-    var ifBYTotal = 0;
-    var netBYTotal = 0;
-
-    for (var x=9; x >= 0; x--) {
-        var y = CurrentYear - x;
-        idString = "#invYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        $(idString).html(AngelTotals.invsPerYear[y].toLocaleString());
-        invBYTotal += AngelTotals.invsPerYear[y];
-
-        idString = "#amtYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp = Math.round(AngelTotals.years[y].invest_amount/1000);
-        $(idString).html("$"+tmp.toLocaleString());
-        amtBYTotal += tmp;
-
-        idString = "#adistYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp = Math.round(AngelTotals.years[y].return_amount/1000);
-        $(idString).html("$"+tmp.toLocaleString());
-        adistBYTotal += tmp;
-
-        idString = "#ccYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp = Math.round(FundTotalsInv.years[y].invest_amount/1000);
-        $(idString).html("$"+tmp.toLocaleString());
-        ccBYTotal += tmp;
-
-        idString = "#fdistYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp = Math.round(FundTotalsInv.years[y].return_amount/1000);
-        $(idString).html("$"+tmp.toLocaleString());
-        fdistBYTotal += tmp;
-
-        idString = "#fdistcYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp = Math.round(FundTotalsCarry.years[y].return_amount/1000);
-        $(idString).html("$"+tmp.toLocaleString());
-        fdistcBYTotal += tmp;
-
-        idString = "#ofYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp1 = Math.round(AngelTotals.years[y].invest_amount/1000+FundTotalsInv.years[y].invest_amount/1000);
-        $(idString).html("$"+tmp1.toLocaleString());
-        ofBYTotal += tmp1;
-
-        idString = "#ifYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp2 = Math.round(AngelTotals.years[y].return_amount/1000 + FundTotalsInv.years[y].return_amount/1000 + FundTotalsCarry.years[y].return_amount/1000);
-        $(idString).html("$"+tmp2.toLocaleString());
-        ifBYTotal += tmp2;
-
-        idString = "#netYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp = Math.round(tmp2-tmp1);
-        if (tmp < 0)
-            $(idString).html("<span  style='color:red'>$"+tmp.toLocaleString() + "</span>");
-        else
-            $(idString).html("$"+tmp.toLocaleString());
-        netBYTotal += tmp;
-
-    }
-
-    $("#invBYTotal").html(invBYTotal.toLocaleString());
-    $("#amtBYTotal").html("$"+amtBYTotal.toLocaleString());
-    $("#adistBYTotal").html("$"+adistBYTotal.toLocaleString());
-    $("#ccBYTotal").html("$"+ccBYTotal.toLocaleString());
-    $("#fdistBYTotal").html("$"+fdistBYTotal.toLocaleString());
-    $("#fdistcBYTotal").html("$"+fdistcBYTotal.toLocaleString());
-    $("#ofBYTotal").html("$"+ofBYTotal.toLocaleString());
-    $("#ifBYTotal").html("$"+ifBYTotal.toLocaleString());
-    $("#netBYTotal").html("$"+netBYTotal.toLocaleString());
-
-
-
-    /*
-     * and display the summary company graph too!
-     */
-    pieGraphInvestStatus("startPageCompanySummary");
-    $("#startPageCompanySummary").css("display","block");
-
-
-}       // updateStartPage()
-
-function updateCashflowPage() {
-
-
-    //showFundPerformanceSorted(InvestorID, 0);        /* this sets fund performance vals */
-    /* showFundCashflows(InvestorID);                   /* this sets the rest of the fund perf. vals. Must come after the
-     above which also resets the carryonly values set here */
-
-    var totalValue = AngelTotals.currVal + FundTotalsCarry.currVal + FundTotalsInv.currVal;
-    var totalPredValue = AngelTotals.predVal + FundTotalsCarry.predVal + FundTotalsInv.predVal;
-    var roi = 0;
-
-    var totFundsCommitted = calcTotalFundsCommitted(this.filter);
-    var totFundsInvested = calcTotalFundsInvested(this.filter);
-    var totCommitLeft = totFundsCommitted - totFundsInvested;
-
-
-    console.debug("updateStartPage: (val, predval)" + angelParens(AngelTotals.currVal, AngelTotals.predVal));
-
-    /*
-     * The summary Stats table
-     */
-    $("#startNoCompanies").html(countCompanies("all"));
-    $("#startNoActiveCompanies").html(countCompanies("active"));
-    $("#startNoFunds").html(countFunds("all"));
-    $("#startNoFundsCommit").html(countFunds("commit"));
-    $("#startCommitLeft").html("$" + totCommitLeft.toLocaleString());
-    $("#startNoFundsCarry").html(countFunds("carry"));
-
-
-
-    /*
-     * the activity over time table
-     */
-    var idString = "";
-    var tmp = 0, tmp1 = 0, tmp2 = 0;
-    var invBYTotal = 0;
-    var amtBYTotal = 0;
-    var adistBYTotal = 0;
-    var ccBYTotal = 0;
-    var fdistBYTotal = 0;
-    var fdistcBYTotal = 0;
-    var ofBYTotal = 0;
-    var ifBYTotal = 0;
-    var netBYTotal = 0;
-    var yearsArr = [];
-
-    var sliderValue = Number($("#cflowRange").val());
-
-
-    console.debug("updateCashflowPage: slider: " + sliderValue);
-
-    var startYear = CurrentYear - sliderValue + 1;
-    for (var x=0; x < 10; x++) {
-        yearsArr[x] =  startYear + x;
-        idString = "#cashFlow" + x;
-        $(idString).html(yearsArr[x]);
-    }
-    console.debug("updateCashflowPage: yearsArr: " + JSON.stringify(yearsArr));
-
-    for (var x=9; x >= 0; x--) {
-        //var y = CurrentYear - x;
-        var y = yearsArr[9-x];
-
-        // console.debug("updateStartPage: idString: " + idString);
-        if (y <= CurrentYear) {
-            idString = "#invYM" + x;
-            $(idString).html(AngelTotals.invsPerYear[y].toLocaleString());
-            invBYTotal += AngelTotals.invsPerYear[y];
-
-            idString = "#amtYM" + x;
-            // console.debug("updateStartPage: idString: " + idString);
-            tmp = Math.round(AngelTotals.years[y].invest_amount/1000);
-            $(idString).html("$"+tmp.toLocaleString());
-            amtBYTotal += tmp;
-
-            idString = "#adistYM" + x;
-            // console.debug("updateStartPage: idString: " + idString);
-            tmp = Math.round(AngelTotals.years[y].return_amount/1000);
-            $(idString).html("$"+tmp.toLocaleString());
-            adistBYTotal += tmp;
-        } else {
-            idString = "#invYM" + x;
-            $(idString).html('0');
-            idString = "#amtYM" + x;
-            $(idString).html("$"+'0');
-            idString = "#adistYM" + x;
-            $(idString).html("$"+'0');
-
-        }
-
-        idString = "#ccYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp = Math.round(FundTotalsInv.years[y].invest_amount/1000);
-        $(idString).html("$"+tmp.toLocaleString());
-        ccBYTotal += tmp;
-
-        idString = "#fdistYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp = Math.round(FundTotalsInv.years[y].return_amount/1000);
-        $(idString).html("$"+tmp.toLocaleString());
-        fdistBYTotal += tmp;
-
-        idString = "#fdistcYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp = Math.round(FundTotalsCarry.years[y].return_amount/1000);
-        $(idString).html("$"+tmp.toLocaleString());
-        fdistcBYTotal += tmp;
-
-        idString = "#ofYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp1 = Math.round(AngelTotals.years[y].invest_amount/1000+FundTotalsInv.years[y].invest_amount/1000);
-        $(idString).html("$"+tmp1.toLocaleString());
-        ofBYTotal += tmp1;
-
-        idString = "#ifYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp2 = Math.round(AngelTotals.years[y].return_amount/1000 + FundTotalsInv.years[y].return_amount/1000 + FundTotalsCarry.years[y].return_amount/1000);
-        $(idString).html("$"+tmp2.toLocaleString());
-        ifBYTotal += tmp2;
-
-        idString = "#netYM" + x;
-        // console.debug("updateStartPage: idString: " + idString);
-        tmp = Math.round(tmp2-tmp1);
-        if (tmp < 0)
-            $(idString).html("<span  style='color:red'>$"+tmp.toLocaleString() + "</span>");
-        else
-            $(idString).html("$"+tmp.toLocaleString());
-        netBYTotal += tmp;
-
-    }
-
-    $("#invBYTotal").html(invBYTotal.toLocaleString());
-    $("#amtBYTotal").html("$"+amtBYTotal.toLocaleString());
-    $("#adistBYTotal").html("$"+adistBYTotal.toLocaleString());
-    $("#ccBYTotal").html("$"+ccBYTotal.toLocaleString());
-    $("#fdistBYTotal").html("$"+fdistBYTotal.toLocaleString());
-    $("#fdistcBYTotal").html("$"+fdistcBYTotal.toLocaleString());
-    $("#ofBYTotal").html("$"+ofBYTotal.toLocaleString());
-    $("#ifBYTotal").html("$"+ifBYTotal.toLocaleString());
-    $("#netBYTotal").html("$"+netBYTotal.toLocaleString());
-
-
-
-    /*
-     * and display the summary company graph too!
-     */
-    pieGraphInvestStatus("startPageCompanySummary");
-    $("#startPageCompanySummary").css("display","block");
-
-
-}   // updateCashflowPage()
-
 function initFeedback(pos, investorID) {
     //set up some basic options for the feedback_me plugin
     var needEmail = true;
@@ -5248,605 +4657,6 @@ function initFeedback(pos, investorID) {
     fm.init(fm_options);
 
 }
-
-
-
-
-/*
- **************************************************************
- * View updating functions.
- */
-
-function chooseNav(nav) {
-
-    console.debug("chooseNav: using nav:" + nav);
-    if (nav == "funds") {
-        $('#angelcalcNavAngel').css("display","none");
-        $('#angelcalcNavFunds').css("display","block");
-        $('#topNavFunds').css("backgroundColor","white");
-        $('#topNavAngel').css("backgroundColor","");
-        FundsView.switchDisplay(FundsView.display);
-
-    } else if (nav == "angel") {
-        $('#angelcalcNavAngel').css("display","block");
-        $('#angelcalcNavFunds').css("display","none");
-        $('#topNavFunds').css("backgroundColor","");
-        $('#topNavAngel').css("backgroundColor","white");
-        AngelView.switchDisplay(AngelView.display);
-    } else {
-        /*
-         * ruh oh - there is nothing else!
-         */
-    }
-    // updateRHS(nav);    // no longer needed - see switchDisplay
-}
-
-/*
- * this runction is deprecated
- */
-function updateRHS(nav) {
-
-    if (nav == "angel") {
-        display = AngelView.display;
-
-        console.debug("updateRHS: angel: " + display);
-        if (display == "investments")
-            showInvestments(InvestorID);
-        else if (display == "payouts")
-            showPayouts(InvestorID);
-        else if (display == "values")
-            showValues(InvestorID);
-        else  if (display == "dealflow")
-            showDealflow(InvestorID);
-        else if (display == "companies")
-            showCompanies(InvestorID);
-        else if (display == "tracker")
-            showTracker(InvestorID);
-        else
-            console.debug("UpdateRHS angel with unknown display: " + display)
-
-    } else if (nav == "funds") {
-        display = FundsView.display;
-
-        console.debug("updateRHS: funds: " + display);
-        if (display == "funds")
-            showFunds(InvestorID);
-        else if (display == "fundpayouts")
-            showFundPayouts(InvestorID);
-        else if (display == "fundpayments")
-            showFundPayments(InvestorID);
-        else if (display == "fundperformance")
-            showFundPerformance(InvestorID);
-        else if (display == "fundcashflows")
-            showFundCashflows(InvestorID);
-        else
-            console.debug("UpdateRHS funds with unknown display: " + display)
-    }
-}       // updateRHS
-
-
-function updateNavSummary() {
-    var totReturn = calcTotalReturn(AngelView.filter);
-    var totCompanies = countCompanies(AngelView.filter);
-    var totInvestments = countInvestments(AngelView.filter);
-    var totInvested = calcTotalInvested(AngelView.filter);
-    var activeCompanies = countCompanies("active");
-    var totValue = calcTotalValue();        // for now assume counts active only
-
-    Companies.count = totCompanies;
-    Investments.count = totInvestments;
-
-    $("#summaryInvestments").html(totInvestments);
-    $("#summaryInvested").html("$" + totInvested.toLocaleString());
-    $("#summaryCompanies").html(totCompanies.toLocaleString());
-    $("#summaryReturned").html("$" + totReturn.toLocaleString());
-    $("#summaryActive").html(activeCompanies.toLocaleString());
-    $("#summaryValue").html("$" + totValue.toLocaleString());
-}
-
-
-
-/*
- * deprecating this soon!
- */
-function showHideView(view) {
-    var companiesContainer = document.getElementById('companiesContainer');
-    var payoutsContainer = document.getElementById('payoutsContainer');
-    var investmentsContainer = document.getElementById('investmentsContainer');
-    var valuesContainer = document.getElementById('valuesContainer');
-    var dealflowContainer = document.getElementById('dealflowContainer');
-    var fundsContainer = document.getElementById('fundsContainer');
-
-    investmentsContainer.style.display = "none";
-    payoutsContainer.style.display = "none";
-    companiesContainer.style.display = "none";
-    valuesContainer.style.display = "none";
-    dealflowContainer.style.display = "none";
-    fundsContainer.style.display = "none";
-
-    if (view == "Investments")
-        investmentsContainer.style.display = "block";
-    else if (view == "Payouts")
-        payoutsContainer.style.display = "block";
-    else if (view == "Companies")
-        companiesContainer.style.display = "block";
-    else if (view == "Values")
-        valuesContainer.style.display = "block";
-    else if (view == "Dealflow")
-        dealflowContainer.style.display = "block";
-    else if (view == "Funds")
-        fundsContainer.style.display = "block";
-
-}
-
-function updateFilterNavbar(filter, show) {
-    var all = document.getElementById("showAll");
-    var active = document.getElementById("showActive");
-    var acquired = document.getElementById("showAcquired");
-    var ipo = document.getElementById("showIPO");
-    var dead = document.getElementById("showDead");
-
-    var showInvests = document.getElementById("investmentsNav");
-    var showPayouts = document.getElementById("payoutsNav");
-    var showCompanies = document.getElementById("companiesNav");
-    var showValues = document.getElementById("valuesNav");
-    var showDealflow = document.getElementById("dealflowNav");
-
-    all.style.color = "black";
-    active.style.color = "black";
-    acquired.style.color = "black";
-    ipo.style.color = "black";
-    dead.style.color = "black";
-
-    showInvests.style.backgroundColor = "";
-    showPayouts.style.backgroundColor = "";
-    showCompanies.style.backgroundColor = "";
-    showValues.style.backgroundColor = "";
-    showDealflow.style.backgroundColor = "";
-
-    if (show == "investments")
-        showInvests.style.backgroundColor = "white";
-    else if (show == "payouts")
-        showPayouts.style.backgroundColor = "white";
-    if (show == "companies")
-        showCompanies.style.backgroundColor = "white";
-    if (show == "values")
-        showValues.style.backgroundColor = "white";
-    if (show == "dealflow")
-        showDealflow.style.backgroundColor = "white";
-
-
-    if (filter == "all")
-        all.style.color = "white";
-    else if (filter == "active")
-        active.style.color = "white";
-    else if (filter == "acquired")
-        acquired.style.color = "white";
-    else if (filter == "ipo")
-        ipo.style.color = "white";
-    else if (filter == "dead")
-        dead.style.color = "white";
-}
-
-
-
-
-var Path = "";  // only needed this when we were developing under htdocs -- should remove!
-
-function addNavLinks(investorID) {
-
-
-    var inv = document.getElementById("investmentsNav");
-    var pay = document.getElementById("payoutsNav");
-    var com = document.getElementById("companiesNav");
-    var val = document.getElementById("valuesNav");
-    var dea = document.getElementById("dealflowNav");
-    var tra = document.getElementById("trackerNav");
-    var fri = document.getElementById("friendNav");
-    var adv = document.getElementById("advisorNav");
-
-    var fun = document.getElementById("fundsNav");
-    var funpout = document.getElementById("fundPayoutsNav");
-    var funpment = document.getElementById("fundPaymentsNav");
-    var funperf = document.getElementById("fundPerformanceNav");
-    var funcf = document.getElementById("fundCashflowsNav");
-    var funimp = document.getElementById("importFundsNav");
-    var funtax = document.getElementById("taxFundsNav");
-
-    var mod = document.getElementById("modelNav");
-    var cmp = document.getElementById("compareNav");
-    var imp = document.getElementById("importNav");
-    var exp = document.getElementById("exportNav");
-    var tax = document.getElementById("taxNav");
-    var addi = document.getElementById("addInvestmentNav");
-    var addp = document.getElementById("addPayoutNav");
-    var addc = document.getElementById("addCompanyNav");
-    var addd = document.getElementById("addDealflowNav");
-    var addtr = document.getElementById("addTrackerNav");
-    var addf = document.getElementById("addFriendNav");
-    var addfi = document.getElementById("addFundInvestNav");
-    var addfp = document.getElementById("addFundPayoutNav");
-    var addfpm = document.getElementById("addFundPaymentNav");
-
-
-    if (inv.addEventListener) {
-            inv.addEventListener("click", function() {
-                showInvestments(investorID);
-                AngelView.switchDisplay("investments");
-            });
-    } else {
-            inv.attachEvent('onclick', function() {
-                showInvestments(investorID);
-                AngelView.switchDisplay("investments");
-            });
-    }
-    if (pay.addEventListener) {
-        pay.addEventListener("click", function() {
-            showPayouts(investorID);
-            AngelView.switchDisplay("payouts");
-        });
-    } else {
-        pay.attachEvent('onclick', function() {
-            showPayouts(investorID);
-            AngelView.switchDisplay("payouts");
-        });
-    }
-    if (com.addEventListener) {
-        com.addEventListener("click", function() {
-            showCompanies(investorID);
-            AngelView.switchDisplay("companies");
-            hideGraphics();
-        });
-    } else {
-        com.attachEvent('onclick', function() {
-            showCompanies(investorID);
-            AngelView.switchDisplay("companies");
-        });
-    }
-    if (val.addEventListener) {
-        val.addEventListener("click", function() {
-            showValues(investorID);
-            AngelView.switchDisplay("values");
-        });
-    } else {
-        val.attachEvent('onclick', function() {
-            showValues(investorID);
-            AngelView.switchDisplay("values");
-        });
-    }
-    if (dea.addEventListener) {
-        dea.addEventListener("click", function() {
-            showDealflow(investorID);
-            AngelView.switchDisplay("dealflow");
-        });
-    } else {
-        dea.attachEvent('onclick', function() {
-            showDealflow(investorID);
-            AngelView.switchDisplay("dealflow");
-        });
-    }
-    if (tra.addEventListener) {
-        tra.addEventListener("click", function() {
-            showTracker(investorID);
-            AngelView.switchDisplay("tracker");
-            hideGraphics();
-        });
-    } else {
-        tra.attachEvent('onclick', function() {
-            showTracker(investorID);
-            AngelView.switchDisplay("tracker");
-            hideGraphics();
-        });
-    }
-    if (fun.addEventListener) {
-        fun.addEventListener("click", function() {
-            showFunds(investorID);
-            FundsView.switchDisplay("funds");
-            hideGraphics();
-        });
-    } else {
-        fun.attachEvent('onclick', function() {
-            showFunds(investorID);
-            FundsView.switchDisplay("funds");
-            hideGraphics();
-        });
-    }
-    if (funpout.addEventListener) {
-        funpout.addEventListener("click", function() {
-            showFundPayouts(investorID);
-            FundsView.switchDisplay("fundpayouts");
-            hideGraphics();
-        });
-    } else {
-        funpout.attachEvent('onclick', function() {
-            showFundPayouts(investorID);
-            FundsView.switchDisplay("fundpayouts");
-            hideGraphics();
-        });
-    }
-    if (funpment.addEventListener) {
-        funpment.addEventListener("click", function() {
-            showFundPayments(investorID);
-            FundsView.switchDisplay("fundpayments");
-            hideGraphics();
-        });
-    } else {
-        funpment.attachEvent('onclick', function() {
-            showFundPayments(investorID);
-            FundsView.switchDisplay("fundpayments");
-            hideGraphics();
-        });
-    }
-    if (funperf.addEventListener) {
-        funperf.addEventListener("click", function() {
-            showFundPerformance(investorID);
-            FundsView.switchDisplay("fundperformance");
-            hideGraphics();
-        });
-    } else {
-        funperft.attachEvent('onclick', function() {
-            showFundPerformance(investorID);
-            FundsView.switchDisplay("fundperformance");
-            hideGraphics();
-        });
-    }
-    if (funcf.addEventListener) {
-        funcf.addEventListener("click", function() {
-            showFundCashflows(investorID);
-            FundsView.switchDisplay("fundcashflows");
-            hideGraphics();
-        });
-    } else {
-        funcf.attachEvent('onclick', function() {
-            showFundCashflows(investorID);
-            FundsView.switchDisplay("fundcashflows");
-            hideGraphics();
-        });
-    }
-
-    if (fri != null) {          // may not be there while we are developing the feature!
-        if (fri.addEventListener) {
-            fri.addEventListener("click", function() {
-                showHideFriends();
-            });
-        } else {
-            fri.attachEvent('onclick', function() {
-                showHideFriends();
-            });
-        }
-    }
-    if (adv != null) {          // may not be there while we are developing the feature!
-        if (adv.addEventListener) {
-            adv.addEventListener("click", function() {
-                showHideAdvisors();
-            });
-        } else {
-            adv.attachEvent('onclick', function() {
-                showHideAdvisors();
-            });
-        }
-    }
-    if (mod.addEventListener) {
-        mod.addEventListener("click", function() {
-            window.location = Path + "/investments?model";
-            return false;
-        });
-    } else {
-        mod.attachEvent('onclick', function() {
-            window.location = Path + "/investments?model";
-            return false;
-        });
-    }
-    if (cmp.addEventListener) {
-        cmp.addEventListener("click", function() {
-            window.location = Path + "/investments?compare";
-            return false;
-        });
-    } else {
-        cmp.attachEvent('onclick', function() {
-            window.location = Path + "/investments?compare";
-            return false;
-        });
-    }
-    if (imp.addEventListener) {
-        imp.addEventListener("click", function() {
-            window.location = Path + "/investments?import";
-            return false;
-        });
-    } else {
-        imp.attachEvent('onclick', function() {
-            window.location = Path + "/investments?import";
-            return false;
-        });
-    }
-    if (funimp.addEventListener) {
-        funimp.addEventListener("click", function() {
-            window.location = Path + "/investments?importFunds";
-            return false;
-        });
-    } else {
-        funimp.attachEvent('onclick', function() {
-            window.location = Path + "/investments?importFunds";
-            return false;
-        });
-    }
-    if (funtax.addEventListener) {
-        funtax.addEventListener("click", function() {
-            fundsTaxManager();
-            return false;
-        });
-    } else {
-        funtax.attachEvent('onclick', function() {
-            fundsTaxManager();
-            return false;
-        });
-    }
-    if (exp.addEventListener) {
-        exp.addEventListener("click", function() {
-            exportManager();
-            return false;
-        });
-    } else {
-        exp.attachEvent('onclick', function() {
-            exportManager();
-            return false;
-        });
-    }
-    if (tax.addEventListener) {
-        tax.addEventListener("click", function() {
-            taxManager();
-            //window.location = Path + "/investments?tax";
-            return false;
-        });
-    } else {
-        tax.attachEvent('onclick', function() {
-            taxManager();
-            //window.location = Path + "/investments?tax";
-            return false;
-        });
-    }
-
-    if (addi.addEventListener) {
-        $("#datepickerInv").datepicker();
-        addi.addEventListener("click", function() {
-            hideGraphics();
-            clearAddInvestmentForm();
-            showAddForm("investment");
-
-            return false;
-        });
-    } else {
-        $("#datepickerInv").datepicker();
-        addi.attachEvent('onclick', function() {
-            window.location = Path + "/investments?newInvestment";
-            return false;
-        });
-    }
-    if (addp.addEventListener) {
-        $("#datepickerPay").datepicker();
-        addp.addEventListener("click", function() {
-            hideGraphics();
-            clearAddPayoutForm("");
-            showAddForm("payout");
-
-            // window.location = Path + "/investments?newPayout";
-            return false;
-        });
-    } else {
-        $("#datepickerPay").datepicker();
-        addp.attachEvent('onclick', function() {
-            window.location = Path + "/investments?newPayout";
-            return false;
-        });
-    }
-    if (addc.addEventListener) {
-        addc.addEventListener("click", function() {
-            window.location = Path + "/companyPage?newCompany";
-            return false;
-        });
-    } else {
-        addc.attachEvent('onclick', function() {
-            window.location = Path + "/companyPage?newCompany";
-            return false;
-        });
-    }
-    if (addd.addEventListener) {
-        addd.addEventListener("click", function() {
-            window.location = Path + "/companyPage?newProspect";
-            return false;
-        });
-    } else {
-        $("#datepickerInv").datepicker();
-        addd.attachEvent('onclick', function() {
-            window.location = Path + "/companyPage?newProspect";
-            return false;
-        });
-    }
-    if (addtr.addEventListener) {
-        $("#datepickerTra").datepicker();
-        addtr.addEventListener("click", function() {
-            hideGraphics();
-            clearTrackerForm();
-            showAddForm("tracker");
-
-            return false;
-        });
-    } else {
-        $("#datepickerTra").datepicker();
-        addtr.attachEvent('onclick', function() {
-            window.location = Path + "/investments?newTracker";
-            return false;
-        });
-    }
-    if (addf != null) {
-        if (addf.addEventListener) {
-            addf.addEventListener("click", function() {
-                angelJSerror("Coming soon!");
-                return false;
-            });
-        } else {
-            addf.attachEvent('onclick', function() {
-                angelJSerror("Coming soon!");
-                return false;
-            });
-        }
-    }
-    if (addfi.addEventListener) {
-        $("#datepickerFundAdd").datepicker();
-        addfi.addEventListener("click", function() {
-            hideGraphics();
-            clearAddFundInvestmentForm();
-            showAddForm("fundinvestment");
-
-            return false;
-        });
-    } else {
-        $("#datepickerFundAdd").datepicker();
-        addfi.attachEvent('onclick', function() {
-            window.location = Path + "/investments?newFundInvestment";
-            return false;
-        });
-    }
-    if (addfp.addEventListener) {
-        $("#datepickerPayfund").datepicker();
-        addfp.addEventListener("click", function() {
-            hideGraphics();
-            clearAddPayoutForm("fund");
-            showAddForm("fundpayout");
-
-            return false;
-        });
-    } else {
-        $("#datepickerPayfund").datepicker();
-        addfp.attachEvent('onclick', function() {
-            window.location = Path + "/investments?newFundPayout";
-            return false;
-        });
-    }
-    if (addfpm.addEventListener) {
-        $("#datepickerFundPayment").datepicker();
-        addfpm.addEventListener("click", function() {
-            hideGraphics();
-            clearAddFundPaymentForm("fund");
-            showAddForm("fundpayment");
-
-            return false;
-        });
-    } else {
-        $("#datepickerPaymentfund").datepicker();
-        addfpm.attachEvent('onclick', function() {
-            window.location = Path + "/investments?newFundPayment";
-            return false;
-        });
-    }
-
-
-}       // addNavLinks
-
-/*
- **************************************************************
- *  End View updating functions.
- */
 
 
 
