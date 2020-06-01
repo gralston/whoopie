@@ -744,6 +744,8 @@ var seats8 = {1 :    {x : 550, y :50},
 };
 
 var DeckLocation = {x:600, y:200};
+var WhoopiePollLength = 2000;  // milliseconds to poll server.
+var WhoopieMoves = 0;
 
 function initializeWhoopie() {
      
@@ -782,22 +784,39 @@ function initializeWhoopie() {
 
     var hands = [];     // array of hands
     var whoopieHands = [];  // array of WhoopieHands
-
     var numHands = 4;
-    
-    // your hand is in the lower right hand corner. harded coded for now
-    var x = 555;
-    var y = 350;
-
-    var gap = 1100/numHands;
-
-
     var myWhoopieHand;
-
     var seats;
+
+    /*
+     * For now we are simply fixing the number of hands at 4. Will fix this later
+     */
     if (numHands == 4) {
         seats = seats4;
     }
+    /*
+     * On the same theme, set up the 4 players as my sibs. Next we will set up the main event loop of the game
+     */
+    $("#player2").css({top: "10px", left: "175px", position:'absolute'});
+    $("#player2").css("display", "block");
+    $("#player3").css({top: "10px", left: "500px", position:'absolute'});
+    $("#player3").css("display", "block");
+    $("#player1").css({top: "310px", left: "175px", position:'absolute'});
+    $("#player1").css("display", "block");
+    $("#player0").css({top: "310px", left: "565px", position:'absolute'});
+    $("#player0").css("display", "block");
+
+    $("#bidID0").html("0");
+    $("#bidID1").html("1");
+    $('#playerIMG1').attr("src","img/photos/esr1980.jpg");
+    $("#bidID2").html("2");
+    $('#playerIMG2').attr("src","img/photos/jmr1980.jpg");
+    $("#bidID3").html("3");
+    $('#playerIMG3').attr("src","img/photos/sjr1980.jpg");
+
+    
+
+
     whoopieHands[0] = new WhoopieHandConstructor();
     myWhoopieHand = whoopieHands[0];
     myWhoopieHand.x = seats[0].x;
@@ -835,7 +854,6 @@ function initializeWhoopie() {
      * we'll create a new trick for each play and then assign it to the trick winner and keep track of that
      */
     trick = new cards.Hand({faceUp:true, x:300, y:200});
-
     
     var yourhand = hands[0];
 
@@ -883,24 +901,7 @@ function initializeWhoopie() {
         });
     }
 
-    
 
-    $("#player2").css({top: "10px", left: "175px", position:'absolute'});
-    $("#player2").css("display", "block");
-    $("#player3").css({top: "10px", left: "500px", position:'absolute'});
-    $("#player3").css("display", "block");
-    $("#player1").css({top: "310px", left: "175px", position:'absolute'});
-    $("#player1").css("display", "block");
-    $("#player0").css({top: "310px", left: "565px", position:'absolute'});
-    $("#player0").css("display", "block");
-
-    $("#bidID0").html("0");
-    $("#bidID1").html("1");
-    $('#playerIMG1').attr("src","img/photos/esr1980.jpg");
-    $("#bidID2").html("2");
-    $('#playerIMG2').attr("src","img/photos/jmr1980.jpg");
-    $("#bidID3").html("3");
-    $('#playerIMG3').attr("src","img/photos/sjr1980.jpg");
    
     trick.click(function(card){
         
@@ -936,26 +937,35 @@ function initializeWhoopie() {
                 $(trick[i].el).animate(props, 1000);
             // $(trick[i].el).css({top: pos.top+"px", left: pos.left+ "px", position:'absolute'});
         }
-       /* pos = $('#player0').position();
-        var props = {
-            top: pos.top,
-            left: pos.left,
-            queue: false
-          };
-        // move the trick to whomever took it
-        for (i = 0; i < trick.length; i++) {
-            $(trick[i].el).animate(props, 1000);
-        }*/
-        //trick.x = myWhoopieHand.x;
-        //trick.y = myWhoopieHand.y;
-        //trick.render();
-
-        
     
+    });
+
+    
+    /*
+     * this is the main game loop.
+     */
+    $(function() {
+        // poll server, do stuff, etc.
+        
+        setTimeout(getNextWhoopieEvent, WhoopiePollLength);  // poll for the next Whoopie event every 2 seconds
+      
     });
 
 
 }   // initializeWhoopie
+
+function getNextWhoopieEvent() {
+    console.debug("getNextWhoopieEvent", WhoopieMoves);
+    var gameOver = false;
+
+    WhoopieMoves++;
+    if (WhoopieMoves > 10)
+        gameOver = true;
+    if (gameOver) 
+        alert("GAME OVER!!!");
+    else
+        setTimeout(getNextWhoopieEvent, WhoopiePollLength);
+}
 
 
 /***************************************************************

@@ -151,15 +151,37 @@ class whoopie {
         return($newID);
 
     }
-    /*
-     ****************************************************
-     * this is currently unused (export done in javascript)
-     */
-    function ajaxExport() {
-        header ('Content-Type: application/octet-stream');
-        echo "a,b,c,d";
-        echo "1,2,3,4";
-        die();
+    
+
+    function ajaxWhoopieNext($gameID, $playerNO) {
+
+        $json = "{";
+
+        $sql = "SELECT p.id, COUNT(m.id) as count  FROM persontable  p LEFT JOIN modeltable m ON p.id = m.investor_id GROUP BY p.id";
+        $r = $p->getRowsCustom($sql);    // if we don't order these, they come out in pseudo random order
+
+
+        $rows = array();
+        while($row = mysqli_fetch_row($r)) {
+            $rows[] = $row;
+        }
+        $json .= '"' . "models" .  '": ';
+        $json .= json_encode($rows);
+        $json .= ",";
+
+        $sql = "SELECT p.id, COUNT(a.id) as count  FROM persontable  p LEFT JOIN angelinvests a ON p.id = a.investor_id GROUP BY p.id";
+        $r = $p->getRowsCustom($sql);    // if we don't order these, they come out in pseudo random order
+
+        $rows = array();
+        while($row = mysqli_fetch_row($r)) {
+            $rows[] = $row;
+        }
+        $json .= '"' . "investments" .  '": ';
+        $json .= json_encode($rows);
+        $json .= "}";
+
+        //throw new Exception($json);     // debug
+        echo($json);
     }
 
 
@@ -3087,7 +3109,7 @@ class whoopie {
 
 
 /*
- * View for angelInvestments
+ * View for whoopie
  */
 
 class whoopie_view extends angelview {
@@ -6094,9 +6116,11 @@ class whoopie_view extends angelview {
         
         $body .= "<div id='whoopieTable' style='background-image:url(/img/cardtable.jpg); border: 5px solid blue; 
                     width:700px; height: 400px; margin: 50px 0px 0px 20px; float:left'>";
+        $body .= "<div id='waitingForGame' style='display:block; background-color: white; margin: 150px 0px 0px 250px;width:300px; height: 100px;background-image:url(/img/xfavicon-16x16.png)'>
+                 <div style='color:blue; margin: 50px 0px 0px 0px;font-size:30px'>Waiting for Game...</div></div>";
         $body .= "   <table>";
-
         $body .= "   </table>";
+      
         
         for ($i=0; $i < 10; $i++ ) { 
             $body .= "<div id='player$i' style='display:none'><img id='playerIMG$i' src='img/photos/gdr1980.jpg' height='50px' width='50px'>";
