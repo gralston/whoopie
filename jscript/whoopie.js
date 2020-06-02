@@ -746,6 +746,7 @@ var seats8 = {1 :    {x : 550, y :50},
 var DeckLocation = {x:600, y:200};
 var WhoopiePollLength = 2000;  // milliseconds to poll server.
 var WhoopieMoves = 0;
+var WaitingForGame = true;      // true while waiting for a game
 
 function initializeWhoopie() {
      
@@ -955,10 +956,41 @@ function initializeWhoopie() {
 }   // initializeWhoopie
 
 function getNextWhoopieEvent() {
-    console.debug("getNextWhoopieEvent", WhoopieMoves);
+    console.debug("getNextWhoopieEvent - moves", WhoopieMoves);
     var gameOver = false;
 
-    WhoopieMoves++;
+    if (WaitingForGame) {
+        $("#waitingForGame").css("display", "block");      
+    }
+
+    $.get("whoopie?ajaxNext&gameID=0&playerID=0", function(data,status) {
+
+        WhoopieMoves++;
+
+        console.debug("getNextWhoopieEvent.data" + JSON.stringify(data));
+        var allData = JSON.parse(data);
+        console.debug("getNextWhoopieEvent.parsedata ", JSON.stringify(allData));
+        /*
+        create a whoopieStatus object with:
+                    WaitingForGame
+                    GameID
+                    MoveCount (total moves in the game)
+                    Deck (cards in common order)
+                    ...
+        whoopieEvent = allData.mainEvent();
+        if (whoopieEvent.type == "gameOn") {
+            WhoopieGameID = whoopieEvent.gameID;
+            WaitingForGame = false;
+        }
+        if (whoopieEvent.whoseMove == me) {
+
+        }
+         */
+       
+        // Investments.list = allData.investments;
+    });
+
+
     if (WhoopieMoves > 10)
         gameOver = true;
     if (gameOver) 
