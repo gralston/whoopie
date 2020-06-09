@@ -747,6 +747,84 @@ var DeckLocation = {x:600, y:200};
 var WhoopiePollLength = 2000;  // milliseconds to poll server.
 var WhoopieMoves = 0;
 var WaitingForGame = true;      // true while waiting for a game
+var SuitOrder = {'h':0,'s':1,'d':2,'c':3 };
+
+var WhoopieHands = [];  // array of WhoopieHands
+var Hands = [];         // array of hands (just the cards)
+
+var WhoopieStatus = {
+    gameID : 0,
+    playerID : 0,
+    playerName : "",
+    numPlayers : 0,
+    lastEventID : 0,            // id of the most recent event from the server
+    waitingForGame : true,
+    deck : [],
+    deckIndex : [],
+    deckToIndex: function() {
+        for (i=0; i<this.deck.length;i++) {
+            var card = this.deck[i];
+            if (card.rank == 0) {
+                // joker
+                if (card.suit = 'bj')
+                    this.deckIndex[i] = 52;
+                else
+                    this.deckIndex[i] = 53;
+            } else {
+                this.deckIndex[i] = (card.rank - 2)*4 + SuitOrder[card.suit];
+            }           
+        }
+    },
+    cardToIndex: function(card) {
+        var index;  // returned index
+        if (card.suit = 'bj')
+            index = 52;
+        else if (card.suit = 'rj')
+            index = 52;
+        else
+            index = (card.rank - 2)*4 + SuitOrder[card.suit];
+
+        return(index);
+    }
+}
+
+function joinGame(gameName) {
+    
+    $("#whoopieJoinName").html(gameName);
+
+    $("#dialogJoinGame").dialog({
+        resizable: false,
+        height: 300,
+        width: 300,
+        modal: true,
+        buttons: {
+            Join: function() {
+                proceed();
+                $(this).dialog("close");
+            },
+            Cancel: function() {
+                $(this).dialog("close");
+            }
+        }
+    });
+
+    function proceed(){
+        // submit form and get your playerID
+        var name = $("#playerName").val();
+        if (name == "" || name == null) {
+            alert("You must choose a name!");
+            return;
+        } else
+            WhoopieStatus.playerName = name;
+        $("#whoopieGameChooser").css("display", "none");
+        $("#whoopieTable").css("display", "block");
+        console.debug("dialog proceed: ", name);
+        initializeWhoopie();
+        whoopieSendRequest("joinGame", null, null);
+    }
+    
+    
+}
 
 function initializeWhoopie() {
      
@@ -774,14 +852,35 @@ function initializeWhoopie() {
     cards.init({table:'#whoopieTable', blackJoker:true, redJoker:true, acesHigh: true});
     var tableHeight = $('#whoopieTable').innerHeight();
     var tableWidth = $('#whoopieTable').innerWidth();
-    console.debug("table dimensions", tableHeight, tableWidth);
+    // console.debug("table dimensions", tableHeight, tableWidth);
 
     //Create a new deck of cards
-    deck = new cards.Deck(); 
+    WhoopieStatus.deck = new cards.Deck(); 
     //cards.all contains all cards, put them all in the deck
-    deck.addCards(cards.all); 
+    WhoopieStatus.deck.addCards(cards.all); 
+    // debugShowAllCards(cards.all, "one");   // show all cards
+    
+    // console.log("***deck***", WhoopieStatus.deck.length);
     //No animation here, just get the deck onto the table.
-    deck.render({immediate:true});
+    
+    cards.shuffle(WhoopieStatus.deck);
+   
+    //debugShowAllCards(WhoopieStatus.deck, "two");   // show all cards
+    WhoopieStatus.deckToIndex();
+    //console.debug("Index", JSON.stringify(WhoopieStatus.deckIndex));
+    // whoopieSendRequest("testRequest", 7, cards.all[5]);
+
+    /*
+     * this is the main game loop.
+     */
+    $(function() {
+        // poll server, do stuff, etc.
+        
+        setTimeout(getNextWhoopieEvent, WhoopiePollLength);  // poll for the next Whoopie event every 2 seconds
+      
+    });
+    return;
+
 
     var hands = [];     // array of hands
     var whoopieHands = [];  // array of WhoopieHands
@@ -834,22 +933,25 @@ function initializeWhoopie() {
         hands[i]= new cards.Hand({faceUp:false, x:whoopieHands[i].x, y:whoopieHands[i].y});
         whoopieHands[i].cards = hands[i];
     }
-        
+    
     
     //Deck has a built in method to deal to hands.
-    deck.deal(13, hands, 20)
-    deck.x = DeckLocation.x;      // standard deck location
-    deck.y = DeckLocation.y;
-    deck.render({immediate:true});
+    
+    WhoopieStatus.deck.deal(13, hands, 20)
+    WhoopieStatus.deck.x = DeckLocation.x;      // standard deck location
+    WhoopieStatus.deck.y = DeckLocation.y;
+    WhoopieStatus.deck.render({immediate:true});
 
     // Let's turn over the top card which is the Whoopie card
 
     whoopieCard = new cards.Deck({faceUp:true});
     whoopieCard.x = DeckLocation.x + 20;
-    deck.render({callback:function() {
-        whoopieCard.addCard(deck.topCard());
+    WhoopieStatus.deck.render({callback:function() {
+        whoopieCard.addCard(WhoopieStatus.deck.topCard());
         whoopieCard.render();
     }});
+
+    
 
     /*
      * we'll create a new trick for each play and then assign it to the trick winner and keep track of that
@@ -860,6 +962,8 @@ function initializeWhoopie() {
 
     yourhand.mouseenter(function(card){
         console.debug("yourhand mousenter");
+        console.log("***deck AFTER ***", WhoopieStatus.deck.length);
+        console.log("***cards.all AFTER ***", cards.all);
         
         card.moveUp(20);
         
@@ -955,43 +1059,181 @@ function initializeWhoopie() {
 
 }   // initializeWhoopie
 
+/*
+ * choose dealer by dealing one card faceup. low card deals. return true if it is you false otherwise
+  for now it is just you
+ */
+function chooseDealer() {
+    
+    console.debug("chooseDealer");
+
+    WhoopieStatus.deck.deal(1, Hands, 20)
+    WhoopieStatus.deck.x = DeckLocation.x;      // standard deck location
+    WhoopieStatus.deck.y = DeckLocation.y;
+    WhoopieStatus.deck.render({immediate:true});
+    
+    for (i=0; i < WhoopieStatus.numPlayers; i++) {
+        var hand = Hands[i];
+        console.debug("chooseDealer: hand", hand);
+        //hand[0].showCard();
+    }
+    //console.debug("chooseDealer: hand", Hands[2][0]);
+    //Hands[2][0].showCard();
+    return(true);   // just deal!
+}
+
+function seatPlayers(count) {
+    /*
+    * For now we are simply fixing the number of hands at 4. Will fix this later
+    */
+   if (count == 4) {
+       seats = seats4;
+   }
+   /*
+    * On the same theme, set up the 4 players as my sibs. Next we will set up the main event loop of the game
+    */
+   $("#player2").css({top: "10px", left: "175px", position:'absolute'});
+   $("#player2").css("display", "block");
+   $("#player3").css({top: "10px", left: "500px", position:'absolute'});
+   $("#player3").css("display", "block");
+   $("#player1").css({top: "310px", left: "175px", position:'absolute'});
+   $("#player1").css("display", "block");
+   $("#player0").css({top: "310px", left: "565px", position:'absolute'});
+   $("#player0").css("display", "block");
+
+   $("#bidID0").html("0");
+   $("#bidID1").html("1");
+   $('#playerIMG1').attr("src","img/photos/esr1980.jpg");
+   $("#bidID2").html("2");
+   $('#playerIMG2').attr("src","img/photos/jmr1980.jpg");
+   $("#bidID3").html("3");
+   $('#playerIMG3').attr("src","img/photos/sjr1980.jpg");
+
+   
+
+
+   WhoopieHands[0] = new WhoopieHandConstructor();
+   myWhoopieHand = WhoopieHands[0];
+   myWhoopieHand.x = seats[0].x;
+   myWhoopieHand.y = seats[0].y;
+   Hands[0]= new cards.Hand({faceUp:true, x:myWhoopieHand.x, y:myWhoopieHand.y});
+   myWhoopieHand.cards = Hands[0];
+
+   
+   
+   for (i = 1; i < count; i++) {
+       WhoopieHands[i] = new WhoopieHandConstructor();
+       WhoopieHands[i].x = seats[i].x;
+       WhoopieHands[i].y = seats[i].y;
+       Hands[i]= new cards.Hand({faceUp:false, x:WhoopieHands[i].x, y:WhoopieHands[i].y});
+       WhoopieHands[i].cards = Hands[i];
+   }
+
+}
+
+function debugShowAllCards(deck, msg) {
+    for (i=0; i < deck.length; i++) {
+        console.debug("cards:", msg, i, deck[i]);
+    }
+}
+
 function getNextWhoopieEvent() {
     console.debug("getNextWhoopieEvent - moves", WhoopieMoves);
     var gameOver = false;
 
-    if (WaitingForGame) {
+    /* if (WaitingForGame) {
         $("#waitingForGame").css("display", "block");      
-    }
-
-    $.get("whoopie?ajaxNext&gameID=0&playerID=0", function(data,status) {
+    }*/
+$
+    $.get("whoopie?ajaxNext&gameID="+WhoopieStatus.gameID+"&playerID="+WhoopieStatus.playerID+"&lastEventID="+WhoopieStatus.lastEventID, function(data,status) {
 
         WhoopieMoves++;
 
-        console.debug("getNextWhoopieEvent.data" + JSON.stringify(data));
+        console.debug("getNextWhoopieEvent.data: ", JSON.stringify(data));
         var allData = JSON.parse(data);
-        console.debug("getNextWhoopieEvent.parsedata ", JSON.stringify(allData));
-        /*
-        create a whoopieStatus object with:
-                    WaitingForGame
-                    GameID
-                    MoveCount (total moves in the game)
-                    Deck (cards in common order)
-                    ...
-        whoopieEvent = allData.mainEvent();
-        if (whoopieEvent.type == "gameOn") {
-            WhoopieGameID = whoopieEvent.gameID;
-            WaitingForGame = false;
-        }
-        if (whoopieEvent.whoseMove == me) {
+        console.debug("getNextWhoopieEvent.parsedata: ", allData);
+        
+        //return;
 
+        var whoopieEvents = allData.events;
+
+        for (i = 0; i < whoopieEvents.length; i++) {
+            var ev = whoopieEvents[i];
+
+            if (ev.type == "gameOn") {
+                $("#waitingForGame").css("display", "none"); 
+                // gotta figure out how to get this, but for now set numplayers to 4
+                WhoopieStatus.numPlayers = 4;  
+                WaitingForgame = false;
+                seatPlayers(WhoopieStatus.numPlayers);     
+                if (WhoopieStatus.playerID == 0) {
+                    // you determine who deals.  shuffle and send the deck to everyone.
+                    cards.shuffle(WhoopieStatus.deck);
+                    WhoopieStatus.deckToIndex();
+                    whoopieSendRequest("deal", null, null);
+                    // then deal one card up to each player. low card is the dealer. If it is you
+                    // then shuffle again, and send deck to everyone. wait for bids.
+                    if (chooseDealer()) {                       
+                        // it's me
+                        cards.shuffle(WhoopieStatus.deck);
+                        WhoopieStatus.deckToIndex();
+                        whoopieSendRequest("deal", null, null);
+                        
+                    }
+                    
+                } else {
+                    // do nothing just wait for the deal.  if you are the low card, shuffle, send
+                    // the deck (see above) and wait for bids. 
+                }
+                // WhoopieStatus.deck = ev.deck;
+                WaitingForGame = false;
+                if (chooseDealer(WhoopieStatus.deck)) {
+                     // it's me!
+                    // shuffle - need to stringify or something the deck to send it to the server for the other players
+                    $.get("whoopie?ajaxSetDeck&gameID=WhoopieStatus.gameID&playerID=WhoopieStatus.playerID&deck=xxx", function(data,status) {
+                    })
+                    // now deal
+                }      
+            } else if (ev.type == "yourDeal") {
+                // so get the deck and deal it locally and send it back
+
+            } else if (ev.type == "newDeal") {
+                // get the deck, deal the cards locally
+                if (myTurn(WhoopieStatus.playerID)) {
+                    // it's your bid.  get the bid and send it along
+                    bid = getYourBid();
+                    $.get("whoopie?ajaxMakeBid&gameID="+WhoopieStatus.gameID+"&playerID="+WhoopieStatus.playerID+"&bid="+bid, function(data,status) {
+                    })
+                }
+            } else if (ev.type == "bidMade") {
+                updateBid(ev.bidderID, ev.bid);
+                if (myTurn(WhoopieStatus.playerID)) {
+                    // it's either your bid or your play. 
+                    if (alreadyBid()) {
+                        bid = getYourPlay();
+                        $.get("whoopie?ajaxMakeBid&gameID="+WhoopieStatus.gameID+"&playerID="+WhoopieStatus.playerID+"&bid="+bid, function(data,status) {
+                        })
+                    } else {
+                        bid = getYourBid();
+                        $.get("whoopie?ajaxMakeBid&gameID="+WhoopieStatus.gameID+"&playerID="+WhoopieStatus.playerID+"&bid="+bid, function(data,status) {
+                        })
+                    }
+                }      
+
+            } else if (ev.type == "cardPlayed") {
+                if (ev.playerID == WhoopieStatus.playerID -1) {
+                    // it's your play.  get the play and send it along
+                    card = getYourPlay();
+                    $.get("whoopie?ajaxPlayCard&gameID="+WhoopieStatus.gameID+"&playerID="+WhoopieStatus.playerID+"&play="+card, function(data,status) {
+                    })
+                }    
+            }    
         }
-         */
-       
-        // Investments.list = allData.investments;
+        
     });
 
 
-    if (WhoopieMoves > 10)
+    if (WhoopieMoves > 0)
         gameOver = true;
     if (gameOver) 
         alert("GAME OVER!!!");
@@ -999,160 +1241,42 @@ function getNextWhoopieEvent() {
         setTimeout(getNextWhoopieEvent, WhoopiePollLength);
 }
 
+function whoopieSendRequest(requestName, bid, card) {
+    console.debug("whoopieSendRequest", requestName);
+    var cardIndex;
 
-/***************************************************************
- * Calculates the per-share price for a YC Standard safe converting with a cap and a discount
- * Price = lower of Safe Price and Discount Price
- *
- * Safe Price = Safe Cap / Fully Diluted Capitalization plus new option shares  (does not include other converts)
- * Discount Price = (1-discount)* Equity Price
- *
- * @param conv
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- * @param equityPrice
- * @returns {*}
- */
-function ycStdSafeCapDiscount(conv, oSharesPost, totalFDpreShares, existingOptions, equityPrice) {
-
-    var safePrice = 0;
-    var discountPrice = 0;
-
-    discount = conv.discount / 100;
-
-    if (oSharesPost == 0)
-        safePrice = Precision.round(conv.cap / totalFDpreShares);    /* no new options and old ones included in preFD */
+    if (card != null)
+        cardIndex = WhoopieStatus.cardToIndex(card);
     else
-        safePrice = Precision.round(conv.cap / (oSharesPost + totalFDpreShares - existingOptions));
+        cardIndex = -1;
+    $.ajax("/whoopie?ajaxRequest", {
+        data: JSON.stringify({whoopieRequest: {name: requestName, playerID:WhoopieStatus.playerID, gameID:WhoopieStatus.gameID,
+                                               playerName: WhoopieStatus.playerName, bid: bid, card : cardIndex, 
+                                               deck: WhoopieStatus.deckIndex} }),
+        method: "POST",
+        contentType: "application/json",
+        success:function(data) {
+            console.debug("return from SendRequest: ", requestName, data) 
+            var allData = JSON.parse(data);
+            whoopieResponse = allData.whoopieResponse;
+            console.debug("return from SendRequest: parsed ", whoopieResponse); 
+            handleWhoopieResponse(whoopieResponse);
+        }
+     });
 
-    discountPrice = Precision.round((1-discount) * equityPrice);
+}
+function handleWhoopieResponse(resp) {
+    console.debug("handleWhoopieResponse", resp.name);
 
-    if (discountPrice == 0 || safePrice < discountPrice) {
-        conv.price = safePrice;
-
-        conv.equationNumerator = Number(conv.cap.toFixed(0)).toLocaleString() + " (cap)";
-
-        if (oSharesPost == 0) {
-            /*
-             * There are no new options, so existing options are included in the pre-fd shares
-             */
-            conv.equationDenominator = Number(totalFDpreShares.toFixed(0)).toLocaleString()  + " (FD Pre Shares)";
-        } else
-            conv.equationDenominator = Number(oSharesPost.toFixed(0)).toLocaleString() + " (options) + " +
-                Number(totalFDpreShares.toFixed(0)).toLocaleString()  + " (FD Pre Shares) - " +
-                Number(existingOptions.toFixed(0)).toLocaleString()  + " (existing options)";
-    } else {
-        conv.price = discountPrice;
-
-        conv.equationNumerator = equityPrice.toFixed(4) + " (Equity price) * " + (1-discount) * 100 + "% (1-discount)";
-        conv.equationDenominator = "";
-
+    if (resp.name == "joinedGame") {
+        $("#waitingForGame").css("display", "block");   
+        WaitingForgame = true;
+        WhoopieStatus.playerID = Number(resp.playerID);
+        //WhoopieStatus.gameID = Number(resp.gameID);
+        WhoopieStatus.gameID = 1;
     }
-
-    conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-    conv.yourShares = Precision.round(conv.yourInvestment / conv.price);
-
-    // console.debug("ycStdSafeCapDiscount: "  + "conv.cap: " + conv.cap.toLocaleString() + " conv.discount: " + conv.discount + " discountPrice: " + discountPrice.toFixed(4) + " conv.price: " + conv.price.toFixed(4));
-
-    return(conv);
 }
 
-/***************************************************************
- * Calculates the per-share price for a YC Standard safe converting with a cap and no discount
- * Price = Equity Price if the pre-money valuation is less than or equal to the safe cap and otherwise
- * Price = Safe Cap / Fully Diluted Capitalization plus new option shares  (does not include other converts)
- *
- * @param conv
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- * @param equityPrice
- * @oaram preMoneyVal
- * @returns {*}
- */
-function ycStdSafeCap(conv, oSharesPost, totalFDpreShares, existingOptions, equityPrice, preMoneyVal) {
-
-    var safePrice = 0;
-
-    if (oSharesPost == 0)
-        safePrice = Precision.round(conv.cap / totalFDpreShares);    /* no new options and old ones included in preFD */
-    else
-        safePrice = Precision.round(conv.cap / (oSharesPost + totalFDpreShares - existingOptions));
-
-    if (equityPrice == 0 || conv.cap < preMoneyVal) {
-        conv.price = safePrice;
-
-        conv.equationNumerator = Number(conv.cap.toFixed(0)).toLocaleString() + " (cap)";
-
-        if (oSharesPost == 0) {
-            /*
-             * There are no new options, so existing options are included in the pre-fd shares
-             */
-            conv.equationDenominator = Number(totalFDpreShares.toFixed(0)).toLocaleString()  + " (FD Pre Shares)";
-        } else
-             conv.equationDenominator = Number(oSharesPost.toFixed(0)).toLocaleString() + " (options) + " +
-                Number(totalFDpreShares.toFixed(0)).toLocaleString()  + " (FD Pre Shares) - " +
-                Number(existingOptions.toFixed(0)).toLocaleString()  + " (existing options)";
-    } else {
-        conv.price = equityPrice;
-
-        conv.equationNumerator = equityPrice.toFixed(4) + " (Equity price)";
-        conv.equationDenominator = "";
-
-    }
-
-    conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-    conv.yourShares = Precision.round(conv.yourInvestment / conv.price);
-
-    console.debug("ycStdSafeCap: " + "conv.cap: " + conv.cap.toLocaleString() + " conv.price: " + conv.price.toFixed(4)+ " equityPrice: " + equityPrice.toFixed(4));
-
-    return(conv);
-}
-
-/***************************************************************
- * Calculates the per-share price for a YC Standard safe converting with a discount only
- * Price = Discount Price = (1-discount)* Equity Price
- *
- * @param conv
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- * @param equityPrice
- * @oaram preMoneyVal
- * @returns {*}
- */
-function ycStdSafeDiscount(conv, oSharesPost, totalFDpreShares, existingOptions, equityPrice, preMoneyVal) {
-
-    var discountPrice = 0;
-
-    discount = conv.discount / 100;
-
-    discountPrice = Precision.round((1-discount) * equityPrice);
-
-    if (discountPrice == 0) {
-        /*
-         * this is a special case where we are trying to approximate the equityPrice. We will never really use
-         * this price so I am not bothering with the equation. This function is only called for real with an
-         * actual equityPrice and therefore discountPrice. (see calcCapTable)
-         */
-        conv.price = Precision.round(preMoneyVal / (oSharesPost + totalFDpreShares - existingOptions));
-
-    } else {
-        conv.price = discountPrice;
-
-        conv.equationNumerator = equityPrice.toFixed(4) + " (Equity price) * " + (1-discount) * 100 + "% (1-discount)";
-        conv.equationDenominator = "";
-
-    }
-
-    conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-    conv.yourShares = Precision.round(conv.yourInvestment / conv.price);
-
-    console.debug("ycStdSafeDiscount: conv.discount: " + conv.discount + " discountPrice: " + discountPrice.toFixed(4) + " conv.price: " + conv.price.toFixed(4));
-
-    return(conv);
-}
 
 /***************************************************************
  * Calculates the per-share price for a YC Standard note converting with a cap and no discount
@@ -4323,383 +4447,6 @@ function fundsTaxReport(period) {
  */
 
 var TimeStart;
-
-function initializeInvestments(investorID, display) {
-
-    console.debug("calling initializeinvestments");
-
-    var noFeedback = false;
-    if (display == "noFeedback") {
-        display = "";
-        noFeedback = true;
-    }
-
-    var d = new Date();
-    CurrentYear = d.getUTCFullYear();     // set to this year.
-
-    Companies = new CompaniesConstructor();
-    Investments = new InvestmentsConstructor();
-    Payouts = new PayoutsConstructor();
-
-    FundInvestments = new InvestmentsConstructor();
-    FundInvestments.commitMap = {};                 // extend fund investments to include map of commitments
-    FundInvestments.carryMap = {};                  // and map of carried interest
-    FundInvestments.commit = function(fundID) {     // and function to return commitment if there is one.
-        if (fundID in FundInvestments.commitMap)
-            return(FundInvestments.commitMap[fundID].investAmount);
-        else
-            return(0);
-
-    }
-
-    Funds = new CompaniesConstructor();
-    Funds.paidInCapital = function(fundID) {        // extend funds to count paidInCapital
-        paid = 0;
-        for (var i=0; i < FundInvestments.list.length; i++) {
-            fi = FundInvestments.list[i];
-            if (fi.fundID == fundID && fi.type != "commit")
-                paid += Number(fi.investAmount);
-        }
-        // console.debug("funds.paidincapital: paid= " + paid);
-        return(paid);
-    }
-    FundPayouts = new PayoutsConstructor();
-
-    AngelView = new AngelcalcView("angel", ["investments","companies", "payouts","values"], "investments");
-    FundsView = new AngelcalcView("funds", ["funds", "fundpayouts", "fundpayments", "fundperformance","fundcashflows"], "funds");
-
-
-    MyCompanies = Companies;
-    MyInvestments = Investments;
-    MyPayouts = Payouts;
-
-
-    console.debug("in initializeInvestments: display: " + display);
-
-    //var timeStart = new Date().getTime();
-    var timeStart1 = performance.now();
-    TimeStart = timeStart1;             // for use in ajaxstop
-
-    getAngelData();
-
-
-
-    addColumnSorters(investorID, 6, "angelInvestsHeaderCol", showInvestmentsSorted);
-    addColumnSorters(investorID, 9, "angelPayoutsHeaderCol", showPayoutsSorted);
-    addColumnSorters(investorID, 8, "angelValuesHeaderCol", showValuesSorted);
-    addColumnSorters(investorID, 6, "angelCompaniesHeaderCol", showCompanyListSorted);
-    addColumnSorters(investorID, 7, "angelTrackerHeaderCol", showTrackerSorted);
-    addColumnSorters(investorID, 8, "angelFundsHeaderCol", showFundsSorted);
-    addColumnSorters(investorID, 9, "angelFundPayoutsHeaderCol", showFundPayoutsSorted);
-    addColumnSorters(investorID, 5, "angelFundPaymentsHeaderCol", showFundPaymentsSorted);
-    addColumnSorters(investorID, 9, "angelFundPerformanceHeaderCol", showFundPerformanceSorted);
-
-
-
-    addNavLinks(investorID);
-
-
-    $(document).ajaxStop(function(){
-        var timeEnd = performance.now();
-        var time = timeEnd - TimeStart;
-
-        console.debug("in initializeinvestments ajaxstop. Time taken: " + Number(time/1000).toFixed(2) + " seconds");
-
-        /*
-         *  fill in objects which store yearly and overall totals for angel and fund investments / returns
-         */
-        AngelTotals = new TotalsConstructor();
-        AngelTotals.initialize();
-        AngelTotalsFiltered = new TotalsConstructor();   // may need to do this after restore below...
-        AngelTotals.filter = AngelView.filter;
-        AngelTotalsFiltered.initialize();
-
-        FundTotalsInv = new FundTotalsConstructor();
-        FundTotalsInv.filter = "invest";
-        FundTotalsInv.initialize();
-        // console.debug("FundTotalsInv: (I, R)" + angelParens(FundTotalsInv.invested, FundTotalsInv.returned));
-
-        FundTotalsCarry = new FundTotalsConstructor();
-        FundTotalsCarry.filter = "carryonly";
-        FundTotalsCarry.initialize();
-
-        // console.debug("#####new totals: angel(I,R): " + angelParens(AngelTotals.invested, AngelTotals.returned));
-        // console.debug("#####new totals: funds carry(I,R): " + angelParens(FundTotalsCarry.invested, FundTotalsCarry.returned));
-        // console.debug("#####new totals: funds invest(I,R): " + angelParens(FundTotalsInv.invested, FundTotalsInv.returned));
-        // console.debug("FundTotalsInv: (currval, predval)" + angelParens(FundTotalsInv.currVal, FundTotalsInv.predVal));
-        // console.debug("FundTotalsCarry: (currval, predval)" + angelParens(FundTotalsCarry.currVal, FundTotalsCarry.predVal));
-
-
-
-        updateStartPage();
-
-        /*
-         * Grab our stored view from our cookies (or store a cookie if not). If we haven't been called with
-         * a requested view or this is a new login, the stored view is it.
-         */
-
-        if (display == "login") {
-            display = AngelView.display;
-            CurrentView.topNav = "angel";
-            /*
-             * this is inelegant, but the following calls force the sorting cookies to be in good shape
-             */
-            AngelView.saveSort("investments", "date","inv_date","DESC");
-            AngelView.saveSort("payouts", "date","payDate","DESC");
-            AngelView.saveSort("values", "string","name","ASC");
-
-            FundsView.saveSort("funds", "fund","id","ASC");
-            FundsView.saveSort("fundpayouts", "date","payDate","DESC");
-            FundsView.saveSort("fundpayments", "date","invDate","DESC");
-            FundsView.saveSort("fundperformance", "fund","id","ASC");
-
-            /*
-             * reset all cookies and leave angelview last since it will be the default
-             */
-            FundsView.save("all");
-            AngelView.save("all");
-            showStartPage();    // should integrate into AngelView!!
-            chooseNav(CurrentView.topNav);
-
-        } else if (display == "summary" || display == "") {
-            showStartPage();
-            chooseNav(CurrentView.topNav);
-        } else {
-            CurrentView.restore();
-            chooseNav(CurrentView.topNav);
-            // console.debug("initializeinvestments: CurrentView.view: " + JSON.stringify(CurrentView.view));
-            display = CurrentView.view.display;
-            showTables();
-            // showStartPage();
-            // console.debug("here!!!");
-        }
-        // display = initCookies(display);
-
-    });
-    /*
-     *  jquery tooltips
-     */
-    $( function() {
-        $( document ).tooltip({
-            position: {
-                my: "center bottom-10",
-                at: "center top",
-                using: function( position, feedback ) {
-                    $( this ).css( position );
-                    $( "<div>" )
-                        .addClass( "arrow" )
-                        .addClass( feedback.vertical )
-                        .addClass( feedback.horizontal )
-                        .appendTo( this );
-                }
-            }
-        });
-    } );
-
-    if (!noFeedback)
-        initFeedback("right-bottom", investorID);
-
-
-
-
-}   // initializeInvestments()
-
-function initializeCashflow(investorID) {
-
-    console.debug("calling initializeCashflow");
-
-    var noFeedback = false;
-    var display = "";
-
-    var d = new Date();
-    CurrentYear = d.getUTCFullYear();     // set to this year.
-
-    Companies = new CompaniesConstructor();
-    Investments = new InvestmentsConstructor();
-    Payouts = new PayoutsConstructor();
-
-    FundInvestments = new InvestmentsConstructor();
-    FundInvestments.commitMap = {};                 // extend fund investments to include map of commitments
-    FundInvestments.carryMap = {};                  // and map of carried interest
-    FundInvestments.commit = function(fundID) {     // and function to return commitment if there is one.
-        if (fundID in FundInvestments.commitMap)
-            return(FundInvestments.commitMap[fundID].investAmount);
-        else
-            return(0);
-
-    }
-
-    Funds = new CompaniesConstructor();
-    Funds.paidInCapital = function(fundID) {        // extend funds to count paidInCapital
-        paid = 0;
-        for (var i=0; i < FundInvestments.list.length; i++) {
-            fi = FundInvestments.list[i];
-            if (fi.fundID == fundID && fi.type != "commit")
-                paid += Number(fi.investAmount);
-        }
-        // console.debug("funds.paidincapital: paid= " + paid);
-        return(paid);
-    }
-    FundPayouts = new PayoutsConstructor();
-
-    AngelView = new AngelcalcView("angel", ["investments","companies", "payouts","values"], "investments");
-    FundsView = new AngelcalcView("funds", ["funds", "fundpayouts", "fundpayments", "fundperformance","fundcashflows"], "funds");
-
-
-    MyCompanies = Companies;
-    MyInvestments = Investments;
-    MyPayouts = Payouts;
-
-
-    console.debug("in initializeCashflow: display: " + display);
-
-    //var timeStart = new Date().getTime();
-    var timeStart1 = performance.now();
-    TimeStart = timeStart1;             // for use in ajaxstop
-
-    getAngelData();
-
-
-    $(document).ajaxStop(function(){
-        var timeEnd = performance.now();
-        var time = timeEnd - TimeStart;
-
-        console.debug("in initializeinvestments ajaxstop. Time taken: " + Number(time/1000).toFixed(2) + " seconds");
-
-        /*
-         *  fill in objects which store yearly and overall totals for angel and fund investments / returns
-         */
-        AngelTotals = new TotalsConstructor();
-        AngelTotals.initialize();
-        AngelTotalsFiltered = new TotalsConstructor();   // may need to do this after restore below...
-        AngelTotals.filter = AngelView.filter;
-        AngelTotalsFiltered.initialize();
-
-        FundTotalsInv = new FundTotalsConstructor();
-        FundTotalsInv.filter = "invest";
-        FundTotalsInv.initialize();
-        // console.debug("FundTotalsInv: (I, R)" + angelParens(FundTotalsInv.invested, FundTotalsInv.returned));
-
-        FundTotalsCarry = new FundTotalsConstructor();
-        FundTotalsCarry.filter = "carryonly";
-        FundTotalsCarry.initialize();
-
-        // console.debug("#####new totals: angel(I,R): " + angelParens(AngelTotals.invested, AngelTotals.returned));
-        // console.debug("#####new totals: funds carry(I,R): " + angelParens(FundTotalsCarry.invested, FundTotalsCarry.returned));
-        // console.debug("#####new totals: funds invest(I,R): " + angelParens(FundTotalsInv.invested, FundTotalsInv.returned));
-        // console.debug("FundTotalsInv: (currval, predval)" + angelParens(FundTotalsInv.currVal, FundTotalsInv.predVal));
-        // console.debug("FundTotalsCarry: (currval, predval)" + angelParens(FundTotalsCarry.currVal, FundTotalsCarry.predVal));
-
-
-
-        updateCashflowPage();
-
-
-    });
-    /*
-     *  jquery tooltips
-     */
-    $( function() {
-        $( document ).tooltip({
-            position: {
-                my: "center bottom-10",
-                at: "center top",
-                using: function( position, feedback ) {
-                    $( this ).css( position );
-                    $( "<div>" )
-                        .addClass( "arrow" )
-                        .addClass( feedback.vertical )
-                        .addClass( feedback.horizontal )
-                        .appendTo( this );
-                }
-            }
-        });
-    } );
-
-    if (!noFeedback)
-        initFeedback("right-bottom", investorID);
-
-
-}   // initializeCashFlow
-/*
- * DEPRECATED! initialize all cookies: for now we don't initialize sorting cookies and hope that works okay.
- */
-function initCookies(view) {
-
-    var cookies = Cookies.get();
-    //console.debug("initCookies: " + JSON.stringify(cookies));
-    if ("angelcalcView" in cookies && view != "login") {
-        if (view != "") {
-            if ("angelcalcFilter" in cookies)       // just being careful, but it really oughta be there
-                CompanyStatusFilter = Cookies.get("angelcalcFilter");
-            return(view);
-        } else {
-            view = Cookies.get("angelcalcView")
-            if ("angelcalcFilter" in cookies)       // just being careful, but it really oughta be there
-                CompanyStatusFilter = Cookies.get("angelcalcFilter");
-            console.debug("We have cookies: (angelcalcView,angelcalcFilter) " + angelParens(view, CompanyStatusFilter));
-            return(view)
-        }
-    } else {
-        /*
-         * either logging in (reset cookies) or have no cookies here.
-         */
-        console.debug("Setting cookies: view=" +  view);
-        Cookies.set("angelcalcView", "investments");
-        Cookies.set("angelcalcFilter", "all");
-        return("");
-    }
-
-}
-
-function initFeedback(pos, investorID) {
-    //set up some basic options for the feedback_me plugin
-    var needEmail = true;
-
-    if (investorID != 0)
-        needEmail = false;
-
-    fm_options = {
-        bootstrap: false,
-        position: pos,
-        show_email: true,
-        email_required: needEmail,
-
-        show_radio_button_list: true,
-        radio_button_list_required: false,
-        radio_button_list_title: "Was Angelcalc useful?",
-        radio_button_list_labels: ["Yes", "No"],
-
-        name_label: "Name",
-        email_label: "Email",
-        message_label: "Feedback",
-
-        name_placeholder: "Your Name",
-        email_placeholder: "Your Email",
-        message_placeholder: "Bugs, comments, etc. If there is a problem with a specific model, please give its name",
-
-        name_required: true,
-        message_required: true,
-
-        show_asterisk_for_required: true,
-
-        feedback_url: "model?feedback",
-
-        custom_params: {
-            feedback: "secret",
-            user_id: investorID
-            // feedback_type: "clean_complex"
-        },
-        delayed_options: {
-            delay_success_milliseconds: 3500,
-            send_success : "Thanks for the feedback!"
-        }
-    };
-    //init feedback_me plugin
-    fm.init(fm_options);
-
-}
-
 
 
 /*

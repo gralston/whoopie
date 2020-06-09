@@ -1,43 +1,32 @@
 <?php
 /**
- * Created by PhpStorm.
+ * Created by Geoff.
  * User: geoff
- * Date: 6/2/14
- * Time: 1:38 PM
+ * Date: 6/6/2020
+ * Time: 2:32 PM
  */
-class angelFund extends angeldb {
+class whoopieGame extends angeldb {
 
-    public $creatorID       = 0;    // id of investor who added this fund
-    public $kind            = "";   // defined as: 'vc', 'hedge', ...
-    public $name            = "";   // fund name
-    public $other_names     = "";   // former or other names
-    public $inceptionYear   = "";   // year fund began operations
-    public $companyID       = "";   // id of company who is the fund's General Partner
-    public $status          = "";   // "active" or "closed"
-    public $description     = "";   // description
-    public $email           = "";   // email address of fund
-    public $address         = "";   // address of fund
-    public $url             = "";   // url of fund if there is one
-    public $wireBank        = "";   // bank name for wires
-    public $wireBankAddress = "";   // Address of bank for wires
-    public $wireBankRouting = "";   // 9 digit wiring number
-    public $wireBankSWIFT   = "";   // SWIFT code for intl. wires
-    public $wireBankAcct    = "";   // account number for wires
-    public $wireAcctName    = "";   // official fund name for wires
-    public $wireFundAddress = "";   // fund address for wires
-    public $wireReference   = "";   // reference if any (e.g. the wire source)
-    public $wireFurtherName = "";   // if a for further credit wire, name on account
-    public $wireFurtherAcct = "";   // if a for further credit wire, acct number to use
-    public $closeDate       = "";   // date fund closed
+    public $creatorid           = 0;    // id of player who created this game
+    public $creationDate        = "";   // date game created
+    public $name                = "";   // game name
+    public $description         = "";   // game description
+    public $playercount         = 0;    // number of players expected
+    public $players             = 0;    // number of players currently
+    public $playernames         = "";   // playerid:name, playerid:nane, 
+    public $finalscore          = "";    // playerid:score, playerid;scoer
+    public $winner              = 0;    // playerid who won  
+    public $status              = "";   // current status: wait, active, gameover
 
+    
 
     function __construct() {
         parent::__construct();
-        $this->table_name = "fundtable";
-        $this->column_names = 'creatorID,kind,name,other_names,inceptionYear,companyID,status,description,email,address,url,wireBank,wireBankAddress,wireBankRouting,wireBankSWIFT,wireBankAcct,wireAcctName,wireFundAddress, wireReference,wireFurtherName,wireFurtherAcct,closeDate';
+        $this->table_name = "games";
+        $this->column_names = 'creatorid,creationdate,name,description, playercount,players,playernames,finalscore,winner,status';
     }
 
-    function findMatchingFund($exact) {
+    function findMatchingGame($exact) {
 
         if ($this->conn == null)
             $this->connect();
@@ -47,12 +36,12 @@ class angelFund extends angeldb {
             $name = mysqli_escape_string($this->conn, $this->name);
             // echo("name is: " . $name);  // debug
             if ($exact)
-                $rows = $this->getRows("fundtable", "name = '$name'");
+                $rows = $this->getRows($this->table_name, "name = '$name'");
             else
-                $rows = $this->getRows("fundtable", "name LIKE '$name%'");
+                $rows = $this->getRows($this->table_name, "name LIKE '$name%'");
         } elseif ($this->id != 0) {
             $id =   $this->id;
-            $rows = $this->getRows("fundtable", "id=$id");
+            $rows = $this->getRows($this->table_name, "id=$id");
         }
         if ($rows == NULL)
             $numrows = 0;
@@ -66,11 +55,12 @@ class angelFund extends angeldb {
             return NULL;
 
         } else if ($numrows == 1) {
-            $existingFund = mysqli_fetch_object($rows,"angelFund");
+            $game = mysqli_fetch_object($rows,"whoopieGame");
             // angeldie("uh oh: $this->name");
-            return $existingFund;
+            return $game;
         }
 
+        angeldie("findmatchinggame: uh oh - id: $this->id");
         return -1;      // multiple matches, this is bad!
 
     }

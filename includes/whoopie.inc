@@ -37,121 +37,122 @@ class whoopie {
         $this->view->outputHTML($body);
     }
 
-    /*******************
-     * This method saves the model which lives in _POST. If the model id number is not 0 in the post this is an update
-     * otherwise a new row
+    /*
+     * called from ajaxNextWhoopieEvent to see if there are any new events
      */
-    function saveModel($investorID) {
-
-
-        // angeldie(serialize($_POST));     // debug
-        $mod = new angelModel();
-        $conn = $mod->connect();
-
-        $mod->id              = $_POST["modelID"];
-        $mod->investor_id     = $investorID;        // owner of this model
-        $mod->creationDate    = date('Y-m-d');       // today
-        $mod->name            =  $_POST["modelName"];       // name of this model
-
-        $mod->numberConverts = $_POST["convertCount"];
-        // qualified financing //
-        $mod->vcInvestment = $_POST["investAmount"];
-        $mod->yourInvestment = $_POST["yourAmount"];
-        $mod->preValuation = $_POST["valuation"];
-        if ($_POST["pre"] == "post")
-            $mod->preValuation -= $mod->vcInvestment;   // it was post money so subract out the investment to get pre
-        $mod->preOptionPoolSize  = $_POST["optionPoolSize"];
-        $mod->preGrantedOptions = $_POST["grantedOptions"];
-        $mod->prePromisedOptions = $_POST["promisedOptions"];
-        $mod->preUnissuedOptions = $_POST["unissuedOptions"];
-        $mod->postOptionsPercent = $_POST["opoolPost"];
-        $mod->fdPreMoneyShares = $_POST["sharesOut"];
-
-        // Founders
-        $mod->numberFounders = $_POST["founderCount"];
-        $mod->founders = "";
-        $needAmpersand = false;
-        for ($i=0; $i < $mod->numberFounders; $i++) {
-            if ($needAmpersand)
-                $mod->founders .= "&";
-            else
-                $needAmpersand = true;
-            $name = $_POST["founder" . $i . "Name"];
-            $name = mysqli_escape_string($conn, $name);
-            $name = urlencode($name);
-            $shares = $_POST["founder" . $i . "Shares"];
-
-            $mod->founders .= $name . "=" . $shares;
-        }
-        // Founders
-        $mod->numberOtherCommon = $_POST["otherCommonCount"];
-        $mod->otherCommon = "";
-        $needAmpersand = false;
-        for ($i=0; $i < $mod->numberOtherCommon; $i++) {
-            if ($needAmpersand)
-                $mod->otherCommon .= "&";
-            else
-                $needAmpersand = true;
-            $name = $_POST["commonHolder" . $i . "Name"];
-            $name = mysqli_escape_string($conn, $name);
-            $name = urlencode($name);
-            $shares = $_POST["commonHolder" . $i . "Shares"];
-
-            $mod->otherCommon .= $name . "=" . $shares;
-        }
-        //angeldie(serialize($mod));
-
-        if ($mod->id == 0) {
-            $updating = false;
-            $newID = $mod->insertRow();   // write this model to the db
-        } else {
-            $updating = true;
-            $prevMod = $mod->getEntry();
-            $prevMod->shareconn($conn);
-            $prevMod->deleteRows('converttable', "model_id=$mod->id");      // will rewrite new converts
-            $mod->sharing = $prevMod->sharing;      // this is the one field which we need to save from previous
-                                                    // all others are rewritten in postdata
-            $newID = $mod->updateThisRow();
-        }
-
+    function checkForEvents($gameID, $playerID, $lastEventID, &$events) {
         /*
-         * save all of the convertibles in this model
+         * first get the game from the games table
+         *   if in waiting state, find out how many have joined. for now, if 2, start the game by 
+         *   returning a gameOn event, with the deck from player 0
          */
-        if ($mod->numberConverts > 0 ) {
-           // $convList = array();
-            // angeldie("converts: mod is: " . serialize($mod));
-           // if ($updating)          /* updating existing converts */
-           //     $this->getConvertsforModel($mod, $convList);       // convList is passed by reference
-            //else {
-                $conv = new angelConvert();
-                $conv->shareconn($conn);
-            //}
+        $game = new whoopieGame();
+        $conn = $game->connect();
+        $game->id = $gameID;
 
-            /*
-             * Either update or create a new row for each convert
-             */
-            for ($i=0; $i < $mod->numberConverts; $i++ ) {
+        $game = $game->getEntry();
 
-                $conv->model_id = $newID;
-                $conv->type = $_POST["CONV" .  $i . "type"];
-                $conv->yourInvestment  = $_POST["CONV" .  $i . "convAmount"];
-                $conv->totalInvestment = $_POST["CONV" .  $i . "convTotal"];
-                $conv->cap = $_POST["CONV" .  $i . "cap"];
-                $conv->discount = $_POST["CONV" .  $i . "discount"];
-                $conv->custom = $_POST["CONV" .  $i . "custom"];
-                $conv->preexist = $_POST["CONV" .  $i . "preexist"];
-                $conv->shares = $_POST["CONV" .  $i . "shares"];
-                // angeldie("here: " . $mod->numberConverts);
-
-                $conv->insertRow();
+        if ($game == null) {
+            angelerror("Help, no such game found");
+        } else {
+            if ($game->status == "wait") {
+                if ($game->numplayers >= 2) {
+                    $events[0] = array("type"=>"gameOn",  "gameID"=>$gameID, "playerID"=>$playerID);
+                    return(1);
+                }
+            } else {
+                // return all events newer than the lastEventID
+                $gameLog = new whoopieGameLog();
+                $gameLog->shareconn($conn);
+                $rows = $gameLog->getRows("gamelog", "gameid = $gameID and id > $lastEventID" );
+                $count = 0;
+                while($l = mysqli_fetch_object($rows,"whoopieGameLog")) {
+                    $events[0] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerID, );
+                    $count++;
+                }
+                return($count);
             }
-
         }
-
-        return($newID);
+        
+        return(0);
 
     }
+
+    function ajaxNextWhoopieEvent() {
+
+        $gameID = $_GET["gameID"];
+        $playerID = $_GET["playerID"];
+        $lastEventID = $_GET["lastEventID"];
+        $events = array();
+
+        $json = "{";
+        $json .= '"' . "events" .  '": ';
+        $count = $this->checkForEvents($gameID, $playerID,  $lastEventID, $events);
+
+        $count = 1;
+        for ($i=0; $i < $count; $i++) {
+            //$json .= '{"type": "gameOn",  "gameID":'.$gameID.', "playerID":'.$playerID.'},';
+            $events[$i] = array("type"=>"gameOn",  "gameID"=>$gameID, "playerID"=>$playerID);
+        }
+        $json .= json_encode($events);
+
+        $json .= "}";
+
+        
+        error_log("func  ajaxNextWhoopieEvent  json: " . $json);
+
+        echo($json);
+    }
+
     
+    function ajaxWhoopieRequest($request) {
+
+        // error_log("func ajaxWhoopieRequest (request, card)" . angelParens($request->whoopieRequest->name, $request->whoopieRequest->card));
+        // error_log("func ajaxWhoopieRequest player name:" . $request->whoopieRequest->playerName);
+        $gameLog = new whoopieGameLog();
+        $conn = $gameLog->connect();
+
+        $whoopieResponse = array("name"=>"joinedGame", "gameID"=>"0", "playerID"=>"-1", "moveNumber"=>"0");
+
+        $json = "{";
+        $json .= '"' . "whoopieResponse" .  '": ';
+
+        if ($request->whoopieRequest->name == "joinGame") {
+            if (strtolower($request->whoopieRequest->playerName) == "geoff")
+                $whoopieResponse["playerID"] = "0";
+            elseif (strtolower($request->whoopieRequest->playerName) == "jon")
+                $whoopieResponse["playerID"] = "1";
+            elseif (strtolower($request->whoopieRequest->playerName) == "steven")
+                $whoopieResponse["playerID"] = "2";
+            elseif (strtolower($request->whoopieRequest->playerName) == "elizabeth")
+                $whoopieResponse["playerID"] = "3";
+
+            
+        } else if ($request->whoopieRequest->name == "deal") {
+            $whoopieResponse["name"] = "receivedDeal";
+            $gameLog->name = "deal";
+            $gameLog->playerid = $request->whoopieRequest->playerID;
+            $gameLog->gameid = 1;
+            $gameLog->bidmade = 0;
+            $gameLog->cardplayed = "";
+
+            
+            $gameLog->deck = $request->whoopieRequest->deck;
+            $gameLog->insertRow();
+        }
+
+        $json .= json_encode($whoopieResponse);
+
+        $json .= ",";
+        $json .= '"' . "deck" .  '": ';
+        $json .= json_encode($request->whoopieRequest->deck);
+        $json .= "}";
+
+        error_log("func ajaxWhoopieRequest json: " . $json);
+
+        echo($json);
+
+    }
 
     function ajaxWhoopieNext($gameID, $playerNO) {
 
@@ -2882,231 +2883,7 @@ class whoopie {
         return($basis);
 
     }
-
- /*
-  * Post contains new Fund commitment info for investor ($id). Either brand new or updated (if $updating is true)
-  */
-
-
-    function addOrUpdateFundCommit($id, $updating) {
-        // angeldie(serialize($_POST));   // debug
-        /*
-         * Verify all of the input and if all good, add a new row to fundtable or update the indicated row
-         * (updating will be the row id)
-         */
-        $errorFound = "";
-
-        $inv = new angelFundInvest();
-        $conn = $inv->connect();
-
-        $inv->investorID = $id;
-        $inv->fundID = $_POST['fund'];
-        $inv->type = "commit";
-        $inv->invDate = $_POST['date'];   // assume good since a selector
-        if ($inv->invDate == "") {
-            $errorFound .= "Please enter a date.<cr>";
-        } else {
-            //angeldie($inv->inv_date);
-            $inv->invDate = date('Y-m-d', strtotime(str_replace('-', '/', $inv->invDate)));
-        }
-
-        if (array_key_exists("hasCarry", $_POST))
-            $inv->hasCarry = true;
-        else
-            $inv->hasCarry = false;
-
-        $inv->investAmount = $_POST['fundCommitAmount'];
-
-        $fund = new angelFund();
-        $fund->shareconn($conn);
-        if (is_numeric($inv->fundID)) {         // if an existing fund, get it so we have its data (incl its name!)
-            $fund->id = $inv->fundID;
-            $fund = $fund->findMatchingFund(true);
-        }
-
-        if (array_key_exists("wireBankName", $_POST))
-            $fund->wireBank             = $_POST["wireBankName"];
-        if (array_key_exists("wireBankAddress", $_POST))
-            $fund->wireBankAddress      = $_POST["wireBankAddress"];
-        if (array_key_exists("wireBankRouting", $_POST))
-            $fund->wireBankRouting      = $_POST["wireBankRouting"];
-        if (array_key_exists("wireBankSWIFT", $_POST))
-            $fund->wireBankSWIFT        = $_POST["wireBankSWIFT"];
-        if (array_key_exists("wireBankAcct", $_POST))
-            $fund->wireBankAcct         = $_POST["wireBankAcct"];
-        if (array_key_exists("wireFCName", $_POST))
-            $fund->wireFurtherName      = $_POST["wireFCName"];
-        if (array_key_exists("wireFCAcct", $_POST))
-            $fund->wireFurtherAcct   = $_POST["wireFCAcct"];
-
-        $fund->status = "active";
-        $fund->kind = $_POST["kind"];
-
-
-        if (!is_numeric($inv->fundID)) {
-            /*
-             * the fund is either new, or not quite an exact match. see if we can find it first
-             *
-             */
-            $fund->name = $inv->fundID;
-            $f = $fund->findMatchingFund(true);
-            if ($f != NULL) {  // found it!
-                $inv->fundID = $f->id;
-            } else {
-                $inv->fundID = $fund->insertRow();
-
-                if ($inv->fundID == 0)
-                    angeldie("new fund creation $fund->name failed");
-            }
-        }
-
-
-        if ($inv->investAmount > 1000000000) {
-            $errorFound .=  "Amount ($inv->investAmount  dollars) is too big - I don't believe it.<cr>";
-        }
-
-        $inv->notes = mysqli_escape_string($conn, $_POST['notes']);
-        $inv->status = "active";
-
-
-        if ($errorFound == "") {
-            if ($updating) {
-                $inv->id = $updating;     // id of fund investment to update
-                $inv->updateThisRow();    // update fund investment / commit row
-                $fund->updateThisRow();         // update fund banking info as well.
-            } else {
-                $inv->insertRow();
-                $fund->updateThisRow();         // update fund banking info as well.
-            }
-
-            // angeldie($q);    // debug
-
-        }
-        return($errorFound);
-
-    }   // addOrUpdateFundCommit
-
- /********************************************************************************
-  * @param $pay - update basis used in all investments referenced in this payout
-  */
-    function updateInvestmentBasis($pay) {
-
-        $inv = new angelInvest();
-        $conn = $inv->connect();
-        $invests = $inv->getInvestments($pay->companyID, $pay->investorID);
-
-        $payBasis = new angelBasis();
-
-
-        $payBasis->queryString = $pay->basis;
-
-        /*
-         * for each investment for this payout, update it's query string as appropriate, including potentially
-         * deleting reference to the payout if the basis used has been removed
-         */
-        // angeldie(serialize($invests));
-        foreach ($invests as $inv) {
-            $invBasis = new angelBasis();
-
-            $invBasis->queryString = $inv->basis;
-
-            /*
-             * There are 3 cases:
-             *  1) there is no basis used from this investment and none recorded in the investment - do nothing
-             *  2) there is no basis used from this investment and one is recorded - remove it (set to 0)
-             *  3) there is basis used from this investment add it or update it (for now update even if hasn't changed
-             *     since this is just simpler.
-             */
-
-
-           // angeldie("basis for ($inv->id): [$x] - the map: " . serialize($payBasis->map));
-           // angeldie(" [$payBasis->basis($inv->id), $invBasis->basis($pay->id)] : " . angelParens($payBasis->basis($inv->id), $invBasis->basis($pay->id)));
-
-            if (! $payBasis->basis($inv->id) and ! $invBasis->basis($pay->id) )         // case (1)
-                continue;
-
-            if (! $payBasis->basis($inv->id) and $invBasis->basis($pay->id) )           // case (2)
-                $invBasis->updateBasis($pay->id, 0);
-
-            elseif ($payBasis->basis($inv->id))                                       // case (3)
-                $invBasis->updateBasis($pay->id, $payBasis->basis($inv->id));
-
-            $inv->basis = $invBasis->queryString;
-            $inv->updateThisRow();
-        }
-
-    }
-
-    function ajaxDeleteInvestment($id) {
-        $int = new angelInvest();
-        $int->connect();
-
-        /*
-         * actually, I need to fix convert_id and next or things are going to go badly :(
-         */
-
-        $int->deleteRows("angelinvests","id=$id");
-        /*
-         * return a status??
-         */
-    }
-
-    function ajaxDeleteFundInvestment($id) {
-        $inv = new angelFundInvest();
-        $inv->connect();
-
-
-        $inv->deleteRows("fundinvests","id=$id");
-        /*
-         * return a status??
-         */
-    }
-
-    function ajaxDeletePayout($id) {
-        $po = new angelPayout();
-        $po->connect();
-
-        if (array_key_exists("fund", $_GET))
-            $table = "fundpayouttable";
-        else
-            $table = "payouttable";
-
-        $po->id = $id;
-        $po->changeTable($table);
-        $po = $po->getEntry();                      // need it's company
-        $po->basis = "";                            // set basis to nothing
-
-        $this->updateInvestmentBasis($po);          // update each investment, removing the basis
-
-
-
-        $po->deleteRows($table,"id=$id");
-        /*
-         * return a status??
-         */
-    }
-
-    function deleteModel($investorID, $id) {
-        $mod = new angelModel();
-        $mod->connect();
-
-        $mod->id = $id;
-        $modelToDelete = $mod->getEntry();
-        if ($modelToDelete == null) {
-            angeldie("could not delete - no such model");
-        } elseif ($modelToDelete->investor_id != $investorID)
-            angeldie("you cannot delete a model you do not own");
-        else {
-            $r = $mod->deleteRows("modeltable","id=$id");
-            if ($r == null) {
-                angeldie("delete failed: " . $mod->error());
-            }
-
-        }
-    }
-
 }
-
 
 /*
  * View for whoopie
@@ -3125,835 +2902,29 @@ class whoopie_view extends angelview {
     }
 
 
-    function InvestmentsPageBody($investorID) {
+    function createWhoopieDialogs() {
 
 
-        $inv = new angelPerson();
-        $conn = $inv->connect();
-        $inv->id = $investorID;
-        $inv =  $inv->findMatchingPerson(NULL);
-
-        $path = $GLOBALS["path"];
-
-        /*
-         * Header (IK12 [cohort chooser] Investments
-         */
-
-        $body = "<span style='font-size: larger'>";
-
-        $body .= "
-        <div id='dialogDelete' title='Delete Investment' style='display:none'>
-                                            <form id='' action='' method='post' enctype='multipart/form-data'>
-                                                 Permanently delete this Investment in <span id='investToDelete'></span>?
-                                            </form>
-                                    </div>";
-
-
-        $body .=  $inv->firstname . "'s Investments (<a href=$path/investments>All</a> |
-                                                     <a href=$path/investments?filter=active>Active</a> |
-                                                     <a href=$path/investments?filter=exits>Exits</a> |
-                                                     <a href=$path/investments?filter=dead>Dead</a>)
-                                                     </span><br><br>";
-        if ($this->error) {
-            // create an error div. also, we need to restore all the values! damn //
-            $body .= $this->error;
-        }
-
-
-
-        $addDivDisplay = "none";
-        $upArrowDisplay = "inline";
-        $downArrowDisplay = "none";
-
-        $x = "initializeInvestments($investorID)";
-        $body .= "<script>$(document).ready( function() { $x } );</script>";
-        $body .= '<div class="optionsDropdown">
-                        <div id="investmentDropdown" class="dropdown-content">';
-        $body .= "          <a href='javascript:onclick=optionAction(\"editInv\")'>Edit Investment</a>";
-
-        $body .= "          <a href='javascript:onclick=optionAction(\"deleteInv\")'>Delete Investment</a>";
-        $body .= '
-                            <a href="#">Exit!!</a>
-                        </div>
-                  </div>';
-
-        $body .= '<div class="optionsDropdown">
-                        <div id="payoutDropdown" class="dropdown-content">';
-        $body .= "          <a href='javascript:onclick=optionAction(\"editPay\")'>Edit</a>";
-
-        $body .= "          <a href='javascript:onclick=optionAction(\"deletePay\")'>Delete</a>";
-        $body .= '
-
-                        </div>
-                  </div>';
-
-        $body .= "<div class='angelbasic' style='margin: 0px 0px 0px 0px;'>
-                <table class='angelInvestmentsTable' style='border: 0px solid red'>
-                <thead>
-                <tr>
-                    <th id='angelInvestsHeaderCol1' mySort='company' myProp='company_id' class='header' valign=top style='width:150px'>Company</th>
-                    <th id='angelInvestsHeaderCol2' mySort='date'    myProp='inv_date'class='header' valign=top style='width:100px'>Date</th>
-                    <th id='angelInvestsHeaderCol3' mySort='string'  myProp='round' class='header' valign=top style='width:150px'>Round</th>
-                    <th id='angelInvestsHeaderCol4' mySort='number'  myProp='invest_amount' class='header' valign=top style='width:100px'>Amount</th>
-                    <th id='angelInvestsHeaderCol5' mySort='number'  myProp='shares' class='header' valign=top style='width:100px'>Shares (Own)</th>
-                    <th id='angelInvestsHeaderCol6' mySort='string'  myProp='notes' class='header' valign=top style='width:135px'>Notes</th>
-                 </tr></thead></table></div>";
-
-        $body .= "<div class='angelbasic' style='height: 300px; overflow:auto; float:left; border: 1px solid black; padding-left: 2px'>";
-        $body .= "<table id='angelInvestmentTable' class='angelInvestmentsTable tl1 tl3 tr4 tr5 tr6'>";
-        $body .= "  <thead>
-                    <tr>
-                        <td valign=top style='width:150px'></td>
-                        <td valign=top style='width:100px'></td>
-                        <td valign=top style='width:150px'></td>
-                        <td valign=top style='width:100px'></td>
-                        <td valign=top style='width:100px'></td>
-                        <td valign=top style='width:135px'></td>
-                    </tr></thead><tbody></tbody></table>";
-
-
-        $body .= "</div>";
-
-        $body .= "<div id='contentSummary' class='angelbasic' style='width: 500px; height: 300px; overflow:auto; background-color: white'>";
-        $body .= "</div>";
-
-        $body .= "</div><div style='clear:both;padding: 10px 30px 10px 30px; border: 0px solid red;'></div>";  // container and clear
-        $body .= "<div style='clear:both;border-top: 2px dashed gray; width: 100%; margin: 30px 0px 0px 0px;'>";
-        $body .= "<p id='note'><a href='#' width='10' class='add' style='display: $upArrowDisplay;' ><img src='/img/up_arrow.png'></a>
-                         <a href='#'  width='10' class='add' style='display: $downArrowDisplay;'><img src='/img/down_arrow.png'></a><b>&nbsp;&nbsp; <a href='#'>Add Investment</a></b></p>";
-        $body .=  "<div id='addInvestmentDiv' class='add' style='display: $addDivDisplay;'>";
-
-
-        $body .= $this->newInvestmentForm($investorID, $conn);
-        return $body;
-    }
-
-    /*******************************************************************************************
-     *      Body for main angelcalc page. Most of the work is done in jscript (angel.js)
-     *
-     * @param $investorID
-     * @return string
-     */
-
-
-    function CashflowPageBody($investorID) {
-        $inv = new angelPerson();
-        $conn = $inv->connect();
-        $inv->id = $investorID;
-        if ($investorID != 0)   // just let root be
-            $inv =  $inv->findMatchingPerson(NULL);
-
-        $x = "initializeCashflow($investorID);";
-        /*if ($message != "")
-                $x .= "$.notify('$message', 'success');";*/
-
-        $body = "<script>$(document).ready( function() { $x  } );</script>";
-
-        $body .= "<div id='angelStartpageContainer' style='display:block'>";
-        /*
-         *  content for CashFlow  page
-         */
-        /*
-         *  Notify of errors and messages and add company summary on the left
-         */
-        if ($this->error != "")
-            $body .= "<script>$(document).ready( function() {\$.notify('$this->error', 'error');} );</script>";
-
-        $body .= $this->startPageLeftSide($investorID, $inv);
-        $body .= $this->cashflowPageRightSide($investorID, $inv);
-
-        $body .= "</div>"; // end of startpage container
-
-        $body .= "<div id='angelTablesContainer' style='display:none'>";
-
-        return($body);
-    }
-
-        /*******************************************************************************************
-     *      Body for main angelcalc page. Most of the work is done in jscript (angel.js)
-     *
-     * @param $investorID
-     * @return string
-     */
-
-
-    function AngelcalcPageBody($investorID, $message, $display) {
-
-
-        $inv = new angelPerson();
-        $conn = $inv->connect();
-        $inv->id = $investorID;
-        if ($investorID != 0)   // just let root be
-            $inv =  $inv->findMatchingPerson(NULL);
-
-        $investmentsDisplay = "none";
-        $payoutsDisplay = "none";
-        $companiesDisplay = "none";
-        $valueDisplay = "none";
-        $dealflowDisplay = "none";
-        $trackerDisplay = "none";
-
-        if ($display == "" or $display == "investments" or $display == "login" or $display == "noFeedback" )
-            $investmentsDisplay = "block";
-        elseif ($display == "payouts")
-            $payoutsDisplay = "block";
-        elseif ($display = "companies")
-            $companiesDisplay = "block";
-        elseif ($display = "tracker")
-            $trackerDisplay = "block";
-
-        if ($inv == NULL) {
-            angeldie("angelcalcpage called w/illegal investor ID: " . $investorID);
-        }
-
-
-
-        // $body = "<script>$(document).ready( function() { initFeedback('right-bottom', $investorID) } );</script>";
-
-        $body = "<div id='angelStartpageContainer' style='display:none'>";
-        /*
-         *  content for angelcalc start page
-         */
-        /*
-         *  Notify of errors and messages and add company summary on the left
-         */
-        if ($this->error != "")
-            $body .= "<script>$(document).ready( function() {\$.notify('$this->error', 'error');} );</script>";
-        elseif ($message != "")
-            $body .= "<script>$(document).ready( function() {\$.notify('$message', 'success');} );</script>";
-
-        $body .= $this->startPageLeftSide($investorID, $inv);
-        $body .= $this->startPageRightSide($investorID, $inv);
-
-        $body .= "</div>"; // end of startpage container
-
-        $body .= "<div id='angelTablesContainer' style='display:none'>";
-
-
-        /*
-         *  content for angelcalc tables
-         */
-        $body .= $this->createAngelcalcDialogs($investorID, $conn, $display);
-        $body .= $this->createLeftNav($investorID);
-
-
-
-        $body .= "<div id='companiesContainer' style='display:$companiesDisplay; border: 0px solid black; margin: 70px 0px 0px 240px; padding-left: 2px'>";
-        $body .= "   <div style='margin:70px 0px 0px 0px '>
-                        <a href='#' id='companyBlockList' style='color:black' onclick='companyListChooser(this,\"block\")'> Block</a> |
-                        <a href='#' id='companyNameList' onclick='companyListChooser(this,\"list\")' >                            List</a> |
-                        <a href='#' id='companyNameRecency' onclick='companyListChooser(this,\"recent\")' >                       Recent Contact</a> |
-                        <a href='#' id='companyValueOverTime' onclick='companyListChooser(this,\"value\")' >                       Value Over Time</a>";
-        $body .= "   </div><br />";
-        $body .= "   <div id='companiesListContainer' style=''>";
-        $body .= "   </div>";  // companiesListContainer
-
-        $body .= "   <div id='companiesNameListContainer' style='display:none'>";
-        $body .= "<div id='companiesTableHeaderDiv' class='angelbasic angelTableHeader' style='margin: 0px 0px 0px 0px; width:600px;'>
-                <table class='angelInvestmentsTable' style='border: 0px solid black;'>
-                <thead>
-                <tr>
-                    <th id='angelCompaniesHeaderCol1' mySort='company' myProp='id'     class='header' valign=top style='width:175px'>Company</th>
-                    <th id='angelCompaniesHeaderCol2' mySort='number'  myProp='invest' class='header' valign=top style='width:100px'>Invested</th>
-                    <th id='angelCompaniesHeaderCol3' mySort='number'  myProp='return' class='header' valign=top style='width:100px'>Returned</th>
-                    <th id='angelCompaniesHeaderCol4' mySort='number'  myProp='roi'    class='header' valign=top style='width:100px'>ROI</th>
-                    <th id='angelCompaniesHeaderCol5' mySort='number'  myProp='shares' class='header' valign=top style='width:100px'>Shares</th>
-                    <th id='angelCompaniesHeaderCol6' mySort='number'  myProp='ownership' class='header' valign=top style='width:100px'>Ownership</th>
-                    <th class='header' valign=top style='width:0px'><div title='print!!' style='margin:0px 0px 0px 30px;'><a href='javascript:onclick=angelPrint(\"investments\")'><img src='img/printer_icon.png' height='20px' width='20px'></div></a></th>
-                 </tr></thead></table></div>";
-
-        $body .= "<div id='companiesTableDiv' class='angelbasic angelTableBody' style=' margin: 0px 0px 0px 0px; width:835px;'>";
-        $body .= "<table id='companiesTable' class='angelInvestmentsTable tl1 tr2 tr3 tr4 tr5 tc6'>";
-        $body .= "  <thead>
-                    <tr>
-                        <th valign=top style='width:175px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:100px'></th>
-                    </tr></thead><tbody></tbody></table></div>";
-        $body .= "   </div>";  // companiesNameListContainer
-
-        $body .= "   <div id='companiesRecentListContainer' style='display:none'>";
-        $body .= "   </div>";  // companiesRecentListContainer
-
-        $body .= "   <div id='companiesValueOverTimeContainer' style='display:none; clear:both'>";
-        $body .= "   <div id='valueOverTimeGraph' class='angelbasic angelGraphics' style='margin: 10px 10px 10px 50px;width:850px;height:650px'></div>";
-        //$body .= '<div id="valueOverTimeGraph" style="width: 900px; height: 500px"></div>';
-        $body .= "</div>";  // companiesValueOverTimeContainer
-
-        $body .= "</div>";  // companiesContainer
-
-
-        $body .= "<div id='trackerContainer' style='display:$trackerDisplay;height: 500px'>";
-        $body .= "   <div style='margin:0px 0px 0px 240px '>
-                        <a href='#' id='trackerAllFilter' style='color:black' onclick='trackerChooser(this,\"all\")'> Show All</a> |
-                        <a href='#' id='trackerCompanyFilter' onclick='trackerChooser(this,\"companies\")' >          Show Companies</a> |
-                        <a href='#' id='trackerPeopleFilter' onclick='trackerChooser(this,\"people\")' >              Show People</a> ";
-        $body .= "   </div>";
-
-        $body .= "<div id='trackerTableHeaderDiv' class='angelbasic angelTableHeader' style='width:1250px;margin:20px 0px 0px 240px '>
-                <table class='angelInvestmentsTable' style='border: 0px solid black;'>
-                <thead>
-                <tr>
-                    <th id='angelTrackerHeaderCol1' mySort='companyorperson' myProp='companyID' class='header' valign=top style='width:175px'>Who to Track?</th>
-                    <th id='angelTrackerHeaderCol2' mySort='string'    myProp='type'   class='header' valign=top style='width:120px'>Type</th>
-                    <th id='angelTrackerHeaderCol3' mySort='date'    myProp='trackerDate'   class='header' valign=top style='width:120px'>Date Entered</th>
-                    <th id='angelTrackerHeaderCol4' mySort='nextdate'    myProp='start'   class='header' valign=top style='width:120px'>Next Contact</th>
-                    <th id='angelTrackerHeaderCol5' mySort='string'  myProp='frequency'      class='header' valign=top style='width:180px'>Frequency</th>
-                    <th id='angelTrackerHeaderCol6' mySort='string'  myProp='status' class='header' valign=top style='width:100px'>Status</th>
-                    <th id='angelTrackerHeaderCol7' mySort='string'  myProp='notes'      class='header' valign=top style='width:260px'>Notes</th>
-                    <th class='header' valign=top ><div title='print!!' style='margin:0px 0px 0px 30px;'><a href='javascript:onclick=angelPrint(\"investments\")'>
-                                        <img src='img/printer_icon.png' height='20px' width='20px'></div></a></th>
-                 </tr></thead></table></div>";
-
-
-        $body .= "<div id='trackerTableDiv' class='angelbasic angelTableBody' style=' width:1240px;'>";
-        $body .= "<table id='trackerTable' class='angelInvestmentsTable tl1 tl3 tl4 tc5 tl6 tl7'>";
-        $body .= "  <thead>
-                    <tr>
-                        <th valign=top style='width:175px'></th>
-                        <th valign=top style='width:120px'></th>
-                        <th valign=top style='width:120px'></th>
-                        <th valign=top style='width:120px'></th>
-                        <th valign=top style='width:180px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:260px'></th>
-                    </tr></thead><tbody></tbody></table></div>";
-
-        $body .= "</div>";  // trackerContainer
-
-        $body .= "<div id='investmentsContainer' style='display:$investmentsDisplay'>";
-        $body .= "<div id='transparentHelpDiv' class='angelInitialHelp'>";
-        $body .= "<-- The easiest way to begin is to click on this '+' sign to add a new investment.<p /><p />
-                    Alternatively, to add a number of investments (or distributions) at once, click on 'Import' here:
-                    <div style='margin: 30px 0px 0px 0px'><-- Import</div>
-
-                ";
-
-        $body .= "</div>";  // transparentHelpDiv
-
-        $body .= "<div id='friendHeaderDiv' style='margin: 0px 0px 20px 220px; width: 400px; padding: 20px; border: 2px solid blue; display:none'>
-                                     Showing <span id='friendHeader'></span>'s Investments </div>";
-
-        $body .= "<div id='investmentsTableHeaderDiv' class='angelbasic angelTableHeader' style='width:950px;'>
-                <table class='angelInvestmentsTable' style='border: 0px solid black;'>
-                <thead>
-                <tr>
-                    <th id='angelInvestsHeaderCol1' mySort='company' myProp='company_id' class='header' valign=top style='width:175px'>Company</th>
-                    <th id='angelInvestsHeaderCol2' mySort='date'    myProp='inv_date'   class='header' valign=top style='width:120px'>Date</th>
-                    <th id='angelInvestsHeaderCol3' mySort='string'  myProp='round'      class='header' valign=top style='width:180px'>Round</th>
-                    <th id='angelInvestsHeaderCol4' mySort='number'  myProp='invest_amount' class='header' valign=top style='width:100px'>Amount</th>
-                    <th id='angelInvestsHeaderCol5' mySort='number'  myProp='shares'     class='header' valign=top style='width:100px'>Shares</th>
-                    <th id='angelInvestsHeaderCol6' mySort='string'  myProp='notes'      class='header' valign=top style='width:260px'>Notes</th>
-                    <th class='header' valign=top ><div title='print!!' style='margin:0px 0px 0px 30px;'><a href='javascript:onclick=angelPrint(\"investments\")'><img src='img/printer_icon.png' height='20px' width='20px'></div></a></th>
-                 </tr></thead></table></div>";
-
-        $body .= "<div id='investmentsTableDiv' class='angelbasic angelTableBody' style=' width:1010px;'>";
-        $body .= "<table id='investmentsTable' class='angelInvestmentsTable tl1 tl3 tr4 tc5 tl6'>";
-        $body .= "  <thead>
-                    <tr>
-                        <th valign=top style='width:175px'></th>
-                        <th valign=top style='width:120px'></th>
-                        <th valign=top style='width:180px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:260px'></th>
-                    </tr></thead><tbody></tbody></table></div>";
-
-        $body .= "</div>";  // investmentsContainer
-
-
-
-
-
-        $body .= "<div id='dealflowContainer' style='display:$dealflowDisplay; border: 0px solid black; margin: 70px 0px 0px 240px; padding-left: 2px'>";
-        $body .= "</div>";  // dealFlowContainer
-
-        $body .= "<div id='valuesContainer' style='display:$valueDisplay'>";
-        $body .= "<div id='valuesTableHeaderDiv' class='angelbasic angelTableHeader' style='width:1200px;'>
-                <table class='angelValuesTable'>
-                <thead>
-                <tr>
-                    <th id='angelValuesHeaderCol1' mySort='company' myProp='id' class='header' valign=top style='width:150px'>Company</th>
-                    <th id='angelValuesHeaderCol2' mySort='number'  myProp='invest' class='header' valign=top style='width:100px'>Amount</th>
-                    <th id='angelValuesHeaderCol3' mySort='number'  myProp='shares' class='header' valign=top style='width:100px'>Shares</th>
-                    <th id='angelValuesHeaderCol4' mySort='number'  myProp='sharePrice' class='header' valign=top style='width:100px'>Price</th>
-                    <th id='angelValuesHeaderCol5' mySort='number'  myProp='ownership' class='header' valign=top style='width:120px'>Ownership</th>
-                    <th id='angelValuesHeaderCol6' mySort='number'  myProp='valuation' class='header' valign=top style='width:150px'>Co Value</th>
-                    <th id='angelValuesHeaderCol7' mySort='number'  myProp='yourvalue' class='header' valign=top style='width:150px'>Your Value</th>
-                    <th id='angelValuesHeaderCol8' mySort='number'  myProp='yourexitvalue' class='header' valign=top style='color:green;width:150px'>Predicted Value</th>
-                    <th class='header' valign=top ><div style='margin:0px 0px 0px 30px;'><a href='javascript:onclick=angelPrint(\"values\")'><img src='img/printer_icon.png' height='20px' width='20px'></div></a></th>
-                 </tr></thead></table></div>";
-
-        $body .= "<div id='valuesTableDiv' class='angelbasic angelTableBody' style='width:1120px;'>";
-        $body .= "<table id='valuesTable' class='angelValuesTable tl1 tr2 tr3 tr4 tr5 tr6 tr7 tr8'>";
-        $body .= "  <thead>
-                    <tr>
-                        <th valign=top style='width:150px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:120px'></th>
-                        <th valign=top style='width:150px'></th>
-                        <th valign=top style='width:150px'></th>
-                        <th valign=top style='width:150px'></th>
-                        </tr></thead><tbody></tbody></table>
-                    </div>";
-        $body .= "<div id='valuesTotalsDiv' class='angelbasic' style='clear:both; width:1050px; margin: 0px 0px 0px 240px; border: 0px solid blue'>";
-
-        $body .= "<table id='valuesTotalsTable' class='angelValuesTable tl1 tr2 tr3 tr4 tr5 tr6 tr7 tr8'>";
-        $body .= "  <thead>
-                    <tr>
-                        <th valign=top style='width:150px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:100px'></th>
-                        <th valign=top style='width:120px'></th>
-                        <th valign=top style='width:150px'></th>
-                        <th valign=top style='width:150px'></th>
-                        <th valign=top style='width:150px'></th>
-                        </tr></thead>";
-        $body .= "<tbody>";
-        $body .= "<tr><td colspan='8'><hr></td></tr>";
-        $body .= "<tr>
-                       <td style='font-weight: bold; border:0px'>Totals</td>";
-        $body .= "     <td colspan='5' style='font-weight: bold; border:0px'></td>";
-        $body .= "     <td style='font-weight: bold; border:0px'><span id='angelValueTotal'></span></td>";
-        $body .= "     <td style='font-weight: bold; border:0px'><span id='angelPredictedValueTotal' style='color:green'></span></td></tr>";
-        $body .= "</tbody></table></div>";
-
-        /*$body .= "    <div id='valuesTotalsDiv' style='clear:both;width:375px; margin: 0px 0px 0px 900px; padding: 3px; height:20px; border: 0px solid blue'>
-
-                                                     <div style='float:left'>Totals: </div>
-                                                     <div style='float:left; margin:0px 0px 0px 115px; font-size:12px'><span id='angelValueTotal'></span></div>";
-        $body .= "                                   <div style='float:right; margin:0px 0px 0px 30px; color:green; font-size:12px'><span id='angelPredictedValueTotal'></span></div>
-                      </div>";*/
-
-        if(!isset($_COOKIE["angelcalc-valueInstructions"])) {
-            $body .= "       <div id='valueInstructions' style='clear:both; margin: 30px 0px 0px 250px; width:800px; padding:2px; border:2px solid blue'>
-                            <a href='javascript:onclick=closeDiv(\"valueInstructions\")'><div class='divWithClose'></div></a>
-                            <div style=' padding:15px;'>
-                                In order to determine the value of your ownership in a company you need two pieces of
-                                information: 1) the number of shares you own (which you may enter by editing each
-                                investment in a company) and 2) the latest price per share. The latter is, of course,
-                                derived from the company's current valuation divided by the number of fully diluted shares
-                                the company currently has outstanding. This is an interesting number because it also tells
-                                you your ownership percentage in the company. <p/> You can request the share price and/or
-                                valuation and fully diluted shares from the company. These values may be entered
-                                directly above by clicking on the <span style='color:blue'>Your Value</span> column in the row for the company you wish
-                                to update or
-                                on the Company Notes Page by adding a 'Valuation Update' note. These values
-                                are always completely private on Angelcalc and are only visible by you.
-                                <p/>
-                                You may also keep track of your predicted outcome for each company by entering a
-                                predicted exit price by clicking in the <span style='color:blue'>Predicted Value</span> of column, or, as above,
-                                enter a specific note - 'Exit Prediction' from the Notes page.
-                                <p/>
-                                You can get to a
-                                company's notes page by clicking on its name.
-                            </div>
-
-                         </div>";
-        }
-         $body .= "         </div>";  // valuesContainer
-
-
-        $body .= "<div id='payoutsContainer' style='display:$payoutsDisplay'>";
-        $body .= "<div id='payoutsTableHeaderDiv' class='angelbasic angelTableHeader' style='width: 1000px;'>";
-        $body .= "<table class='angelPayoutsTable'>
-                    <thead>
-                    <tr>
-                        <th id='angelPayoutsHeaderCol1' mySort='company' myProp='companyID' class='header' valign=top style='width:150px'>Company</th>
-                        <th id='angelPayoutsHeaderCol2' mySort='date'    myProp='payDate'class='header' valign=top style='width:100px'>Date</th>
-                        <th id='angelPayoutsHeaderCol3' mySort='string'  myProp='type' class='header' valign=top style='width:100px'>Type</th>
-                        <th id='angelPayoutsHeaderCol4' mySort='number'  myProp='cash' class='header' valign=top style='width:100px'>Cash</th>
-                        <th id='angelPayoutsHeaderCol5' mySort='number'  myProp='shares' class='header' valign=top style='width:100px'>Shares</th>
-                        <th id='angelPayoutsHeaderCol6' mySort='string'  myProp='symbol' class='header' valign=top style='width:100px'>Symbol</th>
-                        <th id='angelPayoutsHeaderCol7' mySort='number'  myProp='sharePrice' class='header' valign=top style='width:100px'>Price</th>
-                        <th id='angelPayoutsHeaderCol8' mySort='number'  myProp='value' class='header' valign=top style='width:100px'>Value</th>
-                        <th id='angelPayoutsHeaderCol9' mySort='string'  myProp='notes' class='header' valign=top style='width:135px'>Notes</th>
-                        <th class='header' valign=top ><div title='print!!' style='margin:0px 0px 0px 30px;'><a href='javascript:onclick=angelPrint(\"payouts\")'><img src='img/printer_icon.png' height='20px' width='20px'></div></a></th>
-                     </tr></thead></table></div>";
-
-        $body .= "<div id='payoutsTableDiv' class='angelbasic angelTableBody' style='width:1090px;'>";
-        $body .= "<table id='payoutsTable' class='angelPayoutsTable tl1 tr3 tr4 tr5 tr6 tr7 tr8 tl9'>";
-        $body .= "  <thead>
-                    <tr>
-                        <td valign=top style='width:150px'></td>
-                        <td valign=top style='width:100px'></td>
-                        <td valign=top style='width:100px'></td>
-                        <td valign=top style='width:100px'></td>
-                        <td valign=top style='width:100px'></td>
-                        <td valign=top style='width:100px'></td>
-                        <td valign=top style='width:100px'></td>
-                        <td valign=top style='width:100px'></td>
-                        <td valign=top style='width:135px;'></td>
-                    </tr></thead><tbody></tbody></table></div>";
-
-        $body .= "</div>";  // payoutsContainer
-
-        $body .= $this->fundsContainers();
-
-        $body .= "<div style='clear:both; padding: 10px 30px 10px 30px; border: 0px solid red;'></div>";
-
-        $body .= "<div id='summaryGraph1' class='angelbasic angelGraphics' style='clear:left;'></div>";
-        $body .= "<div id='summaryGraph2' class='angelbasic angelGraphics' style='margin: 0px 0px 0px 3px;width: 445px'></div>";
-
-
-
-        $body .=  "<div id='addInvestmentDiv' class='angelAddForm'>";
-        $body .=  $this->newInvestmentForm($investorID, $conn);
-        $body .= "</div>";
-        $body .=  "<div id='addTrackerDiv' class='angelAddForm'>";
-        $body .=  $this->newTrackerForm($investorID, $conn);
-        $body .= "</div>";
-        $body .=  "<div id='addPayoutDiv' class='angelAddForm'>";
-        $body .=  $this->newPayoutForm($investorID, $conn);
-        $body .= "</div>";
-
-        $body .=  "<div id='addFundInvestDiv' class='angelAddForm'>";
-        $body .=  $this->newFundInvestForm($investorID, $conn);
-        $body .= "</div>";
-        $body .=  "<div id='addFundPayoutDiv' class='angelAddForm'>";
-        $body .=  $this->newFundPayoutForm($investorID, $conn);
-        $body .= "</div>";
-        $body .=  "<div id='addFundPaymentDiv' class='angelAddForm'>";
-        $body .=  $this->newFundPaymentForm($investorID, $conn);
-        $body .= "</div>";
-
-
-        // $body .= "<div style='clear:both; padding: 0px 0px 50px 0px; border: 3px solid red;'>&nbsp</div>";
-
-        return $body;
-    } // angelcalcPageBody
-
-    function getNewEntries($count) {
-        $ret = array();
-
-        $ent = new angelNewEntry();
-        $r = $ent->recentEntries($count, $_SESSION["loggedInUserID"]);
-        // $r = $ent->recentEntries($count, 0);
-
-
-
-        while($e = mysqli_fetch_object($r,"angelNewEntry")){
-            $e->type = strtolower($e->type);
-            $date = substr($e->last_update,0,10);   /* last update includes time which we don't need */
-            $type = $e->entryTypeToText();
-            $details = $e->entryToInfo();
-
-            $ret[] = "<tr><td>$date </td><td style='color:blue'>$type</td><td>$details </td></tr>";
-        }
-
-        return($ret);
-
-    }
-
-
-
-
-
-
-    function createAngelcalcDialogs($investorID, $conn, $display) {
-
-        $mod = new angelModel();
-        $mod->shareconn($conn);
-
-        $rounds = getAngelRounds($conn);
-
-        $modelRows = $mod->getRows("modeltable", "investor_id=$investorID"); // get this guy's models, if any
-
-        $modelList = $this->createModelSelectList($modelRows);
         $body = "";
 
-        /*
-         * Originally was going to make this a dialog, but decided against it! Built into add distribution/payout
-         * form now.
-         $body = "
-        <div id='dialogAddPayoutTaxinfo' title='Distribution Tax Info' style='display:none'>
-                                            <form id='' action='' method='post' enctype='multipart/form-data'>
-                                                 Do You want to add tax information? <span id='investToDelete'></span>?
-                                            </form>
-                                    </div>";
-        */
-
-        $body .= "<script type='text/javascript'>$(function() {
-                $('#newExitSharePrice').number(true,2);
-                $('#newCompanyValuation').number(true);
-                $('#newCompanyInvested').number(true);
-                $('#newCompanyFDshares').number(true);
-                $('#newCompanySharePrice').number(true,4);
-                $('#cashflowValuation').number(true);
-
-
-            });</script>";
-        $body .= "
-        <div id='dialogExitPrediction' title='Predict Exit Price' style='display:none'>
-
-                                                 At what price do you think  <span id='exitPredictionCompanyName' style='color:blue'></span> will exit?<p></p>
-                                                     <input type='text' name='newExitSharePrice' id='newExitSharePrice' size='10'>
-
-                                    </div>";
-
-        $body .= "<script>preload_data = 0;";
-        $body .= '
-        $(document).ready(function () {
-            $("#valUpdateSeries").select2({
-                placeholder: "Series?",
-                createSearchChoice:function(term, data) { if ($(data).filter(function() { return this.text.localeCompare(term)===0; }).length===0) {return {id:term, text:term};} },
-                allowClear:true,
-                multiple: false,';
-
-
-        $needComma = false;
-
-        $body .= "data: [";
-        foreach (array_keys($rounds) as $id) {
-            $round = mysqli_escape_string($conn, $rounds[$id]);
-            if ($round == "seed")
-                continue;
-            $round = ucwords($round);
-            if ($needComma)
-                $body .= ",";
-
-            $body .= "{id:$id, text:'$round'}";
-
-            $needComma = true;
-        }
-        $body .= "]";
-
-
-        $body .= '});
-            $("#valUpdateSeries").select2("data", preload_data);';
-
-        $body .= '$.ui.dialog.prototype._allowInteraction = function (e) {
-                    return !!$(e.target).closest(\'.ui-dialog, .ui-datepicker, .select2-drop\').length;
-                    return true;
-                 };';
-
-        $body .= '});</script>';
-
-
-
-        $body .= "
-                       <div id='dialogTrackerStatusUpdate' title='Update Tracker Status' style='display:none'>
-                       Update the tracked status for:  <span id='trackerStatusUpdateName' style='color:blue'></span><p></p>";
-        $body .= "       <table style='width:500px'>
-                            <tr>
-                                <td>
-                                     <span>New Status</span>
-
-                            </tr>
-                            <tr><td>&nbsp</td></tr>
-
-                                       <tr><td><input type='radio' name='trackerStatus' id='trackerStatusLive' value='live'> live</td><td>Time to meet with them</td></tr>
-                                       <tr><td><input type='radio' name='trackerStatus' id='trackerStatusLiveEmailed' value='live:emailed'> live:emailed </td><td>Contacted them, waiting for meeting</td></tr>
-                                       <tr><td><input type='radio' name='trackerStatus' id='trackerStatusWait' value='wait'> wait </td><td>Met them: waiting for next cycle</td></tr>
-
-                            </table></div>";
-        $body .= "
-                       <div id='dialogTrackerNextUpdate' title='Update Next Meeting Date' style='display:none'>
-                       Update the Next Contact Date for:  <span id='trackerNextUpdateName' style='color:blue'></span><p></p>";
-        $body .= "       <table style='width:500px'>
-                            <tr>
-                                <td>Contact Them: </td> <td> <input size='11%' type=text id='datepickerTra' name='date' value=''></td></tr>
-
-
-
-                                       <tr><td><a href='javascript:onclick=trackerQuickNext(\"week\")' style='color:blue' > Next Week</a></td></tr>
-                                       <tr><td><a href='javascript:onclick=trackerQuickNext(\"month\")' style='color:blue'> Next Month</a></td></tr>
-                                       <tr><td><a href='javascript:onclick=trackerQuickNext(\"quarter\")' style='color:blue'> Next Quarter</a></td></tr>
-                                       <tr><td>&nbsp</td></tr>
-                                       <tr><td>or simply choose a new date.</td></tr>
-                                       <tr><td>&nbsp</td></tr>
-                                       <tr><td><input type='checkbox' name='trackerMakeWait' id='trackerMakeWait' checked> Make status 'wait' </td></tr>
-
-
-                            </table></div>";
-
-        $fundsAndModels = $this->getMyFundsWithModels($conn, $investorID);
-
-        $body .= "
-                       <div id='dialogCashflowUpdate' title='Update Fund Value' style='display:none'>
-                       Enter a Cash flow update for:  <span id='cashflowUpdateFundName' style='color:blue'></span><p></p>";
-        $body .= "       <table style='width:500px'>
-                            <tr>
-                                <td>
-                                     <span id='cashflowUpdateType'>Predicted Value</span>
-                                     $ <input type='text' id='cashflowValuation' name='cashflowValuation' size='15'></td>
-                            </tr>
-                            <tr><td>&nbsp</td></tr>
-                            <tr><td>
-                                       <input  onchange='fundCashflowDialogSelector();' type='radio' name='cashflowModel' id='cashflowModel' value='standard' checked> Standard Model
-                                       <input  onchange='fundCashflowDialogSelector();' type='radio' name='cashflowModel' id='cashflowModel' value='custom'> Custom Model </td>
-                            </tr></table>";
-
-        $body .= "         <div id='dialogCFStandard' style='display:block'>
-                            <table style='width:300px'>
-                            <tr><td colspan='4'><hr></td></tr>
-                            <tr><td>Year 1</td><td style='color:blue'>0%</td>
-                                <td>Year 6</td><td style='color:blue'>0%</td></tr>
-                            <tr><td>Year 2</td><td style='color:blue'>0%</td>
-                                <td>Year 7</td><td style='color:blue'>5%</td></tr>
-                            <tr><td>Year 3</td><td style='color:blue'>0%</td>
-                                <td>Year 8</td><td style='color:blue'>10%</td></tr>
-                            <tr><td>Year 4</td><td style='color:blue'>0%</td>
-                                <td>Year 9</td><td style='color:blue'>70%</td></tr>
-                            <tr><td>Year 5</td><td style='color:blue'>0%</td>
-                                <td>Year 10</td><td style='color:blue'>15%</td></tr>
-                        </table></div>";
-
-        $body .= "         <div id='dialogCFCustom'  style='display:none'>
-                            Enter values below or copy another fund's model:  <select onchange='fundCashflowModelSelector(this);'><option selected>Copy...</option>";
-        foreach (array_keys($fundsAndModels) as $fund) {
-            $modQS = $fundsAndModels[$fund];
-            $body .= "<option value='$modQS'> $fund</option>";
-        }
-        $body .= "</select>";
-        $body .= "
-                            <table style='width:350px'>
-                            <tr><td colspan='4'><hr></td></tr>
-                            <tr><td>Year 1</td><td><input onchange='fundCashflowAddPercent()' type='text' id='year1Cashflow' name='year1Cashflow' size='3'> %</td>
-                                <td>Year 6</td><td><input onchange='fundCashflowAddPercent()' type='text' id='year6Cashflow' name='year6Cashflow' size='3'> %</td></tr>
-                            <tr><td>Year 2</td><td><input onchange='fundCashflowAddPercent()' type='text' id='year2Cashflow' name='year2Cashflow' size='3'> %</td>
-                                <td>Year 7</td><td><input onchange='fundCashflowAddPercent()' type='text' id='year7Cashflow' name='year7Cashflow' size='3'> %</td></tr>
-                            <tr><td>Year 3</td><td><input onchange='fundCashflowAddPercent()' type='text' id='year3Cashflow' name='year3Cashflow' size='3'> %</td>
-                                <td>Year 8</td><td><input onchange='fundCashflowAddPercent()' type='text' id='year8Cashflow' name='year8Cashflow' size='3'> %</td></tr>
-                            <tr><td>Year 4</td><td><input onchange='fundCashflowAddPercent()' type='text' id='year4Cashflow' name='year4Cashflow' size='3'> %</td>
-                                <td>Year 9</td><td><input onchange='fundCashflowAddPercent()' type='text' id='year9Cashflow' name='year9Cashflow' size='3'> %</td></tr>
-                            <tr><td>Year 5</td><td><input onchange='fundCashflowAddPercent()' type='text' id='year5Cashflow' name='year5Cashflow' size='3'> %</td>
-                                <td>Year 10</td><td><input onchange='fundCashflowAddPercent()' type='text' id='year10Cashflow' name='year10Cashflow' size='3'> %</td></tr>
-                            <tr><td></td><td></td>
-                                <td style='color:green'>Total</td><td style='color:green;text-align: center'><span id='yearsTotalCashflow' ></span></td></tr>
-
-                        </table></div>
-
-                </div>";
-
-        $body .= "
-        <div id='dialogValuationUpdate' title='Update Company Value' style='display:none'>
-
-                                                 Enter a valuation update for:  <span id='valuationUpdateCompanyName' style='color:blue'></span><p></p>
-
-                       <table style='width:600px'>
-                            <tr>
-                                <th>Round</th>
-                                <th>$ Invested</th>
-                                <th>Post-Money Valuation</th>
-                                <th>Fully-Diluted Shrs</th>
-                                <th>Price Per Share</th>
-                            </tr>
-                            <tr>
-                                <td><input id='valUpdateSeries' name='newCompanySeries' style='width:180px'/><br/>
-
-                                </td>
-                                <td><input type='text' id='newCompanyInvested' name='newCompanyInvested' size='12'></td>
-                                <td><input type='text' id='newCompanyValuation' name='newCompanyValuation' size='15'></td>
-                                <td><input type='text' id='newCompanyFDshares' name='newCompanyFDshares' size='15'></td>
-                                <td><input type='text' id='newCompanySharePrice' name='newCompanySharePrice' size='10'></td>
-                            </tr>
-
-
-                        </table>
-
-                </div>";
-
-        $body .= "
-        <div id='dialogDeleteTracker' title='Delete Tracker' style='display:none'>
-
-                                                 Permanently delete the tracker for <span id='trackerToDelete'></span>?
-
-                                    </div>";
-        $body .= "
-        <div id='dialogDelete' title='Delete Investment' style='display:none'>
-
-                                                 Permanently delete this investment in <span id='investToDelete'></span>?
-
-                                    </div>";
-        $body .= "
-        <div id='dialogDeleteFund' title='Delete Fund Investment' style='display:none'>
-
-                                                 Permanently delete:  <span id='fundToDelete'></span>?
-
-                                    </div>";
-        $body .= "
-        <div id='dialogDeleteProspect' title='Delete Prospect' style='display:none'>
-
-                                                 Permanently delete this proposed investment in <span id='prospectToDelete'></span>?
-
-                                    </div>";
-        $body .= "
-        <div id='dialogDeletePayout' title='Delete Payout' style='display:none'>
-
-                                                 Permanently delete this distribution from <span id='payoutToDelete'></span>?
-
-                                    </div>";
-        $body .= "
-        <div id='dialogExit' title='Exit Investment' style='display:none'>
-                                            <form id='' action='' method='post' enctype='multipart/form-data'>
-                                                 Sorry to hear the fun is over! How did  <span id='investToExit' style='color:blue'></span> exit?<p></p>
-
-                                                     <input type='radio' name='exitType' value='acquired'> &nbsp Acquisition (hopefully with a return to investors)</td></tr>
-                                                     <div class='exit-reveal-if-active'>
-                                                         <table style='margin: 0 0 0 22px;'>
-                                                         <tr><td>Acquiring company?</td>    <td><input type='text' style='width:100px' name='exitAcquirer'></td></tr>
-                                                         <tr><td>Acquisition Price?</td>    <td><input type='text' style='width:100px' id='exitPrice' name='exitPrice'></td></tr>
-                                                         </table>
-                                                         </div>
-                                                     <table>
-                                                     <tr><td><input type='radio' name='exitType' value='ipo'> &nbsp IPO </td></tr>
-                                                     <tr><td><input type='radio' name='exitType' value='dead'> &nbsp Death (they may still return cash investors) </td></tr>
-                                                     <tr><td><hr></td></tr>
-                                                     <tr><td>Exit Date: <input size='11%' type=text id='datepickerExit' name='exitDate' value=''></td></tr>
-                                                 </table>
-
-
-                                            </form>
-                                    </div>";
-        $body .= "
-        <div id='dialogExport' title='Export' style='display:none'>
-                                            <form id='' action='' method='post' enctype='multipart/form-data'>
-                                                 What would you like to export<p></p>
-                                                     <table>
-                                                     <tr><td><input type='radio' name='exportType' value='investments'> &nbsp Investments</td></tr>
-                                                     <tr><td><input type='radio' name='exportType' value='payouts'> &nbsp Distributions </td></tr>
-                                                     <tr><td><hr></td></tr>
-                                                 </table>
-
-
-                                            </form>
-                                    </div>";
+        
 
         $year = $GLOBALS["currentYear"];
         $body .= "
-                    <div id='dialogTax' title='Tax Reporting' style='display:none'>
+                    <div id='dialogJoinGame' title='Join Whoopie Game' style='display:none'>
                             <form id='' action='' method='post' enctype='multipart/form-data'>
-                            Please select the relevant tax quarter or tax year.
-                            A CSV report will be generated and automatically downloaded. See below for the report format.
+                            Please Enter Your Name to Join '<span id=whoopieJoinName></span>'
 
                              <p></p>
                                     <table style='width:90%'>
                                                    <tr> <td style='text-align: center'>
+                                                            <select id='playerName' name='playerName' value=''>
+                                                                <option value='' selected disabled>What's your name? </option>
+                                                                <option value='Elizabeth'>  Elizabeth</option>
+                                                                <option value='Steven'>     Steven</option>
+                                                                <option value='Geoff'>      Geoff</option>
+                                                                <option value='Jon'>        Jon</option>
 
-                                                            <select name='taxPeriod' value=''>
-                                                                <option selected disabled>Select a tax quarter </option>
-                                                                <option value='Q1'>Q1 (Jan 1 - Mar 31) $year</option>
-                                                                <option value='Q2'>Q2 (Apr 1 - Jun 31) $year</option>
-                                                                <option value='Q3'>Q3 (Jul 1 - Aug 31) $year</option>
-                                                                <option value='Q4'>Q4 (Sep 1 - Dec 31) $year</option>
-
-
-                                                                <option disabled>or select a year </option>
-                                                                <option value='2017'>2017 (YTD)</option>
-                                                                <option value='2016'>2016</option>
-                                                                <option value='2015'>2015</option>
-                                                                <option value='2014'>2014</option>
-                                                                <option value='2013'>2013</option>
-                                                                <option value='2012'>2012</option>
-                                                                <option value='2011'>2011</option>
-                                                                <option value='2010'>2010</option>
                                                              </select>
                                                          </td>
                                                    </tr>
@@ -3962,228 +2933,8 @@ class whoopie_view extends angelview {
                                      </table>
                          </form>
 
-                       <p><span style='color:blue'>Tax file format: The file will be a comma separated values (CSV) file where the first column below
-                        identifies each entry and which will also be the column headers in the first row in the file.</span>
-                       <hr>
-                       <table class='tl1 tl2' style='width:100%;font-size:12px'>
-                            <tr><th>First Row</th>                          <th>Definition</th></tr>
-                            <tr><td>Entry Type</td>                         <td>Investment or Distribution</td>	</tr>
-                            <tr><td>Date Received</td>                      <td>Date of Distribution</td>	</tr>
-                            <tr><td>Date Purchased</td>                     <td>Date of Investment</td>	</tr>
-                            <tr><td>Invest Amount</td>                      <td>Amount invested in the company on this date</td>	</tr>
-                            <tr><td>Total Invest</td>                       <td>Total Amount invested in the company</td>	</tr>
-                            <tr><td>Basis Used/Allocated</td>               <td>Amount of basis used from investment or for distribution</td>	</tr>
-                            <tr><td>Company Name</td>                       <td>Name of the company</td>	</tr>
-                            <tr><td>Prev Names</td>                         <td>Any previous names recorded for the company</td>	</tr>
-                            <tr><td>Exit Date</td>                          <td>Date of company exit</td>	</tr>
-                            <tr><td>QSB?</td>                               <td>'Yes' or 'Y' indicates you believe this company is a qualified small business</td>	</tr>
-                            <tr><td>Dist Type</td>                          <td>One of: {Cash or Stock} for a distribution</td>	</tr>
-                            <tr><td>Cash Rcvd</td>                          <td>Amount of cash received in a cash distribution</td>	</tr>
-                            <tr><td>Stock Rcvd</td>                         <td>Number of shares received in a stock distribution</td>	</tr>
-                            <tr><td>Price</td>                              <td>Avg (daily) price of shares received in a stock distribution</td>	</tr>
-                            <tr><td>Symbol</td>                             <td>Symbol of public company stock received</td>	</tr>
-                            <tr><td>Last Dist?</td>                         <td>'Yes' or 'Y' indicates you believe this is the final distribution</td>	</tr>
-                       </table>
-                       <hr><p></p>
-                       <input type='checkbox' id='taxDeadCos'> Include a dead company report
-
-
-
                          </div>";
-        $body .= "
-                    <div id='dialogFundsTax' title='Tax Reporting' style='display:none'>
-                            <form id='' action='' method='post' enctype='multipart/form-data'>
-                            Please select the relevant tax quarter or tax year.
-                            A CSV report will be generated and automatically downloaded. See below for the report format.
-
-                             <p></p>
-                                    <table style='width:90%'>
-                                                   <tr> <td style='text-align: center'>
-
-                                                            <select name='fundsTaxPeriod' value=''>
-                                                                <option selected disabled>Select a tax quarter </option>
-                                                                <option value='Q1'>Q1 (Jan 1 - Mar 31) $year</option>
-                                                                <option value='Q2'>Q2 (Apr 1 - Jun 31) $year</option>
-                                                                <option value='Q3'>Q3 (Jul 1 - Aug 31) $year</option>
-                                                                <option value='Q4'>Q4 (Sep 1 - Dec 31) $year</option>
-
-
-                                                                <option disabled>or select a year </option>
-                                                                <option value='2017'>2017 (YTD)</option>
-                                                                <option value='2016'>2016</option>
-                                                                <option value='2015'>2015</option>
-                                                                <option value='2014'>2014</option>
-                                                                <option value='2013'>2013</option>
-                                                                <option value='2012'>2012</option>
-                                                                <option value='2011'>2011</option>
-                                                                <option value='2010'>2010</option>
-                                                             </select>
-                                                         </td>
-                                                   </tr>
-
-
-                                     </table>
-                         </form>
-
-                       <p><span style='color:blue'>Tax file format: The file will be a comma separated values (CSV) file where the first column below
-                        identifies each entry and which will also be the column headers in the first row in the file.</span>
-                       <hr>
-                       <table class='tl1 tl2' style='width:100%;font-size:12px'>
-                            <tr><th>First Row</th>                          <th>Definition</th></tr>
-                            <tr><td>Entry Type</td>                         <td>Investment or Distribution</td>	</tr>
-                            <tr><td>Date Received</td>                      <td>Date of Distribution</td>	</tr>
-                            <tr><td>Date Purchased</td>                     <td>Date of Investment</td>	</tr>
-                            <tr><td>Invest Amount</td>                      <td>Amount invested in the fund on this date</td>	</tr>
-                            <tr><td>Total Invest</td>                       <td>Total Amount invested in the fund</td>	</tr>
-                            <tr><td>Basis Used/Allocated</td>               <td>Amount of basis used from investment or for distribution</td>	</tr>
-                            <tr><td>Fund Name</td>                          <td>Name of the fund</td>	</tr>
-                            <tr><td>Dist Type</td>                          <td>One of: {Cash or Stock} for a distribution</td>	</tr>
-                            <tr><td>Cash Rcvd</td>                          <td>Amount of cash received in a cash distribution</td>	</tr>
-                            <tr><td>Stock Rcvd</td>                         <td>Number of shares received in a stock distribution</td>	</tr>
-                            <tr><td>Price</td>                              <td>Avg (daily) price of shares received in a stock distribution</td>	</tr>
-                            <tr><td>Symbol</td>                             <td>Symbol of public company stock received</td>	</tr>
-                            <tr><td>Last Dist?</td>                         <td>'Yes' or 'Y' indicates you believe this is the final distribution</td>	</tr>
-                       </table>
-
-
-
-
-
-                         </div>";
-        $body .= "
-        <div id='dialogConvert' title='Convert Investment' style='display:none'>
-                                            <form id='' action='' method='post' enctype='multipart/form-data'>
-                                                 Glad to hear your <span id='investToConvertType' style='color:blue'></span> from
-                                                 <span id='investToConvert' style='color:blue'></span> is converting!
-                                                 Please enter what you know of the conversion below. Don't worry, you can always complete / correct this later by editing
-                                                 the investment.
-                                                 <p></p>
-
-
-                                                     <table style='border-spacing: 5px'>
-                                                     <tr><td>Preferred Shares</td>                  <td><input type='text' id='convPrefShares' name='convPrefShares' value=''> </td></tr>
-                                                      <tr><td>Common Shares</td>                    <td><input type='text' id='convCommonShares' name='convCommonShares' value=''> </td></tr>
-                                                     <tr id='convInterestRow' style='display:none'> <td>Interest Earned</td><td><input type='text' name='convInterest' value=''> </td></tr>";
-
-
-
-        $body .= "<script>preload_data = 0;";
-        $body .= '
-        $(document).ready(function () {
-            $("#convSeries").select2({
-                placeholder: "Series?",
-                createSearchChoice:function(term, data) { if ($(data).filter(function() { return this.text.localeCompare(term)===0; }).length===0) {return {id:term, text:term};} },
-                allowClear:true,
-                multiple: false,';
-
-
-        $needComma = false;
-
-        $body .= "data: [";
-        foreach (array_keys($rounds) as $id) {
-            $round = mysqli_escape_string($conn, $rounds[$id]);
-            if ($round == "seed")
-                continue;
-            $round = ucwords($round);
-            if ($needComma)
-                $body .= ",";
-
-            $body .= "{id:$id, text:'$round'}";
-
-            $needComma = true;
-        }
-        $body .= "]";
-
-
-        $body .= '});
-            $("#convSeries").select2("data", preload_data);';
-
-        $body .= '$.ui.dialog.prototype._allowInteraction = function (e) {
-                    return !!$(e.target).closest(\'.ui-dialog, .ui-datepicker, .select2-drop\').length;
-                    return true;
-                 };';
-
-        $body .= '});</script>';
-
-
-
-        $body .= '<tr><td>Series</td><td><input id="convSeries" name="convSeries" style="width:180px"/><br/>
-                           <span style="font-size:10px">For a different series just enter it</span>
-                            </td>';
-                                                    /* <tr><td>Series</td><td><select name='convSeries' value=''>
-                                                                                <option value='Series Seed'>Series Seed</option>
-                                                                                <option value='Series AA'>Series AA</option>
-                                                                                <option value='Series A' selected>Series A</option>
-                                                                                <option value='Series B'>Series B</option>
-                                                                                <option value='Series C'>Series C</option>
-                                                                                <option value='Other'>Other</option>
-                                                                             </select>*/
-
-        $body .= "
-                                                     <tr><td colspan='2'><hr></td></tr>
-                                                     <tr><td>Conversion Date:</td><td> <input size='11%' type=text id='datepickerConvert' name='convDate' value=''></td></tr>
-                                                     <tr><td>Model<sup>*</sup></td><td><select name='convModel' id='convModel' value=''>";
-
-        $body .= $modelList;
-
-
-        $body .= "                                   </select></td></tr>
-                                                 </table></form>
-                                                <p></p> <span style='font-size:12px; font-weight: 200'>* Optionally include the model name if you've modeled this conversion. </span>
-                                         </div>";
-
-        $body .= '<script>$("#convModel").prop("selectedIndex", -1); </script>';
-
-        $x = "initializeInvestments($investorID,'$display');";
-        /*if ($message != "")
-                $x .= "$.notify('$message', 'success');";*/
-
-        $body .= "<script>$(document).ready( function() { $x  } );</script>";
-        $body .= '<div class="optionsDropdown">
-                        <div id="trackerDropdown" class="dropdown-content">';
-        $body .= "          <a href='javascript:onclick=optionAction(\"editTr\")'>Edit</a>";
-
-        $body .= "          <a href='javascript:onclick=optionAction(\"deleteTr\")'>Delete</a>";
-        $body .= "
-
-                        </div>
-                  </div>";
-        $body .= '<div class="optionsDropdown">
-                        <div id="investmentDropdown" class="dropdown-content">';
-        $body .= "          <a href='javascript:onclick=optionAction(\"editInv\")'>Edit</a>";
-
-        $body .= "          <a href='javascript:onclick=optionAction(\"deleteInv\")'>Delete</a>";
-        $body .= "
-                            <a href='javascript:onclick=optionAction(\"exitInv\")'>Exit!!</a>
-                        </div>
-                  </div>";
-        $body .= '<div class="optionsDropdown">
-                        <div id="payoutDropdown" class="dropdown-content">';
-        $body .= "          <a href='javascript:onclick=optionAction(\"editPay\")'>Edit</a>";
-
-        $body .= "          <a href='javascript:onclick=optionAction(\"deletePay\")'>Delete</a>";
-        $body .= '
-
-                        </div>
-                  </div>';
-        $body .= '<div class="optionsDropdown">
-                        <div id="fundDropdown" class="dropdown-content">';
-        $body .= "          <a href='javascript:onclick=optionAction(\"editFund\")'>Edit</a>";
-
-        $body .= "          <a href='javascript:onclick=optionAction(\"deleteFund\")'>Delete</a>";
-        $body .= '
-
-                        </div>
-                  </div>';
-        $body .= '<div class="optionsDropdown">
-                        <div id="fundPaymentDropdown" class="dropdown-content">';
-        $body .= "          <a href='javascript:onclick=optionAction(\"editFundPayment\")'>Edit</a>";
-        $body .= "          <a href='javascript:onclick=optionAction(\"addFundPayment\")'>Add Again</a>";
-        $body .= "          <a href='javascript:onclick=optionAction(\"deleteFundPayment\")'>Delete</a>";
-        $body .= '
-
-                        </div>
-                  </div>';
+        
 
         return($body);
     }
@@ -6101,9 +4852,10 @@ class whoopie_view extends angelview {
 
     function whoopieHomePageBody() {
 
-        $body = "<script>$(document).ready( function() { initializeWhoopie() } );</script>";  // initialize things when the page loads
+       // $body = "<script>$(document).ready( function() { initializeWhoopie() } );</script>";  // initialize things when the page loads
 
-        $body .= "<div style='overflow:hidden'>";
+        $body = "<div style='overflow:hidden'>";
+        $body .= $this->createWhoopieDialogs();
 
         /*
          * whoopie home page
@@ -6111,13 +4863,27 @@ class whoopie_view extends angelview {
          */
 
         /*
+         * This div is where the game to be played is chosen
+         */
+        $body .= "<div id='whoopieGameChooser' style='width:500px; border: 2px solid blue; margin: 100px 0px 0px 300px'>";        // choose game div
+
+        $body .=    "<table class='whoopieGameChooserTable'>";
+        $body .=        "<tr><th colspan=2>Choose a game!</th></tr>";
+        $body .=        "<tr><th>Name</th> <th>Creator</th</tr>";
+
+        $body .=        "<tr><td onclick='joinGame(\"Ralston Family Game\")'>Ralston Family Game</td> <td>Geoff</td></tr>";
+        $body .=    "</table>";
+        $body .= "</div>";
+
+        /*
          * This div is where the game is played
          */
-        
-        $body .= "<div id='whoopieTable' style='background-image:url(/img/cardtable.jpg); border: 5px solid blue; 
+        $body .= "<div id='whoopieTable' style='display:none; background-image:url(/img/cardtable.jpg); border: 5px solid blue; 
                     width:700px; height: 400px; margin: 50px 0px 0px 20px; float:left'>";
-        $body .= "<div id='waitingForGame' style='display:block; background-color: white; margin: 150px 0px 0px 250px;width:300px; height: 100px;background-image:url(/img/xfavicon-16x16.png)'>
-                 <div style='color:blue; margin: 50px 0px 0px 0px;font-size:30px'>Waiting for Game...</div></div>";
+        
+
+        $body .= "<div id='waitingForGame' style='display:none; background-color: blue; margin: 150px 0px 0px 250px;width:300px; height: 50px;background-image:url(/img/favicon-16x16.png)'>
+                 <div style='color:white; margin: 50px 0px 0px 0px;font-size:30px'>Waiting for Game...</div></div>";
         $body .= "   <table>";
         $body .= "   </table>";
       
@@ -6142,7 +4908,7 @@ class whoopie_view extends angelview {
         /*
          * This div is where the game is scored
          */
-        $body .= "<div id='whoopieScore' style='border: 3px solid red; width:400px; height: 250; margin: 50px 0px 0px 20px;float:left '>";
+        $body .= "<div id='whoopieScore' style='display:none; border: 3px solid red; width:400px; height: 250; margin: 50px 0px 0px 20px;float:left '>";
     
 
         $body .= "<div id='scoreTableHeaderDiv' class='' style='width:400px;margin:0px 0px 0px 0px '>

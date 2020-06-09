@@ -629,6 +629,50 @@ input[type="checkbox"]:checked ~ .exit-reveal-if-active {
     font-family: verdana,Arial,Helvetica,sans-serif;
 }
 
+.whoopieGameChooserTable  {
+    padding: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    width: 500px;
+    border-collapse: collapse;
+}
+.whoopieGameChooserTable th {
+    /*background-color: lightcyan;*/
+    background-color: #E6E6F0;
+    background-repeat: no-repeat;
+    background-position: center right;
+    color: blue;
+    border-right: 0px solid gray;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+.whoopieGameChooserTable td {
+    border-right: 2px solid gray;
+    border-top: 2px solid gray;
+    background-color: #E6E6F0;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+    padding-left: 0px;
+    padding-right: 0px;
+    border-spacing: 0px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: verdana,Arial,Helvetica,sans-serif;
+}
+
+
+.whoopieGameChooserTable td:hover {
+    background-color: white;
+}
+
 .whoopieBidTrickTable  {
     padding: 0px;
     border-spacing: 0px;

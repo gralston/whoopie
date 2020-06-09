@@ -120,7 +120,7 @@ var cards = (function() {
     $('.card').mousedown(mouseEvent);
     $('.card').dblclick(mouseEvent);
 
-    shuffle(all);
+    //shuffle(all);
   }
 
   function shuffle(deck) {
@@ -268,6 +268,19 @@ var cards = (function() {
     addCards: function(cards) {
       for (var i = 0; i < cards.length; i++) {
         var card = cards[i];
+        if (card.container) {
+          card.container.removeCard(card);
+        }
+        this.push(card);
+        card.container = this;
+      }
+    },
+    /*
+     * addCardsIndex - adds cards to a deck in order given by the index parameter
+     */
+    addCardsIndex: function(cards, index) {
+      for (var i = 0; i < index.length; i++) {
+        var card = cards[index[i]];
         if (card.container) {
           card.container.removeCard(card);
         }

@@ -9,7 +9,7 @@
 
 set_include_path(get_include_path() . ":" . "./includes" );
 
-require_once "angelObjects.inc";
+require_once "whoopieObjects.inc";
 require_once "angel_misc.inc";
 require_once "whoopie.inc";  // controller and view for Investment
 
