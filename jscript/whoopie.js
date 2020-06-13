@@ -753,6 +753,15 @@ var SuitOrder = {'h':0,'s':1,'d':2,'c':3 };
 
 var WhoopieHands = [];  // array of WhoopieHands
 var Hands = [];         // array of hands (just the cards)
+var Players = [];       // array of players
+
+var WhoopiePlayer = {
+    playerID : 0,
+    seat : null,
+    lastBid : 0,
+    lastCardPlayed : null,
+    score : 0
+}
 
 var WhoopieStatus = {
     gameID : 0,
@@ -760,6 +769,7 @@ var WhoopieStatus = {
     playerName : "",
     numPlayers : 0,
     lastEventID : 0,            // id of the most recent event from the server
+    state: "",              // waitingForGame, choosingFirstDealer, dealing, bidding, playing, gameOver
     waitingForGame : true,
     whoopieCard : null,
     deck : [],
@@ -851,26 +861,29 @@ function initializeWhoopie() {
 
      var tableElement = "#whoopieTable";
      var numHands = 4;
-
+     
     //Start by initalizing the library
     cards.init({table:'#whoopieTable', blackJoker:true, redJoker:true, acesHigh: true});
-    var tableHeight = $('#whoopieTable').innerHeight();
-    var tableWidth = $('#whoopieTable').innerWidth();
-    // console.debug("table dimensions", tableHeight, tableWidth);
+    
+    // var tableHeight = $('#whoopieTable').innerHeight();
+    // var tableWidth = $('#whoopieTable').innerWidth();
+    //      console.debug("table dimensions", tableHeight, tableWidth);
 
-    //Create a new deck of cards
+    //  Create a new deck of cards
+    //  cards.all contains all cards, put them all in the deck
     WhoopieStatus.deck = new cards.Deck(); 
-    //cards.all contains all cards, put them all in the deck
     WhoopieStatus.deck.addCards(cards.all); 
+    
     // debugShowAllCards(cards.all, "one");   // show all cards
     
     // console.log("***deck***", WhoopieStatus.deck.length);
     //No animation here, just get the deck onto the table.
     
     cards.shuffle(WhoopieStatus.deck);
-   
-    //debugShowAllCards(WhoopieStatus.deck, "two");   // show all cards
+    WhoopieStatus.deck.render({immediate:true});
     WhoopieStatus.deckToIndex();
+    //debugShowAllCards(WhoopieStatus.deck, "two");   // show all cards
+   
     //console.debug("Index", JSON.stringify(WhoopieStatus.deckIndex));
     // whoopieSendRequest("testRequest", 7, cards.all[5]);
 
@@ -883,83 +896,11 @@ function initializeWhoopie() {
         setTimeout(getNextWhoopieEvent, WhoopiePollLength);  // poll for the next Whoopie event every 2 seconds
       
     });
-   /* if (numHands == 4) {
-        Seats = Seats4;
-    } I think this is done in seatplayers so don't need it here*/
+   
     return;
 
-
-    var hands = [];     // array of hands
-    var whoopieHands = [];  // array of WhoopieHands
-    var numHands = 4;
-    var myWhoopieHand;
-    
-
-    /*
-     * For now we are simply fixing the number of hands at 4. Will fix this later
-     */
-    if (numHands == 4) {
-        Seats = seats4;
-    }
-    /*
-     * On the same theme, set up the 4 players as my sibs. Next we will set up the main event loop of the game
-     */
-    $("#player2").css({top: "10px", left: "175px", position:'absolute'});
-    $("#player2").css("display", "block");
-    $("#player3").css({top: "10px", left: "500px", position:'absolute'});
-    $("#player3").css("display", "block");
-    $("#player1").css({top: "310px", left: "175px", position:'absolute'});
-    $("#player1").css("display", "block");
-    $("#player0").css({top: "310px", left: "565px", position:'absolute'});
-    $("#player0").css("display", "block");
-
-    $("#bidID0").html("0");
-    $("#bidID1").html("1");
-    $('#playerIMG1').attr("src","img/photos/esr1980.jpg");
-    $("#bidID2").html("2");
-    $('#playerIMG2').attr("src","img/photos/jmr1980.jpg");
-    $("#bidID3").html("3");
-    $('#playerIMG3').attr("src","img/photos/sjr1980.jpg");
-
-    
-
-
-    whoopieHands[0] = new WhoopieHandConstructor();
-    myWhoopieHand = whoopieHands[0];
-    myWhoopieHand.x = seats[0].x;
-    myWhoopieHand.y = seats[0].y;
-    hands[0]= new cards.Hand({faceUp:true, x:myWhoopieHand.x, y:myWhoopieHand.y});
-    myWhoopieHand.cards = hands[0];
-
     
     
-    for (i = 1; i < numHands; i++) {
-        whoopieHands[i] = new WhoopieHandConstructor();
-        whoopieHands[i].x = seats[i].x;
-        whoopieHands[i].y = seats[i].y;
-        hands[i]= new cards.Hand({faceUp:false, x:whoopieHands[i].x, y:whoopieHands[i].y});
-        whoopieHands[i].cards = hands[i];
-    }
-    
-    
-    //Deck has a built in method to deal to hands.
-    
-    WhoopieStatus.deck.deal(13, hands, 20)
-    WhoopieStatus.deck.x = DeckLocation.x;      // standard deck location
-    WhoopieStatus.deck.y = DeckLocation.y;
-    WhoopieStatus.deck.render({immediate:true});
-
-    // Let's turn over the top card which is the Whoopie card
-
-    whoopieCard = new cards.Deck({faceUp:true});
-    whoopieCard.x = DeckLocation.x + 20;
-    WhoopieStatus.deck.render({callback:function() {
-        whoopieCard.addCard(WhoopieStatus.deck.topCard());
-        whoopieCard.render();
-    }});
-
-    
-
     /*
      * we'll create a new trick for each play and then assign it to the trick winner and keep track of that
      */
@@ -1053,15 +994,6 @@ function initializeWhoopie() {
     });
 
     
-    /*
-     * this is the main game loop.
-     */
-    $(function() {
-        // poll server, do stuff, etc.
-        
-        setTimeout(getNextWhoopieEvent, WhoopiePollLength);  // poll for the next Whoopie event every 2 seconds
-      
-    });
 
 
 }   // initializeWhoopie
@@ -1082,7 +1014,7 @@ function chooseDealer() {
 function finishChooseDealer() {
     var lowHand = null;
     var lowHandIndex = 0;
-    var debug = 1;
+    var debug = 0;
 
     console.debug("finishchooseDealer: all hands", Hands[0], Hands[1], Hands[2], Hands[3]);
     for (i=0; i < WhoopieStatus.numPlayers; i++) {
@@ -1149,6 +1081,22 @@ function yourDeal(numberCards) {
         WhoopieStatus.deckToIndex();
         whoopieSendRequest("deal", null, null);
     }
+
+}
+
+function seatPlayer(playerID, name) {
+    var id = "#player"+playerID;
+
+    WhoopieStatus.numPlayers++;
+
+    $(id).css({top: Seats[playerID].playerTop, left: Seats[playerID].playerLeft, position:'absolute'});
+    $(id).css("display", "block");
+
+   $('#playerIMG1').attr("src","img/photos/esr1980.jpg");
+   $("#bidID2").html("2");
+   $('#playerIMG2').attr("src","img/photos/jmr1980.jpg");
+   $("#bidID3").html("3");
+   $('#playerIMG3').attr("src","img/photos/sjr1980.jpg");
 
 }
 

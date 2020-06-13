@@ -2914,7 +2914,7 @@ class whoopie_view extends angelview {
         $body .= "
                     <div id='dialogJoinGame' title='Join Whoopie Game' style='display:none'>
                             <form id='' action='' method='post' enctype='multipart/form-data'>
-                            Please Enter Your Name to Join '<span id=whoopieJoinName></span>'
+                            Please Choose Your Name to Join '<span id=whoopieJoinName></span>'
 
                              <p></p>
                                     <table style='width:90%'>
@@ -4892,7 +4892,7 @@ class whoopie_view extends angelview {
                     width:700px; height: 400px; margin: 50px 0px 0px 20px; float:left'>";
         
 
-        $body .= "<div id='waitingForGame' style='display:none; background-color: blue; margin: 150px 0px 0px 250px;width:300px; height: 50px;background-image:url(/img/favicon-16x16.png)'>
+        $body .= "<div id='waitingForGame' style='display:none; background-color: blue; margin: 50px 0px 0px 225px;width:300px; height: 50px;background-image:url(/img/xxxfavicon-16x16.png)'>
                  <div style='color:white;   margin: 50px 0px 0px 0px;font-size:30px'>Waiting for Game...</div></div>";
         $body .= "   <table>";
         $body .= "   </table>";
