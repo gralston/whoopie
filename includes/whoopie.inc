@@ -67,7 +67,8 @@ class whoopie {
                 $rows = $gameLog->getRows("gamelog", "gameid = $gameID and id > $lastEventID" );
                 $count = 0;
                 while($l = mysqli_fetch_object($rows,"whoopieGameLog")) {
-                    $events[0] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerID, );
+                    $events[0] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerid );
+
                     $count++;
                 }
                 return($count);
@@ -88,7 +89,7 @@ class whoopie {
         $json = "{";
         $json .= '"' . "events" .  '": ';
         $count = $this->checkForEvents($gameID, $playerID,  $lastEventID, $events);
-
+        error_log("func  ajaxNextWhoopieEvent  lasteventID: " . $lastEventID);
         $count = 1;
         for ($i=0; $i < $count; $i++) {
             //$json .= '{"type": "gameOn",  "gameID":'.$gameID.', "playerID":'.$playerID.'},';
@@ -2936,6 +2937,15 @@ class whoopie_view extends angelview {
                          </div>";
         
 
+     $body .= "
+                        <div id='dialogYourDeal' title='Your Deal' style='display:none'>
+                                
+                                Deal <span id=whoopieDealerCardCount></span> card(s), please!'
+
+                                <p></p>
+                            </div>";
+     
+
         return($body);
     }
 
@@ -4883,11 +4893,18 @@ class whoopie_view extends angelview {
         
 
         $body .= "<div id='waitingForGame' style='display:none; background-color: blue; margin: 150px 0px 0px 250px;width:300px; height: 50px;background-image:url(/img/favicon-16x16.png)'>
-                 <div style='color:white; margin: 50px 0px 0px 0px;font-size:30px'>Waiting for Game...</div></div>";
+                 <div style='color:white;   margin: 50px 0px 0px 0px;font-size:30px'>Waiting for Game...</div></div>";
         $body .= "   <table>";
         $body .= "   </table>";
       
-        
+        $body .= "   <div id='dealerButton' style='display:none;'>";
+
+        $body .= "   <img  src='img/dealerbutton2.jpg' height='30px' width='30px'>";
+
+        $body .= "   </div>";
+
+
+
         for ($i=0; $i < 10; $i++ ) { 
             $body .= "<div id='player$i' style='display:none'><img id='playerIMG$i' src='img/photos/gdr1980.jpg' height='50px' width='50px'>";
 

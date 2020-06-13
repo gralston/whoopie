@@ -700,13 +700,13 @@ function WhoopieHandConstructor()  {
     }  
 }
 
-var seats4 = {  0 :    {x : 400, y :350},//
-                1 :    {x : 100, y :350},//
-                2 :    {x : 100, y :50},//
-                3 :    {x : 400, y :50},//           
+var Seats4 = {  0 :    {x : 400, y :350, playerTop: "310px", playerLeft: "565px", buttonTop: "310px", buttonLeft: "620px"},//
+                1 :    {x : 100, y :350, playerTop: "310px", playerLeft: "175px", buttonTop: "310px", buttonLeft: "230px"},//
+                2 :    {x : 100, y :50, playerTop: "10px", playerLeft: "175px", buttonTop: "10px", buttonLeft: "230px"},//
+                3 :    {x : 400, y :50, playerTop: "10px", playerLeft: "500px", buttonTop: "10px", buttonLeft: "555px"},//           
 };
 
-var seats5 = {1 :    {x : 550, y :50},
+var Seats5 = {1 :    {x : 550, y :50},
              2 :    {x : 400, y :50},
              3 :    {x : 250, y :50},
              4 :    {x : 100, y :50},
@@ -715,7 +715,7 @@ var seats5 = {1 :    {x : 550, y :50},
              7 :    {x : 400, y :350},
              8 :    {x : 400, y :350},
 };
-var seats6 = {1 :    {x : 550, y :50},
+var Seats6 = {1 :    {x : 550, y :50},
              2 :    {x : 400, y :50},
              3 :    {x : 250, y :50},
              4 :    {x : 100, y :50},
@@ -724,7 +724,7 @@ var seats6 = {1 :    {x : 550, y :50},
              7 :    {x : 400, y :350},
              8 :    {x : 400, y :350},
 };
-var seats7 = {1 :    {x : 550, y :50},
+var Seats7 = {1 :    {x : 550, y :50},
              2 :    {x : 400, y :50},
              3 :    {x : 250, y :50},
              4 :    {x : 100, y :50},
@@ -733,7 +733,7 @@ var seats7 = {1 :    {x : 550, y :50},
              7 :    {x : 400, y :350},
              8 :    {x : 400, y :350},
 };
-var seats8 = {1 :    {x : 550, y :50},
+var Seats8 = {1 :    {x : 550, y :50},
              2 :    {x : 400, y :50},
              3 :    {x : 250, y :50},
              4 :    {x : 100, y :50},
@@ -742,6 +742,8 @@ var seats8 = {1 :    {x : 550, y :50},
              7 :    {x : 400, y :350},
              8 :    {x : 400, y :350},
 };
+
+var Seats;
 
 var DeckLocation = {x:600, y:200};
 var WhoopiePollLength = 2000;  // milliseconds to poll server.
@@ -759,6 +761,7 @@ var WhoopieStatus = {
     numPlayers : 0,
     lastEventID : 0,            // id of the most recent event from the server
     waitingForGame : true,
+    whoopieCard : null,
     deck : [],
     deckIndex : [],
     deckToIndex: function() {
@@ -847,6 +850,7 @@ function initializeWhoopie() {
      */
 
      var tableElement = "#whoopieTable";
+     var numHands = 4;
 
     //Start by initalizing the library
     cards.init({table:'#whoopieTable', blackJoker:true, redJoker:true, acesHigh: true});
@@ -879,6 +883,9 @@ function initializeWhoopie() {
         setTimeout(getNextWhoopieEvent, WhoopiePollLength);  // poll for the next Whoopie event every 2 seconds
       
     });
+   /* if (numHands == 4) {
+        Seats = Seats4;
+    } I think this is done in seatplayers so don't need it here*/
     return;
 
 
@@ -886,13 +893,13 @@ function initializeWhoopie() {
     var whoopieHands = [];  // array of WhoopieHands
     var numHands = 4;
     var myWhoopieHand;
-    var seats;
+    
 
     /*
      * For now we are simply fixing the number of hands at 4. Will fix this later
      */
     if (numHands == 4) {
-        seats = seats4;
+        Seats = seats4;
     }
     /*
      * On the same theme, set up the 4 players as my sibs. Next we will set up the main event loop of the game
@@ -1067,19 +1074,82 @@ function chooseDealer() {
     
     console.debug("chooseDealer");
 
-    WhoopieStatus.deck.deal(1, Hands, 20)
-    WhoopieStatus.deck.x = DeckLocation.x;      // standard deck location
-    WhoopieStatus.deck.y = DeckLocation.y;
-    WhoopieStatus.deck.render({immediate:true});
-    
+    dealWhoopieHand(1, true);
+
+    setTimeout(finishChooseDealer, 1000);  
+   
+}
+function finishChooseDealer() {
+    var lowHand = null;
+    var lowHandIndex = 0;
+    var debug = 1;
+
+    console.debug("finishchooseDealer: all hands", Hands[0], Hands[1], Hands[2], Hands[3]);
     for (i=0; i < WhoopieStatus.numPlayers; i++) {
         var hand = Hands[i];
-        console.debug("chooseDealer: hand", hand);
-        //hand[0].showCard();
+        //console.debug("finish chooseDealer: each hand", Hands[i][0].shortName);
+        hand[0].showCard();
+        if (lowHand == null || lowHand[0].rank > hand[0].rank ) {
+            lowHand = hand;
+            lowHandIndex = i;
+        }
+        console.debug("lowhand vs hand rank:", lowHand[0].rank, hand[0].rank);
     }
-    //console.debug("chooseDealer: hand", Hands[2][0]);
-    //Hands[2][0].showCard();
-    return(true);   // just deal!
+    if (debug)
+        lowHand = Hands[0];
+
+    // highlight card and set dealer icon to show won (TBD)
+    console.debug("placing dealer button: ", lowHandIndex, Seats[lowHandIndex].buttonTop, Seats[lowHandIndex].buttonLeft);
+    $("#dealerButton").css({top: Seats[lowHandIndex].buttonTop, left: Seats[lowHandIndex].buttonLeft, position:'absolute'});
+    $("#dealerButton").css("display", "block");
+
+    if (lowHand == Hands[0]) {
+        // need a routine to (1) send a message - this time "your deal" but more often "n took the trick. [your deal]"
+        // wait 2-3 secs for it to sink in
+        // ask input from user - button that says deal Now
+        // Maybe just a deal dialogue!
+        //
+        // I am dealer - shuffle and send request - and then deal
+        // send a message - you're the dealer!
+        yourDeal(1);
+        
+
+    } else {
+        // I am not dealer, wait for my turn to bid
+        // setTimeout(getNextWhoopieEvent, WhoopiePollLength);  
+    }
+    
+}
+
+function yourDeal(numberCards) {
+
+    $("#whoopieDealerCardCount").html(numberCards);
+    $("#dialogYourDeal").dialog({
+        resizable: false,
+        height: 200,
+        width: 200,
+        position: { my: "left top", at: "right center", of: "#whoopieTable" },
+        modal: true,
+        buttons: {
+            Deal: function() {
+                proceed();
+                $(this).dialog("close");
+            }
+        }
+    });
+
+    function proceed(){
+            
+        WhoopieStatus.playerName = name;
+        
+        cards.shuffle(WhoopieStatus.deck);
+
+        dealWhoopieHand(numberCards, false);      
+        
+        WhoopieStatus.deckToIndex();
+        whoopieSendRequest("deal", null, null);
+    }
+
 }
 
 function seatPlayers(count) {
@@ -1087,19 +1157,25 @@ function seatPlayers(count) {
     * For now we are simply fixing the number of hands at 4. Will fix this later
     */
    if (count == 4) {
-       seats = seats4;
+       Seats = Seats4;
+       WhoopieStatus.numPlayers = count;
    }
    /*
-    * On the same theme, set up the 4 players as my sibs. Next we will set up the main event loop of the game
+    * On the same theme, set up the 4 players as my sibs. 
     */
-   $("#player2").css({top: "10px", left: "175px", position:'absolute'});
+   for (i=0; i < count; i++) {
+       p = Seats[i];
+        $("#player"+i).css({top: Seats[i].playerTop, left: Seats[i].playerLeft, position:'absolute'});
+        $("#player"+i).css("display", "block");
+   }
+   /*$("#player2").css({top: "10px", left: "175px", position:'absolute'});
    $("#player2").css("display", "block");
    $("#player3").css({top: "10px", left: "500px", position:'absolute'});
    $("#player3").css("display", "block");
    $("#player1").css({top: "310px", left: "175px", position:'absolute'});
    $("#player1").css("display", "block");
    $("#player0").css({top: "310px", left: "565px", position:'absolute'});
-   $("#player0").css("display", "block");
+   $("#player0").css("display", "block");*/
 
    $("#bidID0").html("0");
    $("#bidID1").html("1");
@@ -1109,27 +1185,44 @@ function seatPlayers(count) {
    $("#bidID3").html("3");
    $('#playerIMG3').attr("src","img/photos/sjr1980.jpg");
 
-   
-
-
-   WhoopieHands[0] = new WhoopieHandConstructor();
-   myWhoopieHand = WhoopieHands[0];
-   myWhoopieHand.x = seats[0].x;
-   myWhoopieHand.y = seats[0].y;
-   Hands[0]= new cards.Hand({faceUp:true, x:myWhoopieHand.x, y:myWhoopieHand.y});
-   myWhoopieHand.cards = Hands[0];
-
-   
-   
-   for (i = 1; i < count; i++) {
-       WhoopieHands[i] = new WhoopieHandConstructor();
-       WhoopieHands[i].x = seats[i].x;
-       WhoopieHands[i].y = seats[i].y;
-       Hands[i]= new cards.Hand({faceUp:false, x:WhoopieHands[i].x, y:WhoopieHands[i].y});
-       WhoopieHands[i].cards = Hands[i];
-   }
 
 }
+
+function dealWhoopieHand(numCards, faceUp) {
+    WhoopieHands[0] = new WhoopieHandConstructor();
+    myWhoopieHand = WhoopieHands[0];
+    myWhoopieHand.x = Seats[0].x;
+    myWhoopieHand.y = Seats[0].y;
+    Hands[0]= new cards.Hand({faceUp:true, x:myWhoopieHand.x, y:myWhoopieHand.y});
+    myWhoopieHand.cards = Hands[0];
+ 
+    for (i = 1; i < WhoopieStatus.numPlayers; i++) {
+        WhoopieHands[i] = new WhoopieHandConstructor();
+        WhoopieHands[i].x = Seats[i].x;
+        WhoopieHands[i].y = Seats[i].y;
+        Hands[i]= new cards.Hand({faceUp:faceUp, x:WhoopieHands[i].x, y:WhoopieHands[i].y});
+        WhoopieHands[i].cards = Hands[i];
+    }
+
+     //console.debug("dealWhoopieHand: all hands", Hands[0], Hands[1], Hands[2], Hands[3]);
+     WhoopieStatus.deck.deal(numCards, Hands, 20);
+     //console.debug("dealWhoopieHand: all hands after deal", Hands[0], Hands[1], Hands[2], Hands[3]);
+     WhoopieStatus.deck.x = DeckLocation.x;      // standard deck location
+     WhoopieStatus.deck.y = DeckLocation.y;
+     WhoopieStatus.deck.render({immediate:true});
+
+     // Let's turn over the top card which is the Whoopie card - unless this is the choose dealer deal
+
+    if (!faceUp) {
+        WhoopieStatus.whoopieCard = new cards.Deck({faceUp:true});
+        WhoopieStatus.whoopieCard.x = DeckLocation.x + 20;
+        WhoopieStatus.deck.render({callback:function() {
+            WhoopieStatus.whoopieCard.addCard(WhoopieStatus.deck.topCard());
+            WhoopieStatus.whoopieCard.render();
+        }});
+    }
+}
+
 
 function debugShowAllCards(deck, msg) {
     for (i=0; i < deck.length; i++) {
@@ -1173,13 +1266,8 @@ $
                     whoopieSendRequest("deal", null, null);
                     // then deal one card up to each player. low card is the dealer. If it is you
                     // then shuffle again, and send deck to everyone. wait for bids.
-                    if (chooseDealer()) {                       
-                        // it's me
-                        cards.shuffle(WhoopieStatus.deck);
-                        WhoopieStatus.deckToIndex();
-                        whoopieSendRequest("deal", null, null);
-                        
-                    }
+                    // chooseDealer does all that!
+                    chooseDealer(); 
                     
                 } else {
                     // do nothing just wait for the deal.  if you are the low card, shuffle, send
@@ -1187,13 +1275,14 @@ $
                 }
                 // WhoopieStatus.deck = ev.deck;
                 WaitingForGame = false;
-                if (chooseDealer(WhoopieStatus.deck)) {
+                /*if (chooseDealer(WhoopieStatus.deck)) {
                      // it's me!
                     // shuffle - need to stringify or something the deck to send it to the server for the other players
                     $.get("whoopie?ajaxSetDeck&gameID=WhoopieStatus.gameID&playerID=WhoopieStatus.playerID&deck=xxx", function(data,status) {
                     })
                     // now deal
-                }      
+                    
+                }  */    
             } else if (ev.type == "yourDeal") {
                 // so get the deck and deal it locally and send it back
 
@@ -1232,13 +1321,13 @@ $
         
     });
 
-
+/*
     if (WhoopieMoves > 0)
         gameOver = true;
     if (gameOver) 
         alert("GAME OVER!!!");
     else
-        setTimeout(getNextWhoopieEvent, WhoopiePollLength);
+        setTimeout(getNextWhoopieEvent, WhoopiePollLength);*/
 }
 
 function whoopieSendRequest(requestName, bid, card) {
