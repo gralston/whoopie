@@ -52,7 +52,6 @@ class angelview {
                     <script src='$path/jscript/jquery.feedback_me.js'></script>
                     <script async defer src='https://buttons.github.io/buttons.js'></script>
 
-                    <script src='$path/jscript/cards/decktype.js'></script>
                     <script src='$path/jscript/cards/cards.js'></script>
                     <script src='$whoopieJS'></script>
                     <script src='https://www.gstatic.com/charts/loader.js'></script>

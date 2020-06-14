@@ -46,7 +46,7 @@ class whoopie {
          *   if in waiting state, find out how many have joined. for now, if 2, start the game by 
          *   returning a gameOn event, with the deck from player 0
          */
-        $game = new whoopieGame();
+       /* $game = new whoopieGame();
         $conn = $game->connect();
         $game->id = $gameID;
 
@@ -58,6 +58,8 @@ class whoopie {
             if ($game->status == "wait") {
                 if ($game->numplayers >= 2) {
                     $events[0] = array("type"=>"gameOn",  "gameID"=>$gameID, "playerID"=>$playerID);
+                    // gotta change the game status!
+                    $game->status 
                     return(1);
                 }
             } else {
@@ -73,9 +75,18 @@ class whoopie {
                 }
                 return($count);
             }
+        }*/
+
+        // return all events newer than the lastEventID
+        $gameLog = new whoopieGameLog();
+        $gameLog->connect();
+        $rows = $gameLog->getRows("gamelog", "gameid = $gameID and id > $lastEventID" );
+        $count = 0;
+        while($l = mysqli_fetch_object($rows,"whoopieGameLog")) {
+            $events[0] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerid );
+            $count++;
         }
-        
-        return(0);
+        return($count);
 
     }
 
@@ -89,12 +100,12 @@ class whoopie {
         $json = "{";
         $json .= '"' . "events" .  '": ';
         $count = $this->checkForEvents($gameID, $playerID,  $lastEventID, $events);
-        error_log("func  ajaxNextWhoopieEvent  lasteventID: " . $lastEventID);
-        $count = 1;
+        error_log("func  ajaxNextWhoopieEvent  lasteventID, count: " . angelParens($lastEventID, $count));
+        /*$count = 1;
         for ($i=0; $i < $count; $i++) {
             //$json .= '{"type": "gameOn",  "gameID":'.$gameID.', "playerID":'.$playerID.'},';
             $events[$i] = array("type"=>"gameOn",  "gameID"=>$gameID, "playerID"=>$playerID);
-        }
+        }*/
         $json .= json_encode($events);
 
         $json .= "}";
@@ -112,8 +123,9 @@ class whoopie {
         // error_log("func ajaxWhoopieRequest player name:" . $request->whoopieRequest->playerName);
         $gameLog = new whoopieGameLog();
         $conn = $gameLog->connect();
+        $debug = true;
 
-        $whoopieResponse = array("name"=>"joinedGame", "gameID"=>"0", "playerID"=>"-1", "moveNumber"=>"0");
+        $whoopieResponse = array("name"=>"joinedGame", "gameID"=>"0", "playerID"=>"-1", "lastID"=>"0");
 
         $json = "{";
         $json .= '"' . "whoopieResponse" .  '": ';
@@ -128,18 +140,43 @@ class whoopie {
             elseif (strtolower($request->whoopieRequest->playerName) == "elizabeth")
                 $whoopieResponse["playerID"] = "3";
 
-            
-        } else if ($request->whoopieRequest->name == "deal") {
-            $whoopieResponse["name"] = "receivedDeal";
-            $gameLog->name = "deal";
-            $gameLog->playerid = $request->whoopieRequest->playerID;
+            $gameLog->name = "playerJoined";
+            $gameLog->playerid = $whoopieResponse["playerID"];
+            $gameLog->playername = $request->whoopieRequest->playerName;
             $gameLog->gameid = 1;
             $gameLog->bidmade = 0;
             $gameLog->cardplayed = "";
 
             
             $gameLog->deck = $request->whoopieRequest->deck;
-            $gameLog->insertRow();
+            $whoopieResponse["lastID"] = $gameLog->insertRow();
+
+            // now update game entry and see if game is live
+            $game = new whoopieGame();
+            $conn = $gameLog->shareconn($conn);
+            $game->id = 1;  // we gotta do some work if we want to support multiple games!
+            $game = $game->getEntry();
+            $game->players++;
+            if ($game->players == $game->playercount or $debug) {
+                $game->status = "gameOn";
+                $game->updateThisRow();
+                // write gameOn event to gameLog
+                $gameLog->name = "gameOn";
+                $gameLog->insertRow();
+            }
+            
+        } else if ($request->whoopieRequest->name == "deal") {
+            $whoopieResponse["name"] = "receivedDeal";
+            $gameLog->name = "deal";
+            $gameLog->playerid = $request->whoopieRequest->playerID;
+            $gameLog->playername = $request->whoopieRequest->playerName;
+            $gameLog->gameid = 1;
+            $gameLog->bidmade = 0;
+            $gameLog->cardplayed = "";
+
+            
+            $gameLog->deck = $request->whoopieRequest->deck;
+            $whoopieResponse["lastID"] = $gameLog->insertRow();
         }
 
         $json .= json_encode($whoopieResponse);
@@ -4892,7 +4929,7 @@ class whoopie_view extends angelview {
                     width:700px; height: 400px; margin: 50px 0px 0px 20px; float:left'>";
         
 
-        $body .= "<div id='waitingForGame' style='display:none; background-color: blue; margin: 50px 0px 0px 225px;width:300px; height: 50px;background-image:url(/img/xxxfavicon-16x16.png)'>
+        $body .= "<div id='waitingForGame' style='display:none; background-color: blue; margin: 50px 0px 0px 225px;width:300px; height: 50px;'>
                  <div style='color:white;   margin: 50px 0px 0px 0px;font-size:30px'>Waiting for Game...</div></div>";
         $body .= "   <table>";
         $body .= "   </table>";
@@ -4906,7 +4943,7 @@ class whoopie_view extends angelview {
 
 
         for ($i=0; $i < 10; $i++ ) { 
-            $body .= "<div id='player$i' style='display:none'><img id='playerIMG$i' src='img/photos/gdr1980.jpg' height='50px' width='50px'>";
+            $body .= "<div id='player$i' style='display:none'><img id='playerIMG$i' src='img/founder.jpeg' height='50px' width='50px'>";
 
             $body .= "<table class='whoopieBidTrickTable'>
                         <tr>

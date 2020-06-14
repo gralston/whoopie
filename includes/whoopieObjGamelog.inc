@@ -9,7 +9,8 @@ class whoopieGamelog extends angeldb {
 
     public $gameid           = 0;       // the game this is relevant to
     public $playerid         = 0;       // player who initiated the event
-    public $name             = "";   // event name
+    public $playername       = "";      // player's name
+    public $name             = "";      // event name
     public $eventcount       = 0; 
     public $dealer           = 0;  
     public $cardplayed       = "";  
@@ -21,7 +22,7 @@ class whoopieGamelog extends angeldb {
     function __construct() {
         parent::__construct();
         $this->table_name = "gamelog";
-        $this->column_names = 'gameid,playerid,name,eventcount, dealer,cardplayed,bidmade,deck';
+        $this->column_names = 'gameid,playerid,playername, name,eventcount, dealer,cardplayed,bidmade,deck';
     }
 
     function findMatchingFund($exact) {

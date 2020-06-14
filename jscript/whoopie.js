@@ -754,13 +754,18 @@ var SuitOrder = {'h':0,'s':1,'d':2,'c':3 };
 var WhoopieHands = [];  // array of WhoopieHands
 var Hands = [];         // array of hands (just the cards)
 var Players = [];       // array of players
+var ThisPlayer = null;  // this whoopie player!
+var nextAvailableSeat = 0;
 
-var WhoopiePlayer = {
-    playerID : 0,
-    seat : null,
-    lastBid : 0,
-    lastCardPlayed : null,
-    score : 0
+function WhoopiePlayer(id, name, seat)  {
+    this.playerID   = id,
+    this.seat       = seat,
+    this.name       = name,
+    this.hand       = null,
+    this.latestBid    = 0,
+    this.lastCardPlayed = null,
+    this.latestTricks = 0,
+    this.score = 0
 }
 
 var WhoopieStatus = {
@@ -1087,16 +1092,22 @@ function yourDeal(numberCards) {
 function seatPlayer(playerID, name) {
     var id = "#player"+playerID;
 
+    console.debug("seatPlayer", name, playerID);
+
     WhoopieStatus.numPlayers++;
 
-    $(id).css({top: Seats[playerID].playerTop, left: Seats[playerID].playerLeft, position:'absolute'});
-    $(id).css("display", "block");
+    $(id).css({top: Seats[nextAvailableSeat].playerTop, left: Seats[nextAvailableSeat].playerLeft, position:'absolute'});
+    Players[playerID] = new WhoopiePlayer(playerID, name, Seats[nextAvailableSeat]);
+    nextAvailableSeat++;
 
-   $('#playerIMG1').attr("src","img/photos/esr1980.jpg");
-   $("#bidID2").html("2");
-   $('#playerIMG2').attr("src","img/photos/jmr1980.jpg");
-   $("#bidID3").html("3");
-   $('#playerIMG3').attr("src","img/photos/sjr1980.jpg");
+    
+    /* special case for ralston family game */
+   $('#playerIMG0').attr("src","img/photos/gdr1980.jpg");
+   $('#playerIMG1').attr("src","img/photos/jmr1980.jpg");
+   $('#playerIMG2').attr("src","img/photos/sjr1980.jpg");
+   $('#playerIMG3').attr("src","img/photos/esr1980.jpg");
+
+   $(id).css("display", "block");
 
 }
 
@@ -1179,14 +1190,13 @@ function debugShowAllCards(deck, msg) {
 }
 
 function getNextWhoopieEvent() {
-    console.debug("getNextWhoopieEvent - moves", WhoopieMoves);
+    
     var gameOver = false;
 
-    /* if (WaitingForGame) {
-        $("#waitingForGame").css("display", "block");      
-    }*/
-$
-    $.get("whoopie?ajaxNext&gameID="+WhoopieStatus.gameID+"&playerID="+WhoopieStatus.playerID+"&lastEventID="+WhoopieStatus.lastEventID, function(data,status) {
+    $getURL = "whoopie?ajaxNext&gameID="+WhoopieStatus.gameID+"&playerID="+WhoopieStatus.playerID+"&lastEventID="+WhoopieStatus.lastEventID;
+    console.debug("getNextWhoopieEvent url, moves", $getURL, WhoopieMoves);
+
+    $.get($getURL, function(data,status) {
 
         WhoopieMoves++;
 
@@ -1206,7 +1216,7 @@ $
                 // gotta figure out how to get this, but for now set numplayers to 4
                 WhoopieStatus.numPlayers = 4;  
                 WaitingForgame = false;
-                seatPlayers(WhoopieStatus.numPlayers);     
+                // seatPlayers(WhoopieStatus.numPlayers);     
                 if (WhoopieStatus.playerID == 0) {
                     // you determine who deals.  shuffle and send the deck to everyone.
                     cards.shuffle(WhoopieStatus.deck);
@@ -1303,14 +1313,18 @@ function whoopieSendRequest(requestName, bid, card) {
 
 }
 function handleWhoopieResponse(resp) {
-    console.debug("handleWhoopieResponse", resp.name);
+    
 
     if (resp.name == "joinedGame") {
+        console.debug("handleWhoopieResponse", resp.name, resp.lastID);
         $("#waitingForGame").css("display", "block");   
         WaitingForgame = true;
         WhoopieStatus.playerID = Number(resp.playerID);
         //WhoopieStatus.gameID = Number(resp.gameID);
         WhoopieStatus.gameID = 1;
+        Seats = Seats4;     // get number of players from the response eventually
+        WhoopieStatus.lastEventID = Number(resp.lastID);
+        seatPlayer(WhoopieStatus.playerID, WhoopieStatus.playerName);
     }
 }
 
