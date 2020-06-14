@@ -41,7 +41,8 @@ class angeldb {
         $this->hostname     = "localhost:3306";
         $this->dbname       = "whoopiedb";
         $this->dbuser       = "root";
-        $this->dbpass       = "ralston";
+        #$this->dbpass       = "ralston";
+        $this->dbpass       = "g658pwwTJRCY";
 
 
     }  // construct()
