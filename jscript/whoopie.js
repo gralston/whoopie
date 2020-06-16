@@ -806,8 +806,9 @@ var WhoopieStatus = {
     }
 }
 
-function joinGame(gameName) {
-    
+function joinGame(gameName, firstid) {
+    console.debug("joingame", gameName, firstid);
+
     $("#whoopieJoinName").html(gameName);
 
     $("#dialogJoinGame").dialog({
@@ -834,6 +835,8 @@ function joinGame(gameName) {
             return;
         } else
             WhoopieStatus.playerName = name;
+        WhoopieStatus.lastEventID = firstid;
+        
         $("#whoopieGameChooser").css("display", "none");
         $("#whoopieTable").css("display", "block");
         console.debug("dialog proceed: ", name);
@@ -1202,16 +1205,24 @@ function getNextWhoopieEvent() {
 
         console.debug("getNextWhoopieEvent.data: ", JSON.stringify(data));
         var allData = JSON.parse(data);
-        console.debug("getNextWhoopieEvent.parsedata: ", allData);
+        // console.debug("getNextWhoopieEvent.parsedata: ", allData);
         
         //return;
 
         var whoopieEvents = allData.events;
 
         for (i = 0; i < whoopieEvents.length; i++) {
+            console.debug("getNextWhoopieEvent #events", whoopieEvents.length);
             var ev = whoopieEvents[i];
+            WhoopieStatus.lastEventID = ev.lastEventID;
 
-            if (ev.type == "gameOn") {
+            console.debug("getNextWhoopieEvent event (type, player) eventid: ", angelParens(ev.type, ev.playerName), ev.lastEventID);
+            if (ev.type == "playerJoined") {
+                if (ev.playerID == WhoopieStatus.playerID)      // skip if it's me!
+                    continue;
+                seatPlayer(ev.playerID, ev.playerName);
+                
+            } else if (ev.type == "gameOn") {
                 $("#waitingForGame").css("display", "none"); 
                 // gotta figure out how to get this, but for now set numplayers to 4
                 WhoopieStatus.numPlayers = 4;  
@@ -1221,7 +1232,7 @@ function getNextWhoopieEvent() {
                     // you determine who deals.  shuffle and send the deck to everyone.
                     cards.shuffle(WhoopieStatus.deck);
                     WhoopieStatus.deckToIndex();
-                    whoopieSendRequest("deal", null, null);
+                    whoopieSendRequest("dealForFirstDeal", null, null);
                     // then deal one card up to each player. low card is the dealer. If it is you
                     // then shuffle again, and send deck to everyone. wait for bids.
                     // chooseDealer does all that!
@@ -1241,6 +1252,10 @@ function getNextWhoopieEvent() {
                     // now deal
                     
                 }  */    
+            } else if (ev.type == "dealForFirstDeal") {
+                // so get the deck and deal it locally
+                importDeck(ev.deck);
+                chooseDealer();
             } else if (ev.type == "yourDeal") {
                 // so get the deck and deal it locally and send it back
 
@@ -1279,13 +1294,22 @@ function getNextWhoopieEvent() {
         
     });
 
-/*
-    if (WhoopieMoves > 0)
+
+    if (WhoopieMoves > 20)
         gameOver = true;
-    if (gameOver) 
+    if (gameOver) {
+        if (WhoopieStatus.playerID == 0)
+            whoopieSendRequest("resetGame", null, null);
         alert("GAME OVER!!!");
+        
+    }
     else
-        setTimeout(getNextWhoopieEvent, WhoopiePollLength);*/
+        setTimeout(getNextWhoopieEvent, WhoopiePollLength);
+}
+
+function importDeck(deckIndex) {
+    console.debug("importDeck", deckIndex)
+
 }
 
 function whoopieSendRequest(requestName, bid, card) {
@@ -1323,588 +1347,9 @@ function handleWhoopieResponse(resp) {
         //WhoopieStatus.gameID = Number(resp.gameID);
         WhoopieStatus.gameID = 1;
         Seats = Seats4;     // get number of players from the response eventually
-        WhoopieStatus.lastEventID = Number(resp.lastID);
+        // WhoopieStatus.lastEventID = Number(resp.lastID);  // I THINK THIS IS A RACE CONDITION WAITING TO HAPPEN!
         seatPlayer(WhoopieStatus.playerID, WhoopieStatus.playerName);
     }
-}
-
-
-/***************************************************************
- * Calculates the per-share price for a YC Standard note converting with a cap and no discount
- * Price is the lower of the Equity Price and the Target Price where
- * Target Price = Note Cap / Fully Diluted Capitalization plus new option shares  (does not include other converts)
- *
- * @param conv
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- * @param equityPrice
- * @oaram preMoneyVal
- * @returns {*}
- */
-function ycStdNoteCap(conv, oSharesPost, totalFDpreShares, existingOptions, equityPrice) {
-
-    var targetPrice = 0;
-
-
-    targetPrice = Precision.round(conv.cap / (oSharesPost + totalFDpreShares - existingOptions));
-
-    if (equityPrice == 0 || targetPrice < equityPrice) {
-        conv.price = targetPrice;
-
-        conv.equationNumerator = Number(conv.cap.toFixed(0)).toLocaleString() + " (cap)";
-
-        conv.equationDenominator = Number(oSharesPost.toFixed(0)).toLocaleString() + " (options) + " +
-            Number(totalFDpreShares.toFixed(0)).toLocaleString()  + " (FD Pre Shares) - " +
-            Number(existingOptions.toFixed(0)).toLocaleString()  + " (existing options)";
-    } else {
-        conv.price = equityPrice;
-
-        conv.equationNumerator = equityPrice.toFixed(4) + " (Equity price)";
-        conv.equationDenominator = "";
-
-    }
-
-    conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-    conv.yourShares = Precision.round(conv.yourInvestment / conv.price);
-
-    console.debug("ycStdNoteCap: " + "conv.cap: " + conv.cap.toLocaleString() + " conv.price: " + conv.price.toFixed(4)+ " equityPrice: " + equityPrice.toFixed(4));
-
-    return(conv);
-}
-
-/***************************************************************
- * Calculates the per-share price for a YCVC SAFE
- * Price is the Safe Price which is:
- * Safe Price = Note Cap (usually 10mm) / Fully Diluted Capitalization plus new option shares  plus all existing converts - including THIS ONE
- *    we currently only include this SAFE, which means our price will be a bit high in those cases until we write more code!
- *
- *    the formula we use is: cap - investment / (denominator above): (investment = i, price = p, s = safe shares denom = d + s )
- *
- *         s = i / p  and  p = cap / d + s  --> p =  p * (d + s) = cap  --> pd + ps = cap --> pd + i = cap --> p = (cap - i) / d
- *
- * @param conv
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- * @param equityPrice
- * @oaram preMoneyVal
- * @returns {*}
- */
-function ycvcSafe(conv, myIndex, oSharesPost, totalFDpreShares, existingOptions, equityPrice) {
-
-    var safePrice = 0;
-
-    var convsToAdd = conv.preexist;
-    var i = 0;
-
-    /*
-     * a YCVC safe's price calculation should include all preexisting SAFE's in its denominator. These are included
-     * in the preexist element.
-     */
-    var convSharesToAddDenom = "";
-    var convSharesToAdd = 0;
-
-    c = preexistCount(convsToAdd, myIndex);
-    convSharesToAdd = c.totalShares;
-    convSharesToAddDenom = c.equationDenominator;
-
-    safePrice = Precision.round((conv.cap - conv.totalInvested)/ (oSharesPost + totalFDpreShares - existingOptions + convSharesToAdd));
-    conv.price = safePrice;
-
-    conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-
-    conv.equationNumerator = Number(conv.cap.toFixed(0)).toLocaleString() + " (cap)";
-
-    conv.equationDenominator = Number(oSharesPost.toFixed(0)).toLocaleString() + " (options) + " +
-            Number(totalFDpreShares.toFixed(0)).toLocaleString()  + " (FD Pre Shares) - " +
-            Number(existingOptions.toFixed(0)).toLocaleString()  + " (existing options) +" +
-            Number(conv.totalShares.toFixed(0)).toLocaleString()  + " (this safe's shares)" + convSharesToAddDenom;
-
-    // console.debug("ycvcSafe: " + "conv.cap: " + conv.cap.toLocaleString() + " conv.price: " + conv.price.toFixed(4));
-
-    return(conv);
-}
-
-
-/***************************************************************
- * Calculates the per-share price for a YC POST Money Safe
- * Price is the Safe Price which is:
- * Safe Price = Note Cap (usually 10mm) / Fully Diluted Capitalization plus new option shares  plus all existing converts - including THIS ONE
- *    we currently only include this SAFE, which means our price will be a bit high in those cases until we write more code!
- *
- *    the formula we use is: cap - investment / (denominator above): (investment = i, price = p, s = safe shares denom = d + s )
- *
- *         s = i / p  and  p = cap / d + s  --> p =  p * (d + s) = cap  --> pd + ps = cap --> pd + i = cap --> p = (cap - i) / d
- *
- * @param conv
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- * @param equityPrice
- * @oaram preMoneyVal
- * @returns {*}
- */
-function ycPost(conv, myIndex, oSharesPost, totalFDpreShares, existingOptions, equityPrice) {
-
-    conv.cap = 150000/.07;
-    conv.totalInvested = 150000;
-
-    c = calcPostMoneySafePrice(conv, myIndex, oSharesPost, totalFDpreShares, existingOptions);
-
-    conv.price = c.price;
-    conv.equationNumerator = c.equationNumerator;
-    conv.equationDenominator = c.equationDenominator;
-    conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-    conv.yourShares = Precision.round(conv.yourInvestment / conv.price);
-    console.debug("ycPost: " + "conv.cap: " + conv.cap.toLocaleString() + " conv.price: " + conv.price.toFixed(4)
-    + " conv.custom: " + conv.custom);
-
-
-    return(conv);
-}  // ycpost
-
-
-/*************************************************************
- * preexistCount calculates the denominator and share count of preexisting converts to include. these are returned in
- * a somewhat hacky way in a conv structure (sorry, but this was easist) in totalShares and denom. elements.
- *
- * @param list  -- this is the comma separated list of converts to include - we will ignore any that don't make sense
- * @param myIndex -- index of myself - ignore!
- *
- */
-
-function preexistCount(list, myIndex) {
-
-    var conv = Object.create(Convert);
-    var addList = list.split(",");
-    var convIndex;
-
-    var convSharesToAddDenom = "";
-    var convSharesToAdd = 0;
-    if (addList[0] != "") {                 // there's one empty entry when the field is empty
-        for (i=0; i < addList.length; i++) {
-            /*
-             * error check addList[i] to make sure it is legit - just ignore otherwise
-             */
-            convIndex = addList[i];
-            if ($.isNumeric(convIndex) && convIndex >= 0 && convIndex < ConvertList.length && convIndex != myIndex) {
-                c = ConvertList[convIndex];
-                convSharesToAddDenom += " + " + Number(c.totalShares.toFixed(0)).toLocaleString() + " (Convert " + addList[i] + ")";
-                convSharesToAdd += c.totalShares;
-            }
-        }
-    }
-    conv.totalShares = convSharesToAdd;
-    conv.equationDenominator = convSharesToAddDenom;
-
-    return(conv);
-}
-/***************************************************************
- * Calculates the per-share price for a what is called a Post Money SAFE
- * but really means post all other seed money and includes all of that money
- * in the denominator of the price calculation (including itself!)
- *
- * @param conv
- * @param myIndex
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- * @param equityPrice
- * @param preMoneyVal
- */
-function postMoneySafeCap(conv, myIndex, oSharesPost, totalFDpreShares, existingOptions, equityPrice, preMoneyVal) {
-
-    if (conv.cap == 0)      // nothing to do, convert is not valid
-        conv.cap = 10000000000; // make it effectively uncapped - hoping this works! :)
-    if (equityPrice == 0 || conv.cap <  preMoneyVal) {
-        var convSharesToAdd = 0;
-        var denominator = "";
-
-        var preexistConvs = "";
-
-        for (i=0; i < ConvertList.length; i++) {
-            if (i == myIndex)   // our shares aren't calc'd yet, don't try to include them!
-                continue;
-            c = ConvertList[i];
-            convSharesToAdd += c.totalShares;
-            denominator += " + " + Number(c.totalShares.toFixed(0)).toLocaleString() + " (Convert " + i + ")";
-            preexistConvs += i + ",";
-
-        }
-        var cd = customBuildDenom(conv.custom, myIndex, preexistConvs, oSharesPost, totalFDpreShares, existingOptions);
-        /* remember that the denom includes our shares, but rather than be circular, we use algebra and subtract the amount invested */
-        conv.price = Precision.round((conv.cap - conv.totalInvested)/ (oSharesPost + totalFDpreShares - existingOptions + convSharesToAdd));
-        conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-        conv.yourShares = Precision.round(conv.yourInvestment / conv.price);
-
-        conv.equationNumerator = Number(conv.cap.toFixed(0)).toLocaleString() + " (cap)";
-
-        conv.equationDenominator =
-            Number(oSharesPost.toFixed(0)).toLocaleString() + " (options) + " +
-            Number(totalFDpreShares.toFixed(0)).toLocaleString()  + " (FD Pre Shares) - " +
-            Number(existingOptions.toFixed(0)).toLocaleString()  + " (existing options) + " +
-            Number(conv.totalShares.toFixed(0)).toLocaleString()  + " (this safe's shares)" +  denominator;
-        conv.equationDenominator = cd.equationDenominator;  // if customBuildDenom actually works!
-
-    } else {
-        conv.price = equityPrice;
-        conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-        conv.yourShares = Precision.round(conv.yourInvestment / conv.price);
-
-        conv.equationNumerator = equityPrice.toFixed(4) + " (Equity price)";
-        conv.equationDenominator = "";
-
-    }
-
-    console.debug("postMoneySafeCap: " + "conv.cap: " + conv.cap.toLocaleString() + " conv.price: " + conv.price.toFixed(4));
-
-    return(conv);
-
-}
-/******************************************************************
- *
- * @param conv
- * @param myIndex
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- * @param equityPrice
- */
-function postMoneySafeCapDiscount(conv, myIndex, oSharesPost, totalFDpreShares, existingOptions, equityPrice) {
-
-    var discount = conv.discount / 100;
-    var discountPrice = Precision.round((1-discount) * equityPrice);
-
-
-    if (conv.cap == 0)
-        conv.cap = 11000000000; // make it effectively uncapped - hoping this works! :)
-
-    c = calcPostMoneySafePrice(conv, myIndex, oSharesPost, totalFDpreShares, existingOptions);
-
-    if (discountPrice == 0 || c.price < discountPrice) {
-        conv.price = c.price;
-
-        conv.equationNumerator = c.equationNumerator;
-        conv.equationDenominator = c.equationDenominator;
-        conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-        conv.yourShares = Precision.round(conv.yourInvestment / conv.price);
-
-
-    } else {
-        conv.price = discountPrice;
-        conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-        conv.yourShares = Precision.round(conv.yourInvestment / conv.price);
-
-        conv.equationNumerator = equityPrice.toFixed(4) + " (Equity price) * " + (1-discount) * 100 + "% (1-discount)";
-        conv.equationDenominator = "";
-
-    }
-
-
-    // console.debug("postMoneySafeCapDiscount: "  + "conv.cap: " + conv.cap.toLocaleString() + " conv.discount: " + conv.discount + " discountPrice: " + discountPrice.toFixed(4) + " conv.price: " + conv.price.toFixed(4) + " conv.custom: " + conv.custom);
-
-    return(conv);
-
-
-}
-
-function calcPostMoneySafePrice(origConv, myIndex, oSharesPost, totalFDpreShares, existingOptions) {
-
-    var conv = Object.create(Convert);
-    var convSharesToAdd = 0;
-    var denominator = "";
-    var newOptions = 0;
-
-    var includeUnissued = (origConv.custom.search("customDenomUnissued") != -1);
-    var includeAdditional = (origConv.custom.search("customDenomAdditional") != -1);
-
-    // console.debug("unissued / additional: " + includeUnissued + " / " + includeAdditional);
-
-    if (includeAdditional)
-        newOptions = oSharesPost - existingOptions;
-
-    if (!includeUnissued)
-        newOptions = -1*Number(existingOptions);    // subtract these from Fully diluted (they're included already)
-
-    // console.debug("osharespost,existingoptions: " + oSharesPost +","+existingOptions);
-
-
-    for (i=0; i < ConvertList.length; i++) {
-        if (i == myIndex)   // our shares aren't calc'd yet, don't try to include them!
-            continue;
-        c = ConvertList[i];
-        convSharesToAdd += c.totalShares;
-        denominator += " + " + Number(c.totalShares.toFixed(0)).toLocaleString() + " (Convert " + i + ")";
-    }
-    /* remember that the denom includes our shares, but rather than be circular, we use algebra and subtract the amount invested */
-    /*console.debug("cap,ti,newopt,totalfdpre,convshares: " + origConv.cap +","+origConv.totalInvested+","
-                    +newOptions+","+totalFDpreShares+","+convSharesToAdd);*/
-    conv.price = Precision.round((origConv.cap - origConv.totalInvested)/ ( newOptions + totalFDpreShares + convSharesToAdd));
-
-    conv.totalShares = Precision.round(origConv.totalInvested / conv.price);
-
-    conv.equationNumerator = Number(origConv.cap.toFixed(0)).toLocaleString() + " (cap)";
-
-    if (includeAdditional)
-        conv.equationDenominator = postOptionsDenom(oSharesPost, existingOptions);
-    else
-        conv.equationDenominator = "";
-
-    conv.equationDenominator +=
-        Number(totalFDpreShares.toFixed(0)).toLocaleString()  + " (FD Pre Shares) + " +
-        Number(conv.totalShares.toFixed(0)).toLocaleString()  + " (this safe's shares)" + denominator;
-
-    if (includeUnissued)
-        conv.equationDenominator += " - 0 (unissued options included in FD shares)";
-    else
-        conv.equationDenominator += " - " + Number(existingOptions.toFixed(0)).toLocaleString() + " (existing unissued options included in FD) " ;
-
-    return(conv);
-
-}
-
-function postOptionsDenom(sharesPost, existing) {
-    var returnString = "";
-
-    if (sharesPost >= existing) {
-        /* the most commonn / normal case */
-        returnString += Number(sharesPost.toFixed(0)).toLocaleString() + " (total new options) ";
-        if (existing > 0)
-            returnString += " - " + Number(existing.toFixed(0)).toLocaleString() + " (existing unissued options) ";
-    } else {
-        returnString += " (there are no new options to include) ";
-    }
-
-
-}
-
-/***************************************************************
- * Calculates the per-share price for a true Post Money SAFE
- * This is not actually used because I think noone really does post money converts like this
- * (where post money is post equity money too).
- * Price is the Safe Price which is:
- * @returns {*}
- */
-function postMoneySafe(conv) {
-
-
-    postVal = Equity.totalInvested+Equity.preMoneyVal;
-
-    /*
-     * if the post money cap is less than the actual post valuation, use the cap to calc. price. Otherwise use
-     * the actual post.
-     */
-    if (conv.cap < postVal) {
-        conv.price = conv.cap / Equity.postFDShares;
-        conv.equationNumerator = Number(conv.cap.toFixed(0)).toLocaleString() + " (post money cap)";
-        conv.equationDenominator = Number(Equity.postFDShares.toFixed(0)).toLocaleString() + " (FD Shares)";
-    } else {
-        conv.price = postVal / Equity.postFDShares;
-        conv.equationNumerator = Number(postVal.toFixed(0)).toLocaleString() + " (post money val)";
-        conv.equationDenominator = Number(Equity.postFDShares.toFixed(0)).toLocaleString() + " (FD Shares)";
-
-    }
-    conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-    conv.yourShares  = Precision.round(conv.yourInvestment / conv.price);
-
-    console.debug("postMoneySafe: " + "conv.cap: " + conv.cap.toLocaleString() + " postFDShares: " + Equity.postFDShares.toLocaleString());
-
-    return(conv);
-}
-
-
-
-/***************************************************************
- * Calculates the per-share price for a custom convert converting with a cap and a discount
- * Price = lower of Safe Price and Discount Price
- *
- * Safe Price = Safe Cap / Fully Diluted Capitalization plus new option shares  (does not include other converts)
- * Discount Price = (1-discount)* Equity Price
- *
- * @param conv
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- * @param equityPrice
- * @returns {*}
- */
-
-function customConvert(conv, index, oSharesPost, totalFDpreShares, existingOptions, equityPrice) {
-
-    var convPrice = 0;
-    var discountPrice = 0;
-
-    var preexistConvs = conv.preexist;
-
-    // var dict = parseQueryStringToDictionary(conv.custom);
-
-    var testVal;
-    var testPrice;
-    var discount = conv.discount / 100;
-
-    discountPrice = Precision.round((1-discount) * equityPrice);
-
-    // var compareValue = (dict["customCompare"] == "capAndVal");
-    var compareValue = (conv.custom.search("capAndVal") != -1);
-    /*
-     * if we need to include ourselves, we rely on algebra to avoid a goal seek here (i.e. we don't try to
-     * precalculate our number of shares. See the comment on the ycvcsafe for the equations.
-     */
-    // var includeMyself = ("customDenomThis" in dict);
-    var includeMyself = (conv.custom.search("customDenomThis") != -1);
-
-    /*
-     * discount only convert. This is no different than any other convert, of course.
-     */
-    if (conv.cap == 0) {
-        if (conv.discount != 0) {
-            conv.price = discountPrice;
-
-            conv.equationNumerator = equityPrice.toFixed(4) + " (Equity price) * " + (1-discount) * 100 + "% (1-discount)";
-            conv.equationDenominator = "";
-
-        }
-
-    } else {
-        c = customBuildDenom(conv.custom, index, preexistConvs, oSharesPost, totalFDpreShares, existingOptions);       /* determine total shares in this converts denom */
-        /* there is a cap - and there may also be a discount */
-        if (compareValue) {
-            if (conv.cap < Equity.preMoneyVal) {
-                if (includeMyself)
-                    conv.price = Precision.round((conv.cap-conv.totalInvested) / c.totalShares);
-                else
-                    conv.price = Precision.round(conv.cap / c.totalShares);
-
-                conv.equationNumerator = Number(conv.cap.toFixed(0)).toLocaleString();
-                conv.equationDenominator = c.equationDenominator;
-
-            } else {
-                if (includeMyself)
-                    conv.price = Precision.round((Equity.preMoneyVal-conv.totalInvested) / c.totalShares);
-                else
-                    conv.price = Precision.round(Equity.preMoneyVal / c.totalShares);
-
-                conv.equationNumerator = Number(Equity.preMoneyVal.toFixed(0)).toLocaleString();
-                conv.equationDenominator = c.equationDenominator;
-            }
-
-        } else {
-            /* comparision will be calculated convert price vs. discounted price */
-            if (includeMyself)
-                convPrice = Precision.round((conv.cap - conv.totalInvested) / c.totalShares);
-            else
-                convPrice = Precision.round(conv.cap / c.totalShares);
-
-            if (convPrice < discountPrice) {
-                conv.price = convPrice;
-                conv.equationNumerator = Number(conv.cap.toFixed(0)).toLocaleString();
-                conv.equationDenominator = c.equationDenominator;
-            } else {
-                /* discount price to be used */
-                conv.price = discountPrice;
-                conv.equationNumerator = equityPrice.toFixed(4) + " (Equity price) * " + (1-discount) * 100 + "% (1-discount)";
-                conv.equationDenominator = "";
-            }
-        }
-
-    }
-
-    conv.totalShares = Precision.round(conv.totalInvested / conv.price);
-    conv.yourShares = Precision.round(conv.yourInvestment / conv.price);
-
-    if (includeMyself && conv.equationDenominator != "")
-        conv.equationDenominator += " + " + Number(conv.totalShares.toFixed(0)).toLocaleString()  + " (this convert's shares)";
-
-    console.debug("customConvert: custom=" + conv.custom + " compareVal: " + compareValue + " conv.cap: " + conv.cap.toLocaleString() + " conv.discount: " + conv.discount + " discountPrice: " + discountPrice.toFixed(4) + " conv.price: " + conv.price.toFixed(4));
-
-    return(conv);
-}
-
-/************************************************
- * Return a conv in which the totalShares is the total shares in the denominator based on the convert's definition
- * with the exception that the converts own shares will not be included even if requested - those shares will be
- * accounted for in the price by subtracting the investment from the numerator (algebra!).  The denominator text
- * field will also be returned in equationDenominator
- *
- * @param custom
- * @oaram index
- * @param preexisrtConvs
- * @param oSharesPost
- * @param totalFDpreShares
- * @param existingOptions
- */
-
-function customBuildDenom(custom, index, preexistConvs, oSharesPost, totalFDpreShares, existingOptions) {
-
-    var conv = Object.create(Convert);
-    conv.totalShares = 0;
-    conv.equationDenominator = "";
-
-    var includeIssued = (custom.search("customDenomIssued") != -1);
-    var includeUnissued = (custom.search("customDenomUnissued") != -1);
-    var includeAdditional = (custom.search("customDenomAdditional") != -1);
-    var includePreexist = (custom.search("customDenomPreexist") != -1);
-
-    /* var includeIssued = ("customDenomIssued" in dict);
-    var includeUnissued = ("customDenomUnissued" in dict);
-    var includeAdditional = ("customDenomAdditional" in dict);
-    var includePreexist = ("customDenomPreexist" in dict);*/
-
-    if (includeIssued) {    // I am pretty sure I can't handle the case where this isn't checked
-        conv.totalShares += totalFDpreShares;
-        conv.equationDenominator = Number(totalFDpreShares.toFixed(0)).toLocaleString()  + " (FD Pre Shares)";
-    }
-    if (includeUnissued) {
-        conv.totalShares += existingOptions;
-        conv.equationDenominator +=  "+ " + Number(existingOptions.toFixed(0)).toLocaleString()  + " (existing options)";
-    }
-
-    if (includeAdditional) {
-        conv.totalShares += oSharesPost - existingOptions;
-        conv.equationDenominator +=  "+ " + Number((oSharesPost-existingOptions).toFixed(0)).toLocaleString()  + " (new options)";
-    }
-
-    if (includePreexist) {
-        c = preexistCount(preexistConvs, index);
-        conv.equationDenominator +=  c.equationDenominator;
-        conv.totalShares += c.totalShares;
-    }
-
-
-    return(conv);
-
-}
-
-/****************************************************************
- *
- * @param premoneyShares
- * @param valuation
- * @param preOrPost
- * @returns {number}
- */
-
-function sharePriceEquity(totalFDpreShares, totalConvShares,oSharesNew, valuation) {
-    var price = 0;
-    var equationNum = "";
-    var equationDenom = "";
-
-
-
-    price = valuation /  (totalFDpreShares + totalConvShares + oSharesNew);
-
-    equationNum = valuation.toLocaleString() + " (pre val)";
-    equationDenom = Number(totalFDpreShares.toFixed(0)).toLocaleString() + " (FD Pre Shares) + " +
-        Number(totalConvShares.toFixed(0)).toLocaleString()  + " (converted shares) + " +
-        Number(oSharesNew.toFixed(0)).toLocaleString()  + " (new options)";
-
-
-    Equity.equationNumerator = equationNum;
-    Equity.equationDenominator = equationDenom;
-
-    // console.debug("sharePriceEquity: price=" + price);
-
-    return(price);
 }
 
 

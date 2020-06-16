@@ -46,44 +46,15 @@ class whoopie {
          *   if in waiting state, find out how many have joined. for now, if 2, start the game by 
          *   returning a gameOn event, with the deck from player 0
          */
-       /* $game = new whoopieGame();
-        $conn = $game->connect();
-        $game->id = $gameID;
-
-        $game = $game->getEntry();
-
-        if ($game == null) {
-            angelerror("Help, no such game found");
-        } else {
-            if ($game->status == "wait") {
-                if ($game->numplayers >= 2) {
-                    $events[0] = array("type"=>"gameOn",  "gameID"=>$gameID, "playerID"=>$playerID);
-                    // gotta change the game status!
-                    $game->status 
-                    return(1);
-                }
-            } else {
-                // return all events newer than the lastEventID
-                $gameLog = new whoopieGameLog();
-                $gameLog->shareconn($conn);
-                $rows = $gameLog->getRows("gamelog", "gameid = $gameID and id > $lastEventID" );
-                $count = 0;
-                while($l = mysqli_fetch_object($rows,"whoopieGameLog")) {
-                    $events[0] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerid );
-
-                    $count++;
-                }
-                return($count);
-            }
-        }*/
 
         // return all events newer than the lastEventID
+        //
         $gameLog = new whoopieGameLog();
         $gameLog->connect();
         $rows = $gameLog->getRows("gamelog", "gameid = $gameID and id > $lastEventID" );
         $count = 0;
         while($l = mysqli_fetch_object($rows,"whoopieGameLog")) {
-            $events[0] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerid );
+            $events[$count] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerid, "playerName"=>$l->playername, "lastEventID"=>$l->id );
             $count++;
         }
         return($count);
@@ -119,11 +90,12 @@ class whoopie {
     
     function ajaxWhoopieRequest($request) {
 
-        // error_log("func ajaxWhoopieRequest (request, card)" . angelParens($request->whoopieRequest->name, $request->whoopieRequest->card));
+        error_log("func ajaxWhoopieRequest (request, card) playerID" . angelParens($request->whoopieRequest->name, $request->whoopieRequest->card), $request->whoopieRequest->playerID);
         // error_log("func ajaxWhoopieRequest player name:" . $request->whoopieRequest->playerName);
         $gameLog = new whoopieGameLog();
         $conn = $gameLog->connect();
-        $debug = true;
+        $debug = false;
+
 
         $whoopieResponse = array("name"=>"joinedGame", "gameID"=>"0", "playerID"=>"-1", "lastID"=>"0");
 
@@ -153,18 +125,33 @@ class whoopie {
 
             // now update game entry and see if game is live
             $game = new whoopieGame();
-            $conn = $gameLog->shareconn($conn);
+            $gameLog->shareconn($conn);
             $game->id = 1;  // we gotta do some work if we want to support multiple games!
             $game = $game->getEntry();
             $game->players++;
             if ($game->players == $game->playercount or $debug) {
-                $game->status = "gameOn";
-                $game->updateThisRow();
+                error_log("func ajaxWhoopieRequest gameOn");
+                $game->status = "gameOn";          
                 // write gameOn event to gameLog
                 $gameLog->name = "gameOn";
                 $gameLog->insertRow();
             }
+
+            $game->updateThisRow();     // update active player count (and maybe status)
             
+        } else if ($request->whoopieRequest->name == "dealForFirstDeal") {
+            
+            $whoopieResponse["name"] = "receivedFirstDeal";
+            $gameLog->name = "dealForFirstDeal";
+            $gameLog->playerid = $request->whoopieRequest->playerID;
+            $gameLog->playername = $request->whoopieRequest->playerName;
+            $gameLog->gameid = 1;
+            $gameLog->bidmade = 0;
+            $gameLog->cardplayed = "";
+
+            
+            $gameLog->deck = $request->whoopieRequest->deck;
+            $whoopieResponse["lastID"] = $gameLog->insertRow();
         } else if ($request->whoopieRequest->name == "deal") {
             $whoopieResponse["name"] = "receivedDeal";
             $gameLog->name = "deal";
@@ -177,7 +164,28 @@ class whoopie {
             
             $gameLog->deck = $request->whoopieRequest->deck;
             $whoopieResponse["lastID"] = $gameLog->insertRow();
-        }
+        } else if ($request->whoopieRequest->name == "resetGame") {
+
+            // now update game entry and see if game is live
+            $game = new whoopieGame();
+            $gameLog->shareconn($conn);
+            $game->id = 1;  // we gotta do some work if we want to support multiple games!
+            $game = $game->getEntry();
+            $game->players = 0;
+            $game->status = "wait";          
+            // write gameOn event to gameLog
+            $gameLog->name = "gameOver";
+            $gameLog->playerid = 0;
+            $gameLog->playername = $request->whoopieRequest->playerName;
+            $gameLog->gameid = 1;
+            $gameLog->bidmade = 0;
+            $gameLog->cardplayed = "";
+            $game->firstlogid = $gameLog->insertRow(); //   first id for next game is entry AFTER the gameOver entry
+
+        
+            $game->updateThisRow();     // update active player count (and maybe status)
+            
+        } 
 
         $json .= json_encode($whoopieResponse);
 
@@ -4899,7 +4907,9 @@ class whoopie_view extends angelview {
 
     function whoopieHomePageBody() {
 
-       // $body = "<script>$(document).ready( function() { initializeWhoopie() } );</script>";  // initialize things when the page loads
+        $game = new whoopieGame();
+        $conn = $game->connect();
+
 
         $body = "<div style='overflow:hidden'>";
         $body .= $this->createWhoopieDialogs();
@@ -4915,24 +4925,32 @@ class whoopie_view extends angelview {
         $body .= "<div id='whoopieGameChooser' style='width:500px; border: 2px solid blue; margin: 100px 0px 0px 300px'>";        // choose game div
 
         $body .=    "<table class='whoopieGameChooserTable'>";
-        $body .=        "<tr><th colspan=2>Choose a game!</th></tr>";
-        $body .=        "<tr><th>Name</th> <th>Creator</th</tr>";
 
-        $body .=        "<tr><td onclick='joinGame(\"Ralston Family Game\")'>Ralston Family Game</td> <td>Geoff</td></tr>";
+        $rows = $game->getRows("games", "id > 0" );
+        while($g = mysqli_fetch_object($rows,"whoopieGame")) {
+            $body .=        "<tr><th colspan=3>Choose a game!</th></tr>";
+            $body .=        "<tr><th>Name</th> <th>Creator</th><th>Description</th></tr>";
+            $body .=        "<tr><td onclick='joinGame(\"$g->name\", $g->firstlogid)'>$g->name</td> 
+                                 <td onclick='joinGame(\"$g->name\", $g->firstlogid)'>$g->creator</td>
+                                 <td onclick='joinGame(\"$g->name\", $g->firstlogid)'>$g->description</td>
+                             </tr>";
+        }
+        
         $body .=    "</table>";
         $body .= "</div>";
 
         /*
-         * This div is where the game is played
+         * This div is where the game is played xxx
          */
         $body .= "<div id='whoopieTable' style='display:none; background-image:url(/img/cardtable.jpg); border: 5px solid blue; 
                     width:700px; height: 400px; margin: 50px 0px 0px 20px; float:left'>";
         
 
-        $body .= "<div id='waitingForGame' style='display:none; background-color: blue; margin: 50px 0px 0px 225px;width:300px; height: 50px;'>
-                 <div style='color:white;   margin: 50px 0px 0px 0px;font-size:30px'>Waiting for Game...</div></div>";
+        $body .= "<div id='waitingForGame' style='display:none; background-color: blue; margin: 160px 0px 0px 400px;width:290px; height: 50px;'>
+                 <div style='color:white;   margin: 0px 0px 0px 10px;font-size:28px'>Waiting for Game...</div></div>";
         $body .= "   <table>";
         $body .= "   </table>";
+
       
         $body .= "   <div id='dealerButton' style='display:none;'>";
 

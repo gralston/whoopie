@@ -41,8 +41,8 @@ class angeldb {
         $this->hostname     = "localhost:3306";
         $this->dbname       = "whoopiedb";
         $this->dbuser       = "root";
-        #$this->dbpass       = "ralston";
-        $this->dbpass       = "g658pwwTJRCY";
+        $this->dbpass       = "ralston";
+        #$this->dbpass       = "g658pwwTJRCY";
 
 
     }  // construct()
@@ -240,18 +240,7 @@ class angeldb {
         if ($result == NULL)
             angeldie("addEntry addRow failed: " . $this->error() );
 
-        /*
-         * other than for news, store a new entry in the newa_entries table
-         */
-        if ($this->table_name != "news_table") {
-            $this->id = mysqli_insert_id($this->conn);
-            $uID = $_SESSION['loggedInUserID'];
-            $q = "INSERT INTO new_entries (type,table_id,userID) VALUES ('$this->table_name','$this->id','$uID')";
-
-            // angeldie($q);
-            $result = mysqli_query($conn,$q);
-        }
-
+        $this->id = mysqli_insert_id($this->conn);
         return($this->id);
     }
 

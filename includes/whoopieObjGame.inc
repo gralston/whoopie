@@ -14,7 +14,8 @@ class whoopieGame extends angeldb {
     public $description         = "";   // game description
     public $playercount         = 0;    // number of players expected
     public $players             = 0;    // number of players currently
-    public $playernames         = "";   // playerid:name, playerid:nane, 
+    public $playernames         = "";   // playerid:name, playerid:nane,
+    public $firstlogid          = 0;    // first place to start reading new logs 
     public $finalscore          = "";    // playerid:score, playerid;scoer
     public $winner              = 0;    // playerid who won  
     public $status              = "";   // current status: wait, active, gameover
@@ -25,7 +26,7 @@ class whoopieGame extends angeldb {
     function __construct() {
         parent::__construct();
         $this->table_name = "games";
-        $this->column_names = 'creator,creationdate,name,description, playercount,players,playernames,finalscore,winner,status';
+        $this->column_names = 'creator,creationdate,name,description, playercount,players,playernames,firstlogid,finalscore,winner,status';
     }
 
     function findMatchingGame($exact) {
