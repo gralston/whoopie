@@ -54,7 +54,9 @@ class whoopie {
         $rows = $gameLog->getRows("gamelog", "gameid = $gameID and id > $lastEventID" );
         $count = 0;
         while($l = mysqli_fetch_object($rows,"whoopieGameLog")) {
-            $events[$count] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerid, "playerName"=>$l->playername, "lastEventID"=>$l->id );
+            $deck = unserialize($l->deck);
+            $events[$count] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerid, 
+                                    "playerName"=>$l->playername, "lastEventID"=>$l->id, "deck"=>$deck );
             $count++;
         }
         return($count);
@@ -72,11 +74,6 @@ class whoopie {
         $json .= '"' . "events" .  '": ';
         $count = $this->checkForEvents($gameID, $playerID,  $lastEventID, $events);
         error_log("func  ajaxNextWhoopieEvent  lasteventID, count: " . angelParens($lastEventID, $count));
-        /*$count = 1;
-        for ($i=0; $i < $count; $i++) {
-            //$json .= '{"type": "gameOn",  "gameID":'.$gameID.', "playerID":'.$playerID.'},';
-            $events[$i] = array("type"=>"gameOn",  "gameID"=>$gameID, "playerID"=>$playerID);
-        }*/
         $json .= json_encode($events);
 
         $json .= "}";
@@ -119,8 +116,10 @@ class whoopie {
             $gameLog->bidmade = 0;
             $gameLog->cardplayed = "";
 
-            
-            $gameLog->deck = $request->whoopieRequest->deck;
+            $gameLog->deck = serialize($request->whoopieRequest->deck);
+            error_log("func ajaxWhoopieRequest joingame: deck:" . $gameLog->deck);
+
+
             $whoopieResponse["lastID"] = $gameLog->insertRow();
 
             // now update game entry and see if game is live
@@ -140,7 +139,7 @@ class whoopie {
             $game->updateThisRow();     // update active player count (and maybe status)
             
         } else if ($request->whoopieRequest->name == "dealForFirstDeal") {
-            
+
             $whoopieResponse["name"] = "receivedFirstDeal";
             $gameLog->name = "dealForFirstDeal";
             $gameLog->playerid = $request->whoopieRequest->playerID;
@@ -150,23 +149,48 @@ class whoopie {
             $gameLog->cardplayed = "";
 
             
-            $gameLog->deck = $request->whoopieRequest->deck;
+            $gameLog->deck = serialize($request->whoopieRequest->deck);
             $whoopieResponse["lastID"] = $gameLog->insertRow();
         } else if ($request->whoopieRequest->name == "deal") {
             $whoopieResponse["name"] = "receivedDeal";
             $gameLog->name = "deal";
             $gameLog->playerid = $request->whoopieRequest->playerID;
             $gameLog->playername = $request->whoopieRequest->playerName;
-            $gameLog->gameid = 1;
+            $gameLog->gameid = $request->whoopieRequest->gameID;;
             $gameLog->bidmade = 0;
             $gameLog->cardplayed = "";
 
             
-            $gameLog->deck = $request->whoopieRequest->deck;
+            $gameLog->deck = serialize($request->whoopieRequest->deck);
+
+            $whoopieResponse["lastID"] = $gameLog->insertRow();
+        } else if ($request->whoopieRequest->name == "bidMade") {
+            $whoopieResponse["name"] = "receivedBid";
+            $gameLog->name = "bidMade";
+            $gameLog->playerid = $request->whoopieRequest->playerID;
+            $gameLog->playername = $request->whoopieRequest->playerName;
+            $gameLog->gameid = $request->whoopieRequest->gameID;
+            $gameLog->bidmade = $request->whoopieRequest->bid;
+            $gameLog->cardplayed = "";
+
+            
+            $gameLog->deck = serialize($request->whoopieRequest->deck);
+
+            $whoopieResponse["lastID"] = $gameLog->insertRow();
+        } else if ($request->whoopieRequest->name == "cardPlayed") {
+            $whoopieResponse["name"] = "receivedCard";
+            $gameLog->name = "cardPlayed";
+            $gameLog->playerid = $request->whoopieRequest->playerID;
+            $gameLog->playername = $request->whoopieRequest->playerName;
+            $gameLog->gameid = $request->whoopieRequest->gameID;
+            $gameLog->bidmade = 0;
+            $gameLog->cardplayed = $request->whoopieRequest->card;
+
             $whoopieResponse["lastID"] = $gameLog->insertRow();
         } else if ($request->whoopieRequest->name == "resetGame") {
 
             // now update game entry and see if game is live
+            $whoopieResponse["name"] = "gameReset";
             $game = new whoopieGame();
             $gameLog->shareconn($conn);
             $game->id = 1;  // we gotta do some work if we want to support multiple games!
@@ -2981,6 +3005,26 @@ class whoopie_view extends angelview {
 
                          </div>";
         
+                         $body .= "
+                         <div id='dialogMakeBid' title='Make a Bid' style='display:none'>
+                                 <form id='' action='' method='post' enctype='multipart/form-data'>
+                                 How many tricks you gonna take this hand?'</span>'
+     
+                                  <p></p>
+                                         <table style='width:90%'>
+                                                        <tr> <td style='text-align: center'>
+                                                                 <select id='whoopieBid' name='whoopieBid' value=''>
+                                                            
+     
+                                                                  </select>
+                                                              </td>
+                                                        </tr>
+     
+     
+                                          </table>
+                              </form>
+     
+                              </div>";
 
      $body .= "
                         <div id='dialogYourDeal' title='Your Deal' style='display:none'>

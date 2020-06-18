@@ -688,11 +688,14 @@ function  TotalsConstructor()  {
  * this is the main whoopie page - perhaps someday have a home page to enter, but for now, just this
  */
 function WhoopieHandConstructor()  {
-    this.cards;                 // this is the hand created from cards.js
+    this.hand;                  // this is the hand created from cards.js
+    this.cardsDealt   = 0;      // number of cards dealt
     this.x;                     // coordinates of this hand on the table
     this.y;                     
     this.bidID = "";            // the id of the span in which to put the current bid
     this.tricksID = "";         // the id of the span in which to put the current number of tricks taken
+    this.bid    = 0;            // bid for this hand
+    this.score  = 0;            // score for this hand
 
 
     this.clear = function() {
@@ -755,18 +758,22 @@ var WhoopieHands = [];  // array of WhoopieHands
 var Hands = [];         // array of hands (just the cards)
 var Players = [];       // array of players
 var ThisPlayer = null;  // this whoopie player!
-var nextAvailableSeat = 0;
+var NextAvailableSeat = 0;
 
 function WhoopiePlayer(id, name, seat)  {
     this.playerID   = id,
     this.seat       = seat,
+    this.bidID      = "";               // the id of the span in which to put the current bid
+    this.tricksID   = "";               // the id of the span in which to put the current number of tricks taken
     this.name       = name,
-    this.hand       = null,
+    this.hands      = [],               // array of whoopiehands for this game
     this.latestBid    = 0,
     this.lastCardPlayed = null,
     this.latestTricks = 0,
     this.score = 0
+    
 }
+
 
 var WhoopieStatus = {
     gameID : 0,
@@ -1010,11 +1017,18 @@ function initializeWhoopie() {
  * choose dealer by dealing one card faceup. low card deals. return true if it is you false otherwise
   for now it is just you
  */
+ChoseDealer = false;
 function chooseDealer() {
     
     console.debug("chooseDealer");
+    if (ChoseDealer) {
+        console.debug("chooseDealer: called twice, dammit");
+        alert("ChooseDealer Bug!");
+        return;     
+    }
+    ChoseDealer = true;
 
-    dealWhoopieHand(1, true);
+    dealWhoopieHand(0, true);
 
     setTimeout(finishChooseDealer, 1000);  
    
@@ -1026,8 +1040,9 @@ function finishChooseDealer() {
 
     console.debug("finishchooseDealer: all hands", Hands[0], Hands[1], Hands[2], Hands[3]);
     for (i=0; i < WhoopieStatus.numPlayers; i++) {
-        var hand = Hands[i];
-        //console.debug("finish chooseDealer: each hand", Hands[i][0].shortName);
+        var hand = Players[i].hands[0].hand;    // by convention, 0th hand is choose dealer hand
+        console.debug("finish chooseDealer: ", i, Players[i].name, hand);
+        console.debug("finish chooseDealer: each hand", i, Players[i].name, hand[0].shortName);
         hand[0].showCard();
         if (lowHand == null || lowHand[0].rank > hand[0].rank ) {
             lowHand = hand;
@@ -1035,15 +1050,15 @@ function finishChooseDealer() {
         }
         console.debug("lowhand vs hand rank:", lowHand[0].rank, hand[0].rank);
     }
-    if (debug)
-        lowHand = Hands[0];
 
-    // highlight card and set dealer icon to show won (TBD)
-    console.debug("placing dealer button: ", lowHandIndex, Seats[lowHandIndex].buttonTop, Seats[lowHandIndex].buttonLeft);
-    $("#dealerButton").css({top: Seats[lowHandIndex].buttonTop, left: Seats[lowHandIndex].buttonLeft, position:'absolute'});
+    // highlight card and set dealer icon to show who won (TBD)
+    //console.debug("placing dealer button: ", lowHandIndex, Seats[lowHandIndex].buttonTop, Seats[lowHandIndex].buttonLeft);
+    var top = Players[lowHandIndex].seat.buttonTop;
+    var left = Players[lowHandIndex].seat.buttonLeft;
+    $("#dealerButton").css({top: top, left: left, position:'absolute'});
     $("#dealerButton").css("display", "block");
 
-    if (lowHand == Hands[0]) {
+    if (lowHand == ThisPlayer.hands[0].hand) {
         // need a routine to (1) send a message - this time "your deal" but more often "n took the trick. [your deal]"
         // wait 2-3 secs for it to sink in
         // ask input from user - button that says deal Now
@@ -1099,9 +1114,9 @@ function seatPlayer(playerID, name) {
 
     WhoopieStatus.numPlayers++;
 
-    $(id).css({top: Seats[nextAvailableSeat].playerTop, left: Seats[nextAvailableSeat].playerLeft, position:'absolute'});
-    Players[playerID] = new WhoopiePlayer(playerID, name, Seats[nextAvailableSeat]);
-    nextAvailableSeat++;
+    $(id).css({top: Seats[NextAvailableSeat].playerTop, left: Seats[NextAvailableSeat].playerLeft, position:'absolute'});
+    Players[playerID] = new WhoopiePlayer(playerID, name, Seats[NextAvailableSeat]);
+    NextAvailableSeat++;
 
     
     /* special case for ralston family game */
@@ -1111,6 +1126,8 @@ function seatPlayer(playerID, name) {
    $('#playerIMG3').attr("src","img/photos/esr1980.jpg");
 
    $(id).css("display", "block");
+
+   return(Players[playerID]);       // return the player you just created and sat
 
 }
 
@@ -1149,33 +1166,47 @@ function seatPlayers(count) {
 
 
 }
+function nextPlayer(playerID, numPlayers) {
 
-function dealWhoopieHand(numCards, faceUp) {
-    WhoopieHands[0] = new WhoopieHandConstructor();
-    myWhoopieHand = WhoopieHands[0];
-    myWhoopieHand.x = Seats[0].x;
-    myWhoopieHand.y = Seats[0].y;
-    Hands[0]= new cards.Hand({faceUp:true, x:myWhoopieHand.x, y:myWhoopieHand.y});
-    myWhoopieHand.cards = Hands[0];
+    if (playerID == (numPlayers - 1))
+        return(0);
+    else
+        return(playerID+1);
+
+}
+/*
+ * Deal the handNumberth hand. By convention, the 0th hand is the choose dealer deal
+ */
+function dealWhoopieHand(handNumber, faceUp) {
+    var hands = [];
+
+    ThisPlayer.hands[handNumber] = new WhoopieHandConstructor();
+    ThisPlayer.hands[handNumber].hand = new cards.Hand({faceUp:true, x:ThisPlayer.seat.x, y:ThisPlayer.seat.y});
  
-    for (i = 1; i < WhoopieStatus.numPlayers; i++) {
-        WhoopieHands[i] = new WhoopieHandConstructor();
-        WhoopieHands[i].x = Seats[i].x;
-        WhoopieHands[i].y = Seats[i].y;
-        Hands[i]= new cards.Hand({faceUp:faceUp, x:WhoopieHands[i].x, y:WhoopieHands[i].y});
-        WhoopieHands[i].cards = Hands[i];
+    for (var i = 0; i < WhoopieStatus.numPlayers; i++) {
+        player = Players[i];
+        if (player != ThisPlayer) {
+            player.hands[handNumber] = new WhoopieHandConstructor();
+            player.hands[handNumber].hand = new cards.Hand({faceUp:faceUp, x:player.seat.x, y:player.seat.y});
+        }
     }
 
+    for (i = 0; i < WhoopieStatus.numPlayers; i++) {
+        var next = Players[nextPlayer(i, WhoopieStatus.numPlayers)];
+        hands[i] = next.hands[handNumber].hand;
+    }
+    var numCards = handNumberToCards(handNumber);
+
      //console.debug("dealWhoopieHand: all hands", Hands[0], Hands[1], Hands[2], Hands[3]);
-     WhoopieStatus.deck.deal(numCards, Hands, 20);
-     //console.debug("dealWhoopieHand: all hands after deal", Hands[0], Hands[1], Hands[2], Hands[3]);
+     WhoopieStatus.deck.deal(numCards, hands, 20);
+     console.debug("dealWhoopieHand: all hands after deal", hands[0], hands[1], hands[2], hands[3]);
      WhoopieStatus.deck.x = DeckLocation.x;      // standard deck location
      WhoopieStatus.deck.y = DeckLocation.y;
      WhoopieStatus.deck.render({immediate:true});
 
      // Let's turn over the top card which is the Whoopie card - unless this is the choose dealer deal
 
-    if (!faceUp) {
+    if (handNumber != 0) {
         WhoopieStatus.whoopieCard = new cards.Deck({faceUp:true});
         WhoopieStatus.whoopieCard.x = DeckLocation.x + 20;
         WhoopieStatus.deck.render({callback:function() {
@@ -1185,6 +1216,21 @@ function dealWhoopieHand(numCards, faceUp) {
     }
 }
 
+/* 
+ * translate hand number to number of cards
+ */
+function handNumberToCards(handNumber) {
+    if (handNumber == 0)
+        return(1);      // one card to pick dealer
+
+    var maxHandNumber = Math.floor(54/WhoopieStatus.numPlayers);
+
+    if (handNumber > (maxHandNumber))
+        return((2*maxHandNumber) - handNumber);      // took too long to figure this out :)
+    else    
+        return handNumber;
+
+}
 
 function debugShowAllCards(deck, msg) {
     for (i=0; i < deck.length; i++) {
@@ -1210,13 +1256,14 @@ function getNextWhoopieEvent() {
         //return;
 
         var whoopieEvents = allData.events;
-
+        var i;
+        console.debug("getNextWhoopieEvent #events", whoopieEvents.length);
         for (i = 0; i < whoopieEvents.length; i++) {
-            console.debug("getNextWhoopieEvent #events", whoopieEvents.length);
+            
             var ev = whoopieEvents[i];
             WhoopieStatus.lastEventID = ev.lastEventID;
 
-            console.debug("getNextWhoopieEvent event (type, player) eventid: ", angelParens(ev.type, ev.playerName), ev.lastEventID);
+            console.debug("getNextWhoopieEvent event loop: i (type, player) eventid: ", i, angelParens(ev.type, ev.playerName), ev.lastEventID);
             if (ev.type == "playerJoined") {
                 if (ev.playerID == WhoopieStatus.playerID)      // skip if it's me!
                     continue;
@@ -1252,10 +1299,11 @@ function getNextWhoopieEvent() {
                     // now deal
                     
                 }  */    
-            } else if (ev.type == "dealForFirstDeal") {
-                // so get the deck and deal it locally
+            } else if (ev.type == "dealForFirstDeal" && WhoopieStatus.playerID != 0) {
+                // so get the deck and deal it locally if you weren't player 0 who already did the deal
                 importDeck(ev.deck);
                 chooseDealer();
+    
             } else if (ev.type == "yourDeal") {
                 // so get the deck and deal it locally and send it back
 
@@ -1309,6 +1357,11 @@ function getNextWhoopieEvent() {
 
 function importDeck(deckIndex) {
     console.debug("importDeck", deckIndex)
+    WhoopieStatus.deck.addCardsIndex(cards.all, deckIndex);
+    /*for (var i=0; i < 53; i++) {
+
+    }*/
+
 
 }
 
@@ -1348,7 +1401,7 @@ function handleWhoopieResponse(resp) {
         WhoopieStatus.gameID = 1;
         Seats = Seats4;     // get number of players from the response eventually
         // WhoopieStatus.lastEventID = Number(resp.lastID);  // I THINK THIS IS A RACE CONDITION WAITING TO HAPPEN!
-        seatPlayer(WhoopieStatus.playerID, WhoopieStatus.playerName);
+        ThisPlayer = seatPlayer(WhoopieStatus.playerID, WhoopieStatus.playerName);
     }
 }
 
