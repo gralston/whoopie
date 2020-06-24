@@ -151,9 +151,9 @@ class whoopie {
             
             $gameLog->deck = serialize($request->whoopieRequest->deck);
             $whoopieResponse["lastID"] = $gameLog->insertRow();
-        } else if ($request->whoopieRequest->name == "deal") {
+        } else if ($request->whoopieRequest->name == "newDeal") {
             $whoopieResponse["name"] = "receivedDeal";
-            $gameLog->name = "deal";
+            $gameLog->name = "newDeal";
             $gameLog->playerid = $request->whoopieRequest->playerID;
             $gameLog->playername = $request->whoopieRequest->playerName;
             $gameLog->gameid = $request->whoopieRequest->gameID;;
@@ -4972,7 +4972,7 @@ class whoopie_view extends angelview {
 
         $rows = $game->getRows("games", "id > 0" );
         while($g = mysqli_fetch_object($rows,"whoopieGame")) {
-            $body .=        "<tr><th colspan=3>Choose a game!</th></tr>";
+            $body .=        "<tr><th onclick='whoopieSendRequest(\"resetGame\"); alert(\"Game Reset\")' colspan=3>Choose a game!</th></tr>";
             $body .=        "<tr><th>Name</th> <th>Creator</th><th>Description</th></tr>";
             $body .=        "<tr><td onclick='joinGame(\"$g->name\", $g->firstlogid)'>$g->name</td> 
                                  <td onclick='joinGame(\"$g->name\", $g->firstlogid)'>$g->creator</td>

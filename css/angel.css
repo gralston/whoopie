@@ -673,6 +673,10 @@ input[type="checkbox"]:checked ~ .exit-reveal-if-active {
     background-color: white;
 }
 
+.whoopieGameChooserTable th:hover {
+    background-color: white;
+}
+
 .whoopieBidTrickTable  {
     padding: 0px;
     border-spacing: 0px;

@@ -34,7 +34,9 @@ $GLOBALS["loggedInUserColName"] = "";         // name to be used in column refer
 $GLOBALS["loggedInUserID"] = -1;               // user id of logged in user
 $GLOBALS["loggedInUserCompanyID"] = 0;        // company id of logged in user
 $GLOBALS["logo"] = "img/whoopieLogo.png";
-$GLOBALS["logo"] = "img/whoopieLogo.png";
+// $GLOBALS["logo"] = "img/whoopieLogo_andrea.png";
+
+
 $GLOBALS["path"] = "";  //  this was needed when angel was under htdocs
 $GLOBALS["betaFile"] = "betaList.txt";            // file containing beta users
 $GLOBALS["guestID"] = -1;

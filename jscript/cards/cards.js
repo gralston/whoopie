@@ -34,7 +34,7 @@ var cards = (function() {
       if (ev.type == "click") {
         var handler = card.container._click;
         if (handler) {
-          console.debug("mouseEvent click");
+          // console.debug("mouseEvent click");
           handler.func.call(handler.context || window, card, ev);
         }
       }
@@ -49,7 +49,7 @@ var cards = (function() {
       else if (ev.type == "mouseup") {
         var handler = card.container._mouseup;
         if (handler) {
-          console.debug("mouseEvent up");
+          // console.debug("mouseEvent up");
           handler.func.call(handler.context || window, card, ev);
         }
       } else if (ev.type == "dblclick") {
@@ -61,13 +61,13 @@ var cards = (function() {
       } else if (ev.type == "mouseenter") {
         var handler = card.container._mouseenter;
         if (handler) {
-          console.debug("mouseEvent enter");
+          // console.debug("mouseEvent enter");
           handler.func.call(handler.context || window, card, ev);
         }
       } else if (ev.type == "mouseleave") {
         var handler = card.container._mouseleave;
         if (handler) {
-          console.debug("mouseEvent leave");
+          // console.debug("mouseEvent leave");
           handler.func.call(handler.context || window, card, ev);
         }
       }
@@ -221,23 +221,23 @@ var cards = (function() {
     moveUp: function(howMuch) {
       var pos = $(this.el).position(); 
       //var off = $(this.el).offset(); 
-      console.debug("moveUp pos bef",pos.top, pos.left);
+      //console.debug("moveUp pos bef",pos.top, pos.left);
       var newtop = (pos.top - howMuch) + 'px';
       $(this.el).css({top: newtop, left: pos.left, position:'absolute'});
       var pos = $(this.el).position(); 
       //console.debug("moveUp 2",rect.top, rect.right, rect.bottom, rect.left);
-      console.debug("moveUp pos aft",pos.top, pos.left);
+      //console.debug("moveUp pos aft",pos.top, pos.left);
       //console.debug("moveUp 4",off.top, off.left);
       
     },
 
     moveDown: function(howMuch) {
       var pos = $(this.el).position(); 
-      console.debug("moveDown pos bef",pos.top, pos.left);
+      // console.debug("moveDown pos bef",pos.top, pos.left);
       var newtop = (pos.top + howMuch) + 'px';
       $(this.el).css({top: newtop, left: pos.left, position:'absolute'});
       var pos = $(this.el).position(); 
-      console.debug("moveDown  pos aft",pos.top, pos.left);
+      // console.debug("moveDown  pos aft",pos.top, pos.left);
     },
 
     moveLeft: function(howMuch) {
