@@ -33,7 +33,7 @@
                     $photo = $_SESSION["photo"];
                 else
                     $photo = "";
-                echo "<li><a href='/userProfile?id=$id' title=''> Hey You  " . $_SESSION["loggedInUserFname"] . '!';
+                // echo "<li><a href='/userProfile?id=$id' title=''> Hey You  " . $_SESSION["loggedInUserFname"] . '!';
                 if ($photo != "")
                     echo "<br /><img src=$photo  class='circleThumbnail' height=30 width=30 />";
                 echo '</a></li>';
@@ -41,7 +41,7 @@
                     <li><a href='$path/whoopie' >Home</a></li>
                     <li><a href='javascript:void(0);' NAME='HELP'  title=''
                         onClick=window.open('static/whoopieInstructions.html','Whoopie','width=1000,height=750,0,status=0,');>Help</a></li>
-                    <li><a href='$path/logout' >Logout</a></li>
+                    <li><a href='$path/static/history.html' >History of Whoopie</a></li>
                 ";
                 ?>
 
