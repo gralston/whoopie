@@ -250,6 +250,11 @@ var cards = (function() {
 
     hide: function() {
       $(this.el).fadeOut();
+    },
+
+    // geoff added
+    show: function() {
+      $(this.el).fadeIn();
     }
 
   };
@@ -364,10 +369,12 @@ var cards = (function() {
       this.calcPosition(options);
       for (var i = 0; i < this.length; i++) {
         var card = this[i];
+        //console.debug("rendering card: ", card.rank+card.suit, top, left);
         zIndexCounter++;
         card.moveToFront();
         var top = parseInt($(card.el).css('top'));
         var left = parseInt($(card.el).css('left'));
+        //console.debug("rendering card: ", this.length,card.rank+card.suit, top, left, card.targetTop, card.targetLeft);
         if (top != card.targetTop || left != card.targetLeft) {
           var props = {
             top: card.targetTop,
@@ -377,6 +384,7 @@ var cards = (function() {
           if (options.immediate) {
             $(card.el).css(props);
           } else {
+            //$(card.el).css(props);
             $(card.el).animate(props, speed);
           }
         }
@@ -442,6 +450,10 @@ var cards = (function() {
       var totalCount = count * hands.length;
 
       function dealOne() {
+        /*if (count == 2) {
+          var card = me.topCard();
+          alert("dealing: (hand, card) " + (i % hands.length) + ", " + card.shortName);
+        }*/
         if (me.length == 0 || i == totalCount) {
           if (callback) {
             callback();

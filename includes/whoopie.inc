@@ -56,7 +56,8 @@ class whoopie {
         while($l = mysqli_fetch_object($rows,"whoopieGameLog")) {
             $deck = unserialize($l->deck);
             $events[$count] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerid, 
-                                    "playerName"=>$l->playername, "lastEventID"=>$l->id, "deck"=>$deck );
+                                    "playerName"=>$l->playername, "lastEventID"=>$l->id, "cardPlayed"=>$l->cardplayed, 
+                                    "bidMade"=>$l->bidmade, "deck"=>$deck );
             $count++;
         }
         return($count);

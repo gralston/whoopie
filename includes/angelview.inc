@@ -37,7 +37,8 @@ class angelview {
         else
             $this->header       = "whoopieheader.inc";
 
-        $whoopieJS = "$path/jscript/whoopie.js?v=" . time();       // this will ensure we reload css every time for debug
+        $whoopieJS = "$path/jscript/whoopie.js?v=" . time();       // this will ensure we reload js every time for debug
+        $cardsJS = "$path/jscript/cards/cards.js?v=" . time();       // this will ensure we reload js every time for debug
         // $whoopieJS = "$path/jscript/whoopie.js";
 
         $this->js .= "
@@ -52,7 +53,7 @@ class angelview {
                     <script src='$path/jscript/jquery.feedback_me.js'></script>
                     <script async defer src='https://buttons.github.io/buttons.js'></script>
 
-                    <script src='$path/jscript/cards/cards.js'></script>
+                    <script src='$cardsJS'></script>
                     <script src='$whoopieJS'></script>
                     <script src='https://www.gstatic.com/charts/loader.js'></script>
                     ";
