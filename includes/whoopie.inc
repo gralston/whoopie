@@ -16,11 +16,18 @@ class whoopie {
     }
     /*******************
      * 
-     * This method displays the logged in home page for modeling
+     * This method displays the logged in home page for modeling 
      */
     function showWhoopieHomePage() {
         $this->view->error = $this->error;
         $body = $this->view->whoopieHomePageBody();
+        $this->view->outputHTML($body);
+
+    }
+
+    function showWhoopieTesterPage() {
+        $this->view->error = $this->error;
+        $body = $this->view->whoopieTesterPageBody();
         $this->view->outputHTML($body);
 
     }
@@ -165,17 +172,14 @@ class whoopie {
             $gameLog->deck = serialize($request->whoopieRequest->deck);
 
             $whoopieResponse["lastID"] = $gameLog->insertRow();
-        } else if ($request->whoopieRequest->name == "bidMade") {
+        } else if ($request->whoopieRequest->name == "newBid") {
             $whoopieResponse["name"] = "receivedBid";
-            $gameLog->name = "bidMade";
+            $gameLog->name = "newBid";
             $gameLog->playerid = $request->whoopieRequest->playerID;
             $gameLog->playername = $request->whoopieRequest->playerName;
             $gameLog->gameid = $request->whoopieRequest->gameID;
             $gameLog->bidmade = $request->whoopieRequest->bid;
             $gameLog->cardplayed = "";
-
-            
-            $gameLog->deck = serialize($request->whoopieRequest->deck);
 
             $whoopieResponse["lastID"] = $gameLog->insertRow();
         } else if ($request->whoopieRequest->name == "cardPlayed") {
@@ -210,7 +214,11 @@ class whoopie {
         
             $game->updateThisRow();     // update active player count (and maybe status)
             
-        } 
+        } else {
+            // unknown request
+            $whoopieResponse["name"] = "unknownRequest";
+            error_log("func ajaxWhoopieRequest unkownRequest: " . $request->whoopieRequest->name);
+        }
 
         $json .= json_encode($whoopieResponse);
 
@@ -3014,9 +3022,11 @@ class whoopie_view extends angelview {
                                   <p></p>
                                          <table style='width:90%'>
                                                         <tr> <td style='text-align: center'>
-                                                                 <select id='whoopieBid' name='whoopieBid' value=''>
+                                                                 <select id='whoopieBid' name='whoopieBid'>
+                                                                 <option value='' selected disabled>How many tricks will you take?</option>";
+                                                                 
                                                             
-     
+                        $body .= "
                                                                   </select>
                                                               </td>
                                                         </tr>
@@ -3030,7 +3040,7 @@ class whoopie_view extends angelview {
      $body .= "
                         <div id='dialogYourDeal' title='Your Deal' style='display:none'>
                                 
-                                Deal <span id=whoopieDealerCardCount></span> card(s), please!'
+                                Deal <span id=whoopieDealerCardCount></span>, please!'
 
                                 <p></p>
                             </div>";
@@ -4950,6 +4960,45 @@ class whoopie_view extends angelview {
 
     }
 
+    function whoopieTesterPageBody() {
+        $body = "";
+
+        $body .= "<div id='whoopieTesterDiv' style='width:500px; border: 2px solid blue; margin: 100px 0px 0px 300px'>";       
+
+        $body .=    "<table class='whoopieGameChooserTable'>";
+        $body .=        "<tr><th onclick='whoopieSendRequest(\"resetGame\"); alert(\"Game Reset\")' colspan=4>Reset game</th></tr>";
+        $body .=        "<tr> <th>Choose Event</th> <th>Choose Player</th><th>Enter Card</th><th>Make a Bid</th></tr>";
+        $body .= "<form id='testWhoopieForm' action='/whoopie.php' method='post'>";
+        $body .=         "<tr><td><select id='testEventName' name='testEventName'>";
+        $body .=                    "<option value='' selected disabled>Event to Send </option>
+                                     <option value='joinGame'>  joinGame </option>
+                                     <option value='newDeal'>      deal </option>
+                                     <option value='playCard'>  playCard </option>
+                                     <option value='bid'>       bid </option>
+                                     </select></td>";
+
+        $body .=         "<td><select id='testEventPlayer' name='testEventPLayer'>";
+        $body .=                                                "<option value='' selected disabled>Choose a Player</option>
+                                                                <option value='3'>      Elizabeth</option>
+                                                                <option value='2'>      Steven</option>
+                                                                <option value='0'>      Geoff</option>
+                                                                <option value='1'>      Jon</option>
+
+                                                             </select>
+
+
+                          </td>";
+
+        $body .=      "<td><input type='text' id='whoopieTestCard'></td>";
+        $body .=      "<td><input type='text' id='whoopieTestBid'></td></tr>";
+        $body .=      "<div style='margin: 100px 0px 0px 0px; font-size: 20px;'><a href='javascript:onclick=testWhoopie()' class='modelButton'>Send Event</a></div>";
+
+        $body .= "</form></table> </div>";
+
+        return($body);
+
+    }
+    
     function whoopieHomePageBody() {
 
         $game = new whoopieGame();
@@ -4972,9 +5021,9 @@ class whoopie_view extends angelview {
         $body .=    "<table class='whoopieGameChooserTable'>";
 
         $rows = $game->getRows("games", "id > 0" );
-        while($g = mysqli_fetch_object($rows,"whoopieGame")) {
-            $body .=        "<tr><th onclick='whoopieSendRequest(\"resetGame\"); alert(\"Game Reset\")' colspan=3>Choose a game!</th></tr>";
-            $body .=        "<tr><th>Name</th> <th>Creator</th><th>Description</th></tr>";
+        $body .=        "<tr><th onclick='whoopieSendRequest(\"resetGame\"); alert(\"Game Reset\")' colspan=3>Choose a game!</th></tr>";
+        $body .=        "<tr><th>Name</th> <th>Creator</th><th>Description</th></tr>";
+        while($g = mysqli_fetch_object($rows,"whoopieGame")) {      
             $body .=        "<tr><td onclick='joinGame(\"$g->name\", $g->firstlogid)'>$g->name</td> 
                                  <td onclick='joinGame(\"$g->name\", $g->firstlogid)'>$g->creator</td>
                                  <td onclick='joinGame(\"$g->name\", $g->firstlogid)'>$g->description</td>
@@ -4991,10 +5040,11 @@ class whoopie_view extends angelview {
                     width:700px; height: 400px; margin: 50px 0px 0px 20px; float:left'>";
         
 
-        $body .= "<div id='waitingForGame' style='display:none; background-color: blue; margin: 160px 0px 0px 400px;width:290px; height: 50px;'>
-                 <div style='color:white;   margin: 0px 0px 0px 10px;font-size:28px'>Waiting for Game...</div></div>";
+        $body .= "<div id='whoopieMessageDiv' style='display:none; background-color: gray; margin: 250px 0px 0px 315px;width:320px; height: 50px;'>
+                 <div style='color:white;   margin: 0px 0px 0px 10px;font-size:28px'><span id='whoopieMessage'>xxxx</span></div></div>";
         $body .= "   <table>";
         $body .= "   </table>";
+
 
       
         $body .= "   <div id='dealerButton' style='display:none;'>";
@@ -5013,7 +5063,7 @@ class whoopie_view extends angelview {
                             <td>B</td><td>T</td> 
                         </tr>
                         <tr>
-                             <td id='bidID$i'>10</td><td id='trickID$i'>10</td>
+                             <td id='bidID$i'></td><td id='trickID$i'></td>
                         </tr>";
         
             $body .= "</table></div>";

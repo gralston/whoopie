@@ -38,7 +38,10 @@ if (empty($_POST) and empty($_GET)) {                       /* Case (1) */
     } else if (array_key_exists("ajaxNext", $_POST) or array_key_exists("ajaxNext", $_GET)) {
         error_log("ajaxNext:  " . serialize($_GET));  // debug
         $int->ajaxNextWhoopieEvent();
+    } else if (array_key_exists("tester", $_GET)) {
+        $int->showWhoopieTesterPage();
     }
+
 }
 
 ?>
