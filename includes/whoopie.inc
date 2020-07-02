@@ -59,6 +59,10 @@ class whoopie {
         $gameLog = new whoopieGameLog();
         $gameLog->connect();
         $rows = $gameLog->getRows("gamelog", "gameid = $gameID and id > $lastEventID" );
+        if ($rows == null or $rows == -1) {
+            error_log("checkForEvents - bad return from gamelog");
+            return(0);
+        }
         $count = 0;
         while($l = mysqli_fetch_object($rows,"whoopieGameLog")) {
             $deck = unserialize($l->deck);
@@ -3022,7 +3026,7 @@ class whoopie_view extends angelview {
                                   <p></p>
                                          <table style='width:90%'>
                                                         <tr> <td style='text-align: center'>
-                                                                 <select id='whoopieBid' name='whoopieBid'>
+                                                                 <select onchange='verifyBid()' id='whoopieBid' name='whoopieBid'>
                                                                  <option value='' selected disabled>How many tricks will you take?</option>";
                                                                  
                                                             
@@ -4967,6 +4971,7 @@ class whoopie_view extends angelview {
 
         $body .=    "<table class='whoopieGameChooserTable'>";
         $body .=        "<tr><th onclick='whoopieSendRequest(\"resetGame\"); alert(\"Game Reset\")' colspan=4>Reset game</th></tr>";
+        $body .=        "<tr><th onclick='whoopieTestStart();  alert(\"Game On!\")' colspan=4>Start game</th></tr>";
         $body .=        "<tr> <th>Choose Event</th> <th>Choose Player</th><th>Enter Card</th><th>Make a Bid</th></tr>";
         $body .= "<form id='testWhoopieForm' action='/whoopie.php' method='post'>";
         $body .=         "<tr><td><select id='testEventName' name='testEventName'>";
@@ -4974,7 +4979,8 @@ class whoopie_view extends angelview {
                                      <option value='joinGame'>  joinGame </option>
                                      <option value='newDeal'>      deal </option>
                                      <option value='playCard'>  playCard </option>
-                                     <option value='bid'>       bid </option>
+                                     <option value='newBid'>       bid </option>
+
                                      </select></td>";
 
         $body .=         "<td><select id='testEventPlayer' name='testEventPLayer'>";

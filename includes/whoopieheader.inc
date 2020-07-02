@@ -28,14 +28,7 @@
             <div class="angelcalcTopNav">
             <ul>
                 <?PHP
-                $id = $_SESSION["loggedInUserID"];
-                if ($id != -1)
-                    $photo = $_SESSION["photo"];
-                else
-                    $photo = "";
-                // echo "<li><a href='/userProfile?id=$id' title=''> Hey You  " . $_SESSION["loggedInUserFname"] . '!';
-                if ($photo != "")
-                    echo "<br /><img src=$photo  class='circleThumbnail' height=30 width=30 />";
+                
                 echo '</a></li>';
                 echo "
                     <li><a href='$path/whoopie' >Home</a></li>
