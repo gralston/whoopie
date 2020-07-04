@@ -712,6 +712,7 @@ function WhoopieStanzaConstructor()  {
     this.tricksTaken        = [0,0,0,0,0,0,0,0,0,0];       // number of tricks taken for this stanza per playerID
     this.scores             = [0,0,0,0,0,0,0,0,0,0];       // scores for this stanza per playerID
     this.allTricks          = [];       // all the tricks for this stanza for easy access (if needed?)
+    this.allHiddenCards     = [];       // all the cards hidden (tricks taken) in this stanza for easy access to show them again
 
     this.jokerWhoopie = function() {
         if (this.whoopieCard.rank == 0)
@@ -720,7 +721,13 @@ function WhoopieStanzaConstructor()  {
             return(false);
     }  
     this.clear = function() {
-        
+        for (var i=0; i < WhoopieStatus.numPlayers; i++) {
+            this.tricksTaken[i] = 0;
+            this.scores[i] = 0;
+        }
+        this.bidTotal = 0;
+        this.tricksPlayed = 0;
+        this.cardsDealt = 0;
     }  
 }
 /*
@@ -832,7 +839,7 @@ var WhoopieStatus = {
     dealer : 0,                 // the current / most recent dealer
     thisPlayerTookTheirTurn: false, // set to true during playing if this player already played
     thisPlayerAlreadyBid: false,    // set to true during bidding if this player already bid
-    state: "",                      // waitingForGame, choosingFirstDealer, dealing, bidding, playing, gameOver
+    state: "",             // waitingForGame, choosingFirstDealer, gameOver, newdeal, bidding, tricktaken, playing
     waitingForGame : true,
     scramble : false,               // true if we are currently in a scramble state (j-state joker played, everything is trump)
     deck : [],
@@ -863,7 +870,19 @@ var WhoopieStatus = {
             index = (card.rank - 2)*4 + SuitOrder[card.suit];
 
         return(index);
-    }
+    },
+    verifyDeck: function() {
+        var cards = [];
+        cards.length = 54; cards.fill(0);
+
+        for (i=0; i<this.deckIndex.length;i++) {
+            
+            if (cards[this.deckIndex[i]] == 1)
+                alert("Deck has a problem: duplicate card index: ", this.deckIndex[i]);
+            else
+                cards[this.deckIndex[i]] = 1;
+        }
+    } 
 }
 
 function joinGame(gameName, firstid) {
@@ -901,6 +920,8 @@ function joinGame(gameName, firstid) {
         $("#whoopieTable").css("display", "block");
         console.debug("dialog proceed: ", name);
         initializeWhoopie();
+        $("#whoopieMessageDiv2").css("display", "block");
+        $("#whoopieScore").css("display", "block");
         whoopieSendRequest("joinGame", null, null);
     }
     
@@ -1094,10 +1115,10 @@ function finishChooseDealer() {
     var lowHandIndex = 0;
     var debug = 0;
 
-    console.debug("finishchooseDealer: all hands", Hands[0], Hands[1], Hands[2], Hands[3]);
+    //console.debug("finishchooseDealer: all hands", Hands[0], Hands[1], Hands[2], Hands[3]);
     for (var i=0; i < WhoopieStatus.numPlayers; i++) {
         var hand = Players[i].hands[0].hand;    // by convention, 0th hand is choose dealer hand
-        // console.debug("finish chooseDealer: ", i, Players[i].name, hand);
+        console.debug("finish chooseDealer: ", i, Players[i].name, hand);
         // console.debug("finish chooseDealer: each hand", i, Players[i].name, hand[0].shortName);
         hand[0].showCard();
         if (lowHand == null || lowHand[0].rank > hand[0].rank ) {
@@ -1148,9 +1169,9 @@ function yourDeal(handNumber) {
     $("#whoopieDealerCardCount").html(cardCount);
     $("#dialogYourDeal").dialog({
         resizable: false,
-        height: 200,
+        height: 150,
         width: 200,
-        position: { my: "left top", at: "right center", of: "#whoopieTable" },
+        position: { my: 'top', at: 'top+50', of: "#whoopieMessageDiv2" },
         modal: true,
         buttons: {
             Deal: function() {
@@ -1163,13 +1184,17 @@ function yourDeal(handNumber) {
     function proceed(){
             
         WhoopieStatus.playerName = name;
-        
+
+        WhoopieStatus.deck = new WhoopieStatus.cards.Deck(); 
+        WhoopieStatus.deck.addCards(WhoopieStatus.cards.all);
+
         WhoopieStatus.cards.shuffle(WhoopieStatus.deck);
 
-       // dealWhoopieHand(handNumber, false);      // don't deal here, deal when you get the newDeal request - but is the hand we 
+       // dealWhoopieHand(handNumber, false);      // don't deal here, deal when you get the newDeal request - but if the hand we 
                                                    // deal is wrong, ma
         
         WhoopieStatus.deckToIndex();
+        WhoopieStatus.verifyDeck();
         whoopieSendRequest("newDeal", null, null);
     }
 
@@ -1284,6 +1309,7 @@ function dealWhoopieStanza(handNumber, faceUp) {
 
     
     WhoopieStatus.stanzas[handNumber] = new WhoopieStanzaConstructor();
+    WhoopieStatus.stanzas[handNumber].clear();
     WhoopieStatus.stanzas[handNumber].handNumber = handNumber;
     CurrentStanza = WhoopieStatus.stanzas[handNumber];
 
@@ -1346,37 +1372,43 @@ function dealWhoopieStanza(handNumber, faceUp) {
         }
     }
 
+    var id = WhoopieStatus.dealer;
+    var next = Players[nextPlayer(WhoopieStatus.dealer, WhoopieStatus.numPlayers)];
     for (i = 0; i < WhoopieStatus.numPlayers; i++) {
-        var next = Players[nextPlayer(i, WhoopieStatus.numPlayers)];
         hands[i] = next.hands[handNumber].hand;
+        next = Players[nextPlayer(next.playerID, WhoopieStatus.numPlayers)];
     }
     var numCards = handNumberToCards(handNumber);
     WhoopieStatus.stanzas[handNumber].cardsDealt = numCards;
 
      console.debug("dealWhoopieStanza: all hands", hands[0], hands[1], hands[2], hands[3]);
      
-     // WhoopieStatus.cards.shuffle(WhoopieStatus.deck);
-     WhoopieStatus.deck.deal(numCards, hands, 200);
+     // deal hands and turn over whoopie card (unless this is the first deal chooser hand)
+     if (handNumber != 0)
+        WhoopieStatus.deck.deal(numCards, hands, 100, turnOverWhoopieCard);
+     else
+        WhoopieStatus.deck.deal(numCards, hands, 100);
 
      console.debug("dealWhoopieStanza: all hands after deal", hands[0], hands[1], hands[2], hands[3]);
      WhoopieStatus.deck.x = DeckLocation.x;      // standard deck location
      WhoopieStatus.deck.y = DeckLocation.y;
      WhoopieStatus.deck.render({immediate:true});
 
-     // Let's turn over the top card which is the Whoopie card - unless this is the choose dealer deal
+}
 
-    if (handNumber != 0) {
-        var whoopieDeck;
-        whoopieDeck = new WhoopieStatus.cards.Deck({faceUp:true});
-        whoopieDeck.x = DeckLocation.x + 20;
-        whoopieDeck.render({callback:function() {
-            whoopieDeck.addCard(WhoopieStatus.deck.topCard());
-            CurrentStanza.whoopieCard = whoopieDeck[0];
-            CurrentStanza.whoopieCard = whoopieDeck[0];
-            CurrentStanza.trumpSuit = CurrentStanza.whoopieCard.suit;         // this is the current trump suit!
-            whoopieDeck.render();
-        }});
-    }
+function turnOverWhoopieCard() {
+    
+    var whoopieDeck;
+    whoopieDeck = new WhoopieStatus.cards.Deck({faceUp:true});
+    whoopieDeck.x = DeckLocation.x + 20;
+    whoopieDeck.render({callback:function() {
+        whoopieDeck.addCard(WhoopieStatus.deck.topCard());
+        CurrentStanza.whoopieCard = whoopieDeck[0];
+        CurrentStanza.whoopieCard = whoopieDeck[0];
+        CurrentStanza.trumpSuit = CurrentStanza.whoopieCard.suit;         // this is the current trump suit!
+        whoopieDeck.render();
+    }});
+    
 }
 
 /* 
@@ -1489,6 +1521,7 @@ function getNextWhoopieEvent() {
 
                 // get the deck and deal the cards locally - if it wasn't you who already dealt
                 //if (ev.playerID != ThisPlayer.playerID) {
+                    WhoopieStatus.state = "newdeal";
                     if (WhoopieStatus.handNumber > 1)
                         cleanUpLastStanza();
                     importDeck(ev.deck);
@@ -1502,11 +1535,7 @@ function getNextWhoopieEvent() {
                     // it's your bid.  get the bid and send it along
                     getYourBid();
                 }
-                // don't set another timeout - may interfere with deal - we think that's a bug, 
-                // dealWhoopieStanza will set timeout as a callback
-                // and cancel any outstanding timeouts
-                //clearTimeout(WhoopieStatus.timeoutID);
-                // return; 
+                WhoopieStatus.state = "bidding";    // from now on we are bidding
 
             } else if (ev.type == "newBid") {
                 whoopieMessageOff();    // clear dealer message (if there)
@@ -1514,6 +1543,8 @@ function getNextWhoopieEvent() {
                 $("#trickID"+ev.playerID).html(0);
                 if (Number(ev.playerID) != ThisPlayer.playerID);
                     CurrentStanza.bidTotal += Number(ev.bidMade);
+                CurrentStanza.bids[Number(ev.playerID)] = Number(ev.bidMade);
+
                 WhoopieStatus.lastPlayerID = Number(ev.playerID);
                 if (myTurn()) {
                     // it's either your bid or your play. 
@@ -1647,11 +1678,16 @@ function updateTrickStatus(playerID, card) {
         takeTrick(CurrentTrick.playerID);
         stanza.tricksPlayed++;
         stanza.tricksTaken[CurrentTrick.playerID]++;
+        whoopieMessage(Players[CurrentTrick.playerID].name + " took the trick");   
+        $("#trickID"+CurrentTrick.playerID).html(CurrentStanza.tricksTaken[CurrentTrick.playerID]);
+
         WhoopieStatus.hasLead = CurrentTrick.playerID;  // just won the trick
         WhoopieStatus.thisPlayerTookTheirTurn = false;  // and haven't led or played yet!
+        WhoopieStatus.state = "tricktaken";
         if (stanza.tricksPlayed == stanza.cardsDealt) {
             // time for a new deal
-            updateScore();
+            WhoopieStatus.state = "newdeal";
+            updateScore(stanza);
             nextDeal();
         } else if (CurrentTrick.playerID == ThisPlayer.playerID) {
                 // I took the trick - it's my lead
@@ -1661,12 +1697,46 @@ function updateTrickStatus(playerID, card) {
         CurrentTrick = null;     // should we clean up anything?  Free up that trick? Store it. Worry about this later!
     }
 }
-function updateScore() {
+function updateScore(stanza) {
+    console.debug("updatescore - ", stanza);
+
     // update everyone's score at the end of a Stanza
+    for (var i=0; i < WhoopieStatus.numPlayers; i++) {
+        var bid = stanza.bids[i];
+        var tricks = stanza.tricksTaken[i];
+        if (bid == tricks) {
+            stanza.scores[i] = tricks+2;
+        } else
+            stanza.scores[i] = -1;
+    }
+    updateScoreTable(stanza);
 }
+
+function updateScoreTable(stanza) {
+    console.debug("updatescoretable - ", stanza);
+
+    // var bidstable = document.getElementById("whoopieBidsTable");
+    // var bidsbody = bidstable.tBodies[0];
+    // var bidsrow = bidsbody.insertRow(-1);
+
+    var scoretable = document.getElementById("scoreTable");
+    var scorebody = scoretable.tBodies[0];
+    var scorerow = scorebody.insertRow(-1);
+
+    for (var i=0; i < WhoopieStatus.numPlayers; i++) {
+        scorerow.insertCell(i).innerHTML = stanza.bids[i];
+    } 
+    scorerow.insertCell(WhoopieStatus.numPlayers).innerHTML = "";
+
+    for (var i=0; i < WhoopieStatus.numPlayers; i++) {
+        scorerow.insertCell(i+1+WhoopieStatus.numPlayers).innerHTML = stanza.scores[i];
+    }     
+
+}
+
 function cleanUpHand(hand) {
     var len = hand.length;
-    console.debug("cleanUpHand", hand[0], hand[1],hand[2], hand[3], len);
+    console.debug("cleanUpHand", len);
     for (var i = 0; i < len; i++) {
             var card = hand[i];
             pos = $(WhoopieStatus.deck[WhoopieStatus.deck.length-1].el).position();
@@ -1688,6 +1758,19 @@ function cleanUpHand(hand) {
     //WhoopieStatus.deck.render({immediate:true});
 }
 function cleanUpLastStanza() {
+    if (WhoopieStatus.handNumber == 1) {
+        // clean up first deal (no tricks, no Stanza
+        for (var i=0; i < WhoopieStatus.numPlayers; i++) {
+            cleanUpHand(Players[i].hands[0].hand);
+        }
+    } else {
+        cleanUpHand(CurrentStanza.allHiddenCards);
+    }
+    
+}
+
+
+function cleanUpLastStanzaOLD() {
     console.debug("cleanUpLastStanza: handNumber, tricksPlayed", WhoopieStatus.handNumber, CurrentStanza.tricksPlayed);
     if (WhoopieStatus.handNumber == 1) {
         // clean up first deal (no tricks, no Stanza
@@ -1697,6 +1780,7 @@ function cleanUpLastStanza() {
     } else {
         // 
         for (var i = 0; i < WhoopieStatus.handNumber - 1; i++) {
+            console.debug("CleanUpLastStanza: CurrentStanza ", CurrentStanza);
             cleanUpHand(CurrentStanza.allTricks[i].hand);
         }
         CurrentStanza.whoopieCard.hideCard();
@@ -1736,12 +1820,9 @@ function lastHandNumber(numPlayers) {
 
     return(stanzas);
 }
-function takeTrick(playerID) {
 
-    whoopieMessage(Players[playerID].name + " took the trick");
-    CurrentStanza.tricksTaken[playerID]++;
-    $("#trickID"+WhoopieStatus.playerID).html(CurrentStanza.tricksTaken[playerID]);
-    
+function takeTrick(playerID) {
+  
      // slide the cards together
      var trick = CurrentTrick.hand;
      var i;
@@ -1754,8 +1835,8 @@ function takeTrick(playerID) {
              queue: false
            };
          if (i == trick.length-1) { // last card, call back function to remove trick
-             $(trick[i].el).animate(props,1000, function() {
-                 // move all the cards together
+             $(trick[i].el).animate(props,1000, function() {  // move all the cards together
+                 
                  var playerElement = "#player" + playerID;
 
                  pos = $(playerElement).position();
@@ -1766,24 +1847,19 @@ function takeTrick(playerID) {
                  };
                  // move the trick to whomever took it
                  for (i = 0; i < trick.length; i++) {
-                     $(trick[i].el).animate(props, 1000, function() {
-                         // and hide / count it (haven't counted it yet!)
-                          for (i = 0; i < trick.length; i++) {
-                              var card = trick[i];
-                              card.hide();      // make it disappear
-                              card.hideCard();  // also turn it over
-                              //WhoopieStatus.deck.addCard(card);
-                              //card.hideCard();
-                              //card.show();
-                          }
-                          //WhoopieStatus.deck.render({immediate:true});
-                          //for (i = 0; i < trick.length; i++) {
-                            //var card = trick[i];
-                            //card.hideCard();
-                            //card.show();
-                          //}
-                          //CurrentStanza.whoopieCard.moveToFront();
-                       });
+                    
+                    if (i == trick.length-1) {
+                        $(trick[i].el).animate(props, 1000, function() {
+                            // and hide
+                            for (i = 0; i < trick.length; i++) {    
+                                var card = trick[i];
+                                card.hide();      // make it disappear
+                                card.hideCard();  // also turn it over
+                                CurrentStanza.allHiddenCards[CurrentStanza.allHiddenCards.length] = card;
+                            }
+                        });
+                    } else 
+                        $(trick[i].el).animate(props, 1000);
                  }
                });
          } else 
@@ -1878,6 +1954,7 @@ function playCard(playerID, card) {
         return(false);
     }
     WhoopieStatus.lastPlayerID = playerID;
+    WhoopieStatus.state = "playing";
 
     if (CurrentTrick == null) {
     // create a new trick
@@ -1915,10 +1992,27 @@ function playerHasSuit(playerID, suit) {
  * returns true if you are next to bid or play a card, false otherwise
  */
 function myTurn() {
-    console.debug("myTurn: myID, playerBeforeMe, lastPlayerID, tookturn",
+    console.debug("myTurn: state myID, playerBeforeMe, lastPlayerID, tookturn", WhoopieStatus.state,
             WhoopieStatus.playerID, WhoopieStatus.playerBeforeMe,WhoopieStatus.lastPlayerID, WhoopieStatus.thisPlayerTookTheirTurn);
-        
-    if (WhoopieStatus.hasLead == WhoopieStatus.playerID || WhoopieStatus.playerBeforeMe == WhoopieStatus.lastPlayerID) {
+
+    if (WhoopieStatus.state == "newdeal") {
+        if (WhoopieStatus.dealer == WhoopieStatus.playerBeforeMe)
+            return(true);
+    } else if (WhoopieStatus.state == "bidding") {
+        if (WhoopieStatus.lastPlayerID == WhoopieStatus.playerBeforeMe && !WhoopieStatus.thisPlayerAlreadyBid)
+            return(true);
+    } else if (WhoopieStatus.state == "tricktaken") {
+        if (WhoopieStatus.hasLead == ThisPlayer.playerID)
+            return(true);
+    } else if (WhoopieStatus.state == "playing") {
+        if (WhoopieStatus.lastPlayerID == WhoopieStatus.playerBeforeMe && !WhoopieStatus.thisPlayerTookTheirTurn)
+            return(true);
+    } else  
+        return(false);
+
+    if (WhoopieStatus.hasLead == WhoopieStatus.playerID)
+        return(true);     
+    else if (WhoopieStatus.hasLead == -1 && WhoopieStatus.playerBeforeMe == WhoopieStatus.lastPlayerID) {
         // it's your move unless you already moved this turn
         if (! WhoopieStatus.thisPlayerTookTheirTurn)
             return(true);
@@ -1976,6 +2070,7 @@ function askForBid() {
         resizable: false,
         height: 150,
         width: 250,
+        position: { my: 'top', at: 'top+30', of: "#whoopieMessageDiv2" },
         modal: true,
         buttons: {
             Bid: function() {
@@ -1987,6 +2082,9 @@ function askForBid() {
 
     function proceed(){
         var bid = $("#whoopieBid").val();
+        var position = $( "#dialogMakeBid" ).dialog( "option", "position" );
+        console.debug("dialogMakeBid position", position.top, position.left);
+ 
 
         // var numCards = handNumberToCards(WhoopieStatus.handNumber);
 
@@ -2063,6 +2161,8 @@ function whoopieTestStart() {
 
     if (WhoopieStatus.cards == null) {
         initializeWhoopie();
+        $("#whoopieMessageDiv2").css("display", "block");
+        $("#whoopieScore").css("display", "block");
         clearTimeout(WhoopieStatus.timeoutID);
     }
 

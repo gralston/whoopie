@@ -450,10 +450,10 @@ var cards = (function() {
       var totalCount = count * hands.length;
 
       function dealOne() {
-        /*if (count == 2) {
+        if (count == 1) {
           var card = me.topCard();
-          alert("dealing: (hand, card) " + (i % hands.length) + ", " + card.shortName);
-        }*/
+          console.debug("dealing: (hand, card) " + (i % hands.length) + ", " + card.shortName);
+        }
         if (me.length == 0 || i == totalCount) {
           if (callback) {
             callback();

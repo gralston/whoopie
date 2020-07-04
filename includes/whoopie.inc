@@ -5012,7 +5012,9 @@ class whoopie_view extends angelview {
 
 
         $body = "<div style='overflow:hidden'>";
+
         $body .= $this->createWhoopieDialogs();
+        
 
         /*
          * whoopie home page
@@ -5046,11 +5048,9 @@ class whoopie_view extends angelview {
                     width:700px; height: 400px; margin: 50px 0px 0px 20px; float:left'>";
         
 
-        $body .= "<div id='whoopieMessageDiv' style='display:none; background-color: gray; margin: 250px 0px 0px 315px;width:320px; height: 50px;'>
+        /*$body .= "<div id='whoopieMessageDiv' style='display:none; background-color: gray; margin: 250px 0px 0px 315px;width:320px; height: 50px;'>
                  <div style='color:white;   margin: 0px 0px 0px 10px;font-size:28px'><span id='whoopieMessage'>xxxx</span></div></div>";
-        $body .= "   <table>";
-        $body .= "   </table>";
-
+*/
 
       
         $body .= "   <div id='dealerButton' style='display:none;'>";
@@ -5089,17 +5089,17 @@ class whoopie_view extends angelview {
                 <thead>
                 <tr><th colspan=4>Bids</th><th style='background-color: black;width:10px'>&nbsp</th><th colspan=4>Scores</th></tr>
                 <tr>   
-                    <th id='angelTrackerHeaderCol1'  class='' valign=top style='width:30px'>J</th>
-                    <th id='angelTrackerHeaderCol2'  class='' valign=top style='width:30px'>G</th>
-                    <th id='angelTrackerHeaderCol3'  class='' valign=top style='width:30px'>E</th>
-                    <th id='angelTrackerHeaderCol4'  class='' valign=top style='width:30px'>S</th>
+                    <th id='angelTrackerHeaderCol1'  class='' valign=top style='width:30px'>G</th>
+                    <th id='angelTrackerHeaderCol2'  class='' valign=top style='width:30px'>J</th>
+                    <th id='angelTrackerHeaderCol3'  class='' valign=top style='width:30px'>S</th>
+                    <th id='angelTrackerHeaderCol4'  class='' valign=top style='width:30px'>E</th>
                     <th style='background-color: black;width:10px'>&nbsp</th>
                 
                 
-                    <th id='angelTrackerHeaderCol1' mySort='companyorperson' myProp='companyID' class='' valign=top style='width:30px'>J</th>
-                    <th id='angelTrackerHeaderCol2' mySort='string'    myProp='type'   class='' valign=top style='width:30px'>G</th>
-                    <th id='angelTrackerHeaderCol3' mySort='date'    myProp='trackerDate'   class='' valign=top style='width:30px'>E</th>
-                    <th id='angelTrackerHeaderCol4' mySort='nextdate'    myProp='start'   class='' valign=top style='width:30px'>S</th>
+                    <th id='angelTrackerHeaderCol1' mySort='companyorperson' myProp='companyID' class='' valign=top style='width:30px'>G</th>
+                    <th id='angelTrackerHeaderCol2' mySort='string'    myProp='type'   class='' valign=top style='width:30px'>J</th>
+                    <th id='angelTrackerHeaderCol3' mySort='date'    myProp='trackerDate'   class='' valign=top style='width:30px'>S</th>
+                    <th id='angelTrackerHeaderCol4' mySort='nextdate'    myProp='start'   class='' valign=top style='width:30px'>E</th>
                  </tr></thead></table></div>";
 
 
@@ -5108,25 +5108,29 @@ class whoopie_view extends angelview {
 
         $body .= "  <thead>
                     <tr>
-                        <th valign=top style='width:30px'>1</th>
-                        <th valign=top style='width:30px'>2</th>
-                        <th valign=top style='width:30px'>3</th>
-                        <th valign=top style='width:30px'>4</th>
+                        <th valign=top style='width:30px'></th>
+                        <th valign=top style='width:30px'></th>
+                        <th valign=top style='width:30px'></th>
+                        <th valign=top style='width:30px'></th>
                         <th style='background-color: black;width:10px'></th>
-                        <th valign=top style='width:30px'>5</th>
-                        <th valign=top style='width:30px'>6</th>
-                        <th valign=top style='width:30px'>7</th>
-                        <th valign=top style='width:30px'>8</th>
+                        <th valign=top style='width:30px'></th>
+                        <th valign=top style='width:30px'></th>
+                        <th valign=top style='width:30px'></th>
+                        <th valign=top style='width:30px'></th>
                     </tr></thead><tbody></tbody></table></div>";
 
         
         $body .= "</div>";  // whoopie score container
 
+        $body .= "<div id='whoopieMessageDiv2' style='clear:both; display:none; background-color: gray; margin: 10px 0px 0px 20px;
+                                                      width:700px; height: 200px;'>
+        <div id='whoopieMessageDiv' style='color:white;   margin: 0px 0px 0px 400px;font-size:28px'><span id='whoopieMessage'></span>";
+        
 
-/*
-        $body .= '<div id="whoopieInstructions" class="modelInstructions">';
-        $body .= file_get_contents("includes/whoopieInstructions.inc");        // add instructions at the end of the page
-        $body .= "</div>"; */
+        $body .= "</div></div>";
+
+
+
         return($body);
     }
 
