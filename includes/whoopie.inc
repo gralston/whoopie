@@ -5041,7 +5041,7 @@ class whoopie_view extends angelview {
         $body .=    "<table class='whoopieGameChooserTable'>";
 
         $rows = $game->getRows("games", "id > 0" );
-        $body .=        "<tr><th onclick='whoopieSendRequest(\"resetGame\"); alert(\"Game Reset\")' colspan=3>Choose a game!</th></tr>";
+        $body .=        "<tr><th onclick='whoopieSendRequest(\"resetGame\"); alert(\"Game Reset\")' colspan=3>Choose a game - click on the name!</th></tr>";
         $body .=        "<tr><th>Name</th> <th>Creator</th><th>Description</th></tr>";
         while($g = mysqli_fetch_object($rows,"whoopieGame")) {      
             $body .=        "<tr><td onclick='joinGame(\"$g->name\", $g->firstlogid)'>$g->name</td> 
@@ -5099,20 +5099,22 @@ class whoopie_view extends angelview {
         $body .= "<div id='scoreTableHeaderDiv' class='' style='width:400px;margin:0px 0px 0px 0px '>
                 <table class='whoopieScoringTable tr1 tr2 tr3 tr4 tr5 tc6 tr7 tr8 tr9 tr10' style='border: 2px solid black;'>
                 <thead>
-                <tr><th></th><th colspan=4>Bids</th><th style='background-color: black;width:10px'>&nbsp</th><th colspan=4>Scores</th></tr>
+                <tr><th style='border-right: 1px solid gray;width:30px'>Hand</th><th style='background-color: lightblue; text-align:center' colspan=4>Bids</th>
+                             <th style='background-color: black;width:10px; '>&nbsp</th>
+                             <th style='background-color: lightblue; text-align:center'colspan=4>Scores</th></tr>
                 <tr>   
-                    <th   class='' valign=top style='width:30px'>#</th>
-                    <th   class='' valign=top style='width:30px'>G</th>
-                    <th   class='' valign=top style='width:30px'>J</th>
-                    <th   class='' valign=top style='width:30px'>S</th>
-                    <th   class='' valign=top style='width:30px'>E</th>
+                    <th   valign=top style='border-right: 1px solid gray;width:30px'>#</th>
+                    <th   valign=top style='width:30px'>G</th>
+                    <th   valign=top style='width:30px'>J</th>
+                    <th   valign=top style='width:30px'>S</th>
+                    <th   valign=top style='width:30px'>E</th>
                     <th style='background-color: black;width:10px'>&nbsp</th>
                 
                 
-                    <th id='angelTrackerHeaderCol1' mySort='companyorperson' myProp='companyID' class='' valign=top style='width:30px'>G</th>
-                    <th id='angelTrackerHeaderCol2' mySort='string'    myProp='type'   class='' valign=top style='width:30px'>J</th>
-                    <th id='angelTrackerHeaderCol3' mySort='date'    myProp='trackerDate'   class='' valign=top style='width:30px'>S</th>
-                    <th id='angelTrackerHeaderCol4' mySort='nextdate'    myProp='start'   class='' valign=top style='width:30px'>E</th>
+                    <th   valign=top style='width:30px'>G</th>
+                    <th   valign=top style='width:30px'>J</th>
+                    <th   valign=top style='width:30px'>S</th>
+                    <th   valign=top style='width:30px'>E</th>
                  </tr></thead></table></div>";
 
 
@@ -5121,7 +5123,7 @@ class whoopie_view extends angelview {
 
         $body .= "  <thead>
                     <tr>
-                        <th valign=top style='width:30px'></th>
+                        <th valign=top style='border-right: 1px solid gray;width:30px'></th>
                         <th valign=top style='width:30px'></th>
                         <th valign=top style='width:30px'></th>
                         <th valign=top style='width:30px'></th>
@@ -5152,9 +5154,9 @@ class whoopie_view extends angelview {
 
         $body .= "</div>";  // whoopie score container
 
-        $body .= "<div id='whoopieMessageDiv2' style='clear:both; display:none; background-color: gray; margin: 10px 0px 0px 20px;
-                                                      width:700px; height: 200px;'>
-        <div id='whoopieMessageDiv' style='color:white;   margin: 0px 0px 0px 400px;font-size:28px'><span id='whoopieMessage'></span>";
+        $body .= "<div id='whoopieMessageDiv2' style='clear:both; display:none; background-color: white; margin: 10px 0px 0px 20px;
+                                                      width:700px; height: 80px;'>
+        <div id='whoopieMessageDiv' style='color:black;   margin: 0px 0px 0px 275px;font-size:28px'><span id='whoopieMessage'></span>";
         
 
         $body .= "</div></div>";

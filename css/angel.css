@@ -628,6 +628,9 @@ input[type="checkbox"]:checked ~ .exit-reveal-if-active {
     border-collapse: collapse;
     font-family: verdana,Arial,Helvetica,sans-serif;
 }
+.no-close .ui-dialog-titlebar-close {
+    display: none;
+  }
 
 .whoopieGameChooserTable  {
     padding: 0px;
@@ -702,7 +705,7 @@ input[type="checkbox"]:checked ~ .exit-reveal-if-active {
 
 
 .whoopieScoringTable  {
-    padding: 0px;
+    padding: 3px;
     border-spacing: 0px;
     table-layout: fixed;
     width: 400px;
@@ -723,7 +726,7 @@ input[type="checkbox"]:checked ~ .exit-reveal-if-active {
     font-family: verdana,Arial,Helvetica,sans-serif;
 }
 
-.whoopieScoring th {
+.whoopieScoringTable th {
     /*background-color: lightcyan;*/
     background-color: #E6E6F0;
     background-repeat: no-repeat;
@@ -732,12 +735,14 @@ input[type="checkbox"]:checked ~ .exit-reveal-if-active {
     border-right: 0px solid gray;
     vertical-align: middle;
     font-size: 12px;
+    padding: 0px 4px 0px 0px;
     padding-left: 4px;
     padding-right: 4px;
     border-spacing: 0px;
     table-layout: fixed;
     border-collapse: collapse;
     font-family: verdana,Arial,Helvetica,sans-serif;
+    text-align: center;
 }
 
 .angelPayoutsTable  {

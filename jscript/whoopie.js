@@ -1169,10 +1169,14 @@ function yourDeal(handNumber) {
 
     $("#whoopieDealerCardCount").html(cardCount);
     $("#dialogYourDeal").dialog({
+        dialogClass: "no-close",
+        classes: {
+            "ui-dialog-titlebar-close": "no-close"
+          },
         resizable: false,
-        height: 150,
+        height: 175,
         width: 200,
-        position: { my: 'top', at: 'top+50', of: "#whoopieMessageDiv2" },
+        position: { my: 'top', at: 'top+50', of: "#scoreTableDiv" },
         modal: true,
         buttons: {
             Deal: function() {
@@ -1412,7 +1416,7 @@ function organizeHand(hand) {
     var hearts = [];
     var newHand = [];
     var savedProps = [];
-
+    console.debug("organizehand...");
     if (hand.length < 3)
         return;
 
@@ -1727,15 +1731,15 @@ function updateTrickStatus(playerID, card) {
 
         if (CurrentTrick.winningCardisTrump) {
             var rank;
-            if (card.rank == 0)
+            if (CurrentTrick.winningCard.rank == 0)     // a joker takes on the rank of the whoopie card
                 rank = CurrentStanza.whoopieCard.rank;
             else    
-                rank = card.rank
+                rank = CurrentTrick.winningCard.rank
 
-            if (rank > CurrentTrick.winningCard.rank) {
+            if (card.rank > rank) {
                  // new card is winning!!
                  CurrentTrick.playerID = playerID;     // new winner
-                 CurrentTrick.winningCard = CurrentStanza.whoopieCard;  // it's really the joker but it acts like the whoopie card
+                 CurrentTrick.winningCard = card;  // it's really the joker but it acts like the whoopie card
             }
         } else {
             // we are the first trump, we win!
@@ -1807,10 +1811,15 @@ function cardIsTrump(card) {
         CurrentStanza.whoopieCard = card;
         CurrentStanza.trumpSuit = card.suit; 
         return(true);
-    } 
-
-    if (card.suit == CurrentStanza.trumpSuit)
+    } else if (card.suit == CurrentStanza.trumpSuit) {
         return(true);
+    } else if (CurrentTrick.jokerLed) {
+        return(true);
+    } else if (CurrentTrick.cardsPlayed == 1 && CurrentStanza.scramble) {
+        // every card led is trump in a scramble
+        CurrentStanza.trumpSuit = card.suit;
+        return(true);
+    }
     
     return(false);
 
@@ -1818,6 +1827,8 @@ function cardIsTrump(card) {
 
 /*
  * handle case where card played is a joker
+ *    if a joker is led - highest card takes the trick, then in scramble (card led is trump)
+ *    if a joker is played on a trick, the suit led become trump just for that trick, then in scramble.
  */
 function handleJoker(playerID, card) {
 
@@ -1846,7 +1857,7 @@ function handleJoker(playerID, card) {
 }
 
 /*
- * handle case where card played is a whoopiecard
+ * handle case where card played is a whoopiecard:
  */
 function handleWhoopie(playerID, card) {
     // Whoopie card played 
@@ -1859,6 +1870,7 @@ function handleWhoopie(playerID, card) {
         CurrentTrick.playerID = playerID;
     }
     CurrentTrick.winningCardisTrump = true;
+    CurrentStanza.scramble = false; // no longer in scramble!
     
 }
 
@@ -2191,10 +2203,14 @@ function askForBid() {
     var bid = -1;
 
     $("#dialogMakeBid").dialog({
+        dialogClass: "no-close",
+        classes: {
+            "ui-dialog-titlebar-close": "no-close"
+          },
         resizable: false,
-        height: 150,
+        height: 175,
         width: 250,
-        position: { my: 'top', at: 'top+30', of: "#whoopieMessageDiv2" },
+        position: { my: 'top', at: 'top+30', of: "#scoreTableDiv" },
         modal: true,
         buttons: {
             Bid: function() {

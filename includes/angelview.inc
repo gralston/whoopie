@@ -67,10 +67,10 @@ class angelview {
         $this->js .= '<script>$(document).ready(function(){$("#note").click(function(){$(".add").toggle("fast");});});</script>';
 
         $this->css          = "<link href='$path/css/ik12.css' type='text/css' rel='stylesheet' />";        // LOSE THIS!
-        if ($auth == "root")
+        //if ($auth == "root")
             $angelCSS = "$path/css/angel.css?v=" . time();       // this will ensure we reload css every time for debug
-        else
-            $angelCSS = "$path/css/angel.css";
+        //else
+        //    $angelCSS = "$path/css/angel.css";
 
         $this->css .= "
 
@@ -116,7 +116,7 @@ class angelview {
         echo "</div></div></div>";
         echo '<div class="angelpush"></div></div>';
         echo '</div></div></div><br>';
-        require($this->footer);
+        // require($this->footer);
         echo "</body>";
         echo "</html>";
     }
