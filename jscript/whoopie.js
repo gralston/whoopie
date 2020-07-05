@@ -1174,7 +1174,7 @@ function yourDeal(handNumber) {
             "ui-dialog-titlebar-close": "no-close"
           },
         resizable: false,
-        height: 175,
+        height: 200,
         width: 200,
         position: { my: 'top', at: 'top+50', of: "#scoreTableDiv" },
         modal: true,
@@ -1488,7 +1488,7 @@ function turnOverWhoopieCard() {
     if (WhoopieStatus.dealer != ThisPlayer.playerID)
         organizeHand(ThisPlayer.hands[WhoopieStatus.handNumber].hand);    // make my hand easier to read
     else    
-        setTimeout(organizeDealerHand, 2000);
+        setTimeout(organizeDealerHand, 2500);
 }
 
 function organizeDealerHand() {
@@ -2208,7 +2208,7 @@ function askForBid() {
             "ui-dialog-titlebar-close": "no-close"
           },
         resizable: false,
-        height: 175,
+        height: 200,
         width: 250,
         position: { my: 'top', at: 'top+30', of: "#scoreTableDiv" },
         modal: true,
