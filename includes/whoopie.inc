@@ -105,25 +105,27 @@ class whoopie {
         $conn = $gameLog->connect();
         $debug = false;
 
+        $playerName = $request->whoopieRequest->playerName;
 
         $whoopieResponse = array("name"=>"joinedGame", "gameID"=>"0", "playerID"=>"-1", "lastID"=>"0");
 
         $json = "{";
         $json .= '"' . "whoopieResponse" .  '": ';
 
+
         if ($request->whoopieRequest->name == "joinGame") {
-            if (strtolower($request->whoopieRequest->playerName) == "geoff")
+            if (strtolower($playerName) == "geoff")
                 $whoopieResponse["playerID"] = "0";
-            elseif (strtolower($request->whoopieRequest->playerName) == "jon")
+            elseif (strtolower($playerName) == "jon")
                 $whoopieResponse["playerID"] = "1";
-            elseif (strtolower($request->whoopieRequest->playerName) == "steven")
+            elseif (strtolower($playerName) == "steven")
                 $whoopieResponse["playerID"] = "2";
-            elseif (strtolower($request->whoopieRequest->playerName) == "elizabeth")
+            elseif (strtolower($playerName) == "elizabeth")
                 $whoopieResponse["playerID"] = "3";
 
             $gameLog->name = "playerJoined";
             $gameLog->playerid = $whoopieResponse["playerID"];
-            $gameLog->playername = $request->whoopieRequest->playerName;
+            $gameLog->playername = $playerName;
             $gameLog->gameid = 1;
             $gameLog->bidmade = 0;
             $gameLog->cardplayed = "";
@@ -132,23 +134,32 @@ class whoopie {
             error_log("func ajaxWhoopieRequest joingame: deck:" . $gameLog->deck);
 
 
-            $whoopieResponse["lastID"] = $gameLog->insertRow();
+            
 
             // now update game entry and see if game is live
             $game = new whoopieGame();
             $gameLog->shareconn($conn);
             $game->id = 1;  // we gotta do some work if we want to support multiple games!
             $game = $game->getEntry();
-            $game->players++;
-            if ($game->players == $game->playercount or $debug) {
-                error_log("func ajaxWhoopieRequest gameOn");
-                $game->status = "gameOn";          
-                // write gameOn event to gameLog
-                $gameLog->name = "gameOn";
-                $gameLog->insertRow();
+            
+            if (strpos($game->playernames, $playerName) == false) {
+                    // first time for this player!
+                    
+                $whoopieResponse["lastID"] = $gameLog->insertRow();
+                $game->players++;
+                if ($game->players == $game->playercount or $debug) {
+                    error_log("func ajaxWhoopieRequest gameOn");
+                    $game->status = "gameOn";          
+                    // write gameOn event to gameLog
+                    $gameLog->name = "gameOn";
+                    $gameLog->insertRow();
+                }
+                $game->playernames .= ":" . $playerName;
+                
+                $game->updateThisRow();     // update active player count (and maybe status)
+            } else {
+                $whoopieResponse["name"] = "Error: " . $playerName . " is already playing. Please try again.";
             }
-
-            $game->updateThisRow();     // update active player count (and maybe status)
             
         } else if ($request->whoopieRequest->name == "dealForFirstDeal") {
 
@@ -205,8 +216,9 @@ class whoopie {
             $game->id = 1;  // we gotta do some work if we want to support multiple games!
             $game = $game->getEntry();
             $game->players = 0;
+            $game->playernames = "";
             $game->status = "wait";          
-            // write gameOn event to gameLog
+            // write gameOver event to gameLog
             $gameLog->name = "gameOver";
             $gameLog->playerid = 0;
             $gameLog->playername = $request->whoopieRequest->playerName;
@@ -5044,7 +5056,7 @@ class whoopie_view extends angelview {
         /*
          * This div is where the game is played xxx
          */
-        $body .= "<div id='whoopieTable' style='display:none; background-image:url(/img/cardtable.jpg); border: 5px solid blue; 
+        $body .= "<div id='whoopieTable' style='display:none; background-image:url(/img/cardtable.jpg); border: 0px solid blue; 
                     width:700px; height: 400px; margin: 50px 0px 0px 20px; float:left'>";
         
 
@@ -5081,18 +5093,19 @@ class whoopie_view extends angelview {
         /*
          * This div is where the game is scored
          */
-        $body .= "<div id='whoopieScore' style='display:none; border: 3px solid red; width:400px; height: 250; margin: 50px 0px 0px 20px;float:left '>";
+        $body .= "<div id='whoopieScore' style='display:none; border: 0px solid red; width:400px; height: 250; margin: 50px 0px 0px 20px;float:left '>";
     
 
         $body .= "<div id='scoreTableHeaderDiv' class='' style='width:400px;margin:0px 0px 0px 0px '>
-                <table class='whoopieScoringTable' style='border: 2px solid black;'>
+                <table class='whoopieScoringTable tr1 tr2 tr3 tr4 tr5 tc6 tr7 tr8 tr9 tr10' style='border: 2px solid black;'>
                 <thead>
-                <tr><th colspan=4>Bids</th><th style='background-color: black;width:10px'>&nbsp</th><th colspan=4>Scores</th></tr>
+                <tr><th></th><th colspan=4>Bids</th><th style='background-color: black;width:10px'>&nbsp</th><th colspan=4>Scores</th></tr>
                 <tr>   
-                    <th id='angelTrackerHeaderCol1'  class='' valign=top style='width:30px'>G</th>
-                    <th id='angelTrackerHeaderCol2'  class='' valign=top style='width:30px'>J</th>
-                    <th id='angelTrackerHeaderCol3'  class='' valign=top style='width:30px'>S</th>
-                    <th id='angelTrackerHeaderCol4'  class='' valign=top style='width:30px'>E</th>
+                    <th   class='' valign=top style='width:30px'>#</th>
+                    <th   class='' valign=top style='width:30px'>G</th>
+                    <th   class='' valign=top style='width:30px'>J</th>
+                    <th   class='' valign=top style='width:30px'>S</th>
+                    <th   class='' valign=top style='width:30px'>E</th>
                     <th style='background-color: black;width:10px'>&nbsp</th>
                 
                 
@@ -5104,10 +5117,11 @@ class whoopie_view extends angelview {
 
 
         $body .= "<div id='scoreTableDiv' class='' style=' width:400px;margin:0px 0px 0px 0px '>";
-        $body .= "<table id='scoreTable' class='whoopieScoringTable tr1 tr2 tr3 tr4 tc5 tr6 tr7 tr8 tr9' style='border: 0px solid blue;'>";
+        $body .= "<table id='scoreTable' class='whoopieScoringTable tr1 tr2 tr3 tr4 tr5 tc6 tr7 tr8 tr9 tr10' style='border: 0px solid blue;'>";
 
         $body .= "  <thead>
                     <tr>
+                        <th valign=top style='width:30px'></th>
                         <th valign=top style='width:30px'></th>
                         <th valign=top style='width:30px'></th>
                         <th valign=top style='width:30px'></th>
@@ -5119,7 +5133,23 @@ class whoopie_view extends angelview {
                         <th valign=top style='width:30px'></th>
                     </tr></thead><tbody></tbody></table></div>";
 
-        
+        $body .= "<div id='scoreTableTotalsDiv' class='' style=' width:400px;margin:0px 0px 0px 0px '>";
+        $body .= "<table id='scoreTableTotals' class='whoopieScoringTable tr1 tr2 tr3 tr4 tr5 tc6 tr7 tr8 tr9 tr10' style='border: 2px solid black;'>";
+
+        $body .= "  <tbody>
+                    <tr>
+                        <td valign=top style='width:30px'></th>
+                        <td valign=top style='width:30px'></th>
+                        <td valign=top style='width:30px'></th>
+                        <td valign=top style='width:30px'></th>
+                        <td valign=top style='width:30px'></th>
+                        <td style='background-color: black;width:10px'></th>
+                        <td id='totalsID0' valign=top style='width:30px;color:blue'></th>
+                        <td id='totalsID1' valign=top style='width:30px;color:blue'></th>
+                        <td id='totalsID2' valign=top style='width:30px;color:blue'></th>
+                        <td id='totalsID3' valign=top style='width:30px;color:blue'></th>
+                    </tr></tbody></table></div>";
+
         $body .= "</div>";  // whoopie score container
 
         $body .= "<div id='whoopieMessageDiv2' style='clear:both; display:none; background-color: gray; margin: 10px 0px 0px 20px;

@@ -685,7 +685,7 @@ function WhoopieTrickConstructor()  {
     this.playerID = -1;                  // the id of the player who is winning and in the end took this trick
     this.jokerLed = false;          // true if joker led (which is either highest card wins or auto-win if whoopie card is a joker)
     this.suitLed = "";              // the suit which was led
-    this.trumpSuit = "";            // the current trump suit
+    this.trumpSuit = "";            // the current trump suit DEPRECATED just use stanza version
     this.winningCard = null;        // the card that is winning the trick so far, and eventually won the trick
     this.winningCardisTrump = false;    // the winning card was a trump when it was played
     this.autoWin = false;           // special case where whoopie card is joker and a joker led - which takes the trick.
@@ -845,6 +845,7 @@ var WhoopieStatus = {
     deck : [],
     deckIndex : [],
     stanzas : [],                   // all the stanzas in this game
+    scores : [0,0,0,0,0,0,0,0,0],
     stopPlaying : false,
     deckToIndex: function() {
         for (i=0; i<this.deck.length;i++) {
@@ -1305,7 +1306,9 @@ function dealWhoopieStanza(handNumber, faceUp) {
     WhoopieStatus.thisPlayerTookTheirTurn = false;  // we haven't taken our turn yet!
     WhoopieStatus.thisPlayerAlreadyBid = false;  // we haven't taken our turn yet!
 
-    faceUp = true;      // just for debug
+    
+
+    // faceUp = true;      // just for debug
 
     
     WhoopieStatus.stanzas[handNumber] = new WhoopieStanzaConstructor();
@@ -1370,6 +1373,9 @@ function dealWhoopieStanza(handNumber, faceUp) {
             player.hands[handNumber] = new WhoopieHandConstructor();
             player.hands[handNumber].hand = new WhoopieStatus.cards.Hand({faceUp:faceUp, x:player.seat.x, y:player.seat.y});
         }
+
+        $("#bidID"+i).html("");         // clear bids from previous stanza
+        $("#trickID"+i).html("");       // clear tricks taken from previous stanza
     }
 
     var id = WhoopieStatus.dealer;
@@ -1386,13 +1392,80 @@ function dealWhoopieStanza(handNumber, faceUp) {
      // deal hands and turn over whoopie card (unless this is the first deal chooser hand)
      if (handNumber != 0)
         WhoopieStatus.deck.deal(numCards, hands, 100, turnOverWhoopieCard);
-     else
+     else {
         WhoopieStatus.deck.deal(numCards, hands, 100);
+     }
 
+     
      console.debug("dealWhoopieStanza: all hands after deal", hands[0], hands[1], hands[2], hands[3]);
      WhoopieStatus.deck.x = DeckLocation.x;      // standard deck location
      WhoopieStatus.deck.y = DeckLocation.y;
      WhoopieStatus.deck.render({immediate:true});
+
+}
+
+
+function organizeHand(hand) {
+    var clubs = [];
+    var spades = [];
+    var diamonds = [];
+    var hearts = [];
+    var newHand = [];
+    var savedProps = [];
+
+    if (hand.length < 3)
+        return;
+
+    if (hand.length > 3)
+        console.debug("organizehand: ", hand.length, hand[0].shortName, hand[1].shortName, hand[2].shortName, hand[3].shortName);
+
+    
+
+    for (var i = 0; i < hand.length; i++) {
+        var card = hand[i];
+        savedProps[savedProps.length] = $( card.el ).position();
+
+        if (card.suit == "c")
+             clubs[clubs.length] = card;
+        else if (card.suit == "d")
+             diamonds[diamonds.length] = card;
+        else if (card.suit == "h")
+             hearts[hearts.length] = card;
+        else if (card.suit == "s")
+             spades[spades.length] = card;            
+    }
+
+    clubs.sort(function(a,b) { return(a.rank - b.rank)});
+    diamonds.sort(function(a,b) { return(a.rank - b.rank)});
+    hearts.sort(function(a,b) { return(a.rank - b.rank)});
+    spades.sort(function(a,b) { return(a.rank - b.rank)});
+
+    var index = 0;
+    for (var i = 0; i < clubs.length; i++)
+        newHand[index++] = clubs[i];
+    for (var i = 0; i < diamonds.length; i++)
+        newHand[index++] = diamonds[i];
+    for (var i = 0; i < hearts.length; i++)
+        newHand[index++] = hearts[i];
+    for (var i = 0; i < spades.length; i++)
+        newHand[index++] = spades[i];
+
+    if (hand.length > 3)
+        console.debug("organizehand New: ", newHand.length, newHand[0].shortName, newHand[1].shortName, newHand[2].shortName, newHand[3].shortName);
+
+    var zIndexCounter = 1;
+    for (var i = 0; i < hand.length; i++) {
+        var newCard = newHand[i];
+        var card = hand[i];
+        var pos = $( newCard.el ).position();
+        console.debug("organize hand - details - first card replaced by second card", card.shortName, newCard.shortName );
+        console.debug("organize hand - details - moving card from ", pos.top, pos.left );
+        console.debug("organize hand - details - moving card to ", savedProps[i].top, savedProps[i].left );
+        $(newCard.el).css(savedProps[i]);
+        pos = $( newCard.el ).position();
+        console.debug("organize hand - details - after move card is at:  ", pos.top, pos.left );
+        $(newCard.el).css('z-index', zIndexCounter++);
+    }
 
 }
 
@@ -1408,7 +1481,14 @@ function turnOverWhoopieCard() {
         CurrentStanza.trumpSuit = CurrentStanza.whoopieCard.suit;         // this is the current trump suit!
         whoopieDeck.render();
     }});
-    
+    if (WhoopieStatus.dealer != ThisPlayer.playerID)
+        organizeHand(ThisPlayer.hands[WhoopieStatus.handNumber].hand);    // make my hand easier to read
+    else    
+        setTimeout(organizeDealerHand, 2000);
+}
+
+function organizeDealerHand() {
+    organizeHand(ThisPlayer.hands[WhoopieStatus.handNumber].hand); 
 }
 
 /* 
@@ -1539,6 +1619,7 @@ function getNextWhoopieEvent() {
 
             } else if (ev.type == "newBid") {
                 whoopieMessageOff();    // clear dealer message (if there)
+                
                 $("#bidID"+ev.playerID).html(ev.bidMade);
                 $("#trickID"+ev.playerID).html(0);
                 if (Number(ev.playerID) != ThisPlayer.playerID);
@@ -1546,6 +1627,9 @@ function getNextWhoopieEvent() {
                 CurrentStanza.bids[Number(ev.playerID)] = Number(ev.bidMade);
 
                 WhoopieStatus.lastPlayerID = Number(ev.playerID);
+                if (WhoopieStatus.dealer == Number(ev.playerID))
+                    WhoopieStatus.state = "playing";
+
                 if (myTurn()) {
                     // it's either your bid or your play. 
                     if (WhoopieStatus.thisPlayerAlreadyBid) {
@@ -1626,17 +1710,21 @@ function cardShortNameToCard(shortName) {
  */
 function updateTrickStatus(playerID, card) {
 
-    console.debug("updateTrickStatus", CurrentTrick.trumpSuit, CurrentTrick.playerID, CurrentTrick.cardsPlayed, CurrentTrick.suitLed);
+    console.debug("updateTrickStatus", CurrentStanza.trumpSuit, CurrentTrick.playerID, CurrentTrick.cardsPlayed, CurrentTrick.suitLed);
     console.debug("updateTrickStatus", playerID, card.suit, card.rank);
 
     CurrentTrick.cardsPlayed++;
        
-    if (card.rank == 0)
+    if (card.rank == 0) {
         handleJoker(playerID, card);
-    else if (card.rank == CurrentStanza.whoopieCard.rank)
+        showCardIsTrump(card);
+    } else if (card.rank == CurrentStanza.whoopieCard.rank) {
         handleWhoopie(playerID, card);
-    else if (cardIsTrump(card)) {
+        showCardIsTrump(card);
+    } else if (cardIsTrump(card)) {
         // okay, the card played was a trump!
+        showCardIsTrump(card);
+
         if (CurrentTrick.winningCardisTrump) {
             var rank;
             if (card.rank == 0)
@@ -1696,7 +1784,85 @@ function updateTrickStatus(playerID, card) {
     
         CurrentTrick = null;     // should we clean up anything?  Free up that trick? Store it. Worry about this later!
     }
+}   // updateTrickStatus
+
+function undoCardIsTrump(card) {
+    $(card.el).css({"border-width":"0px"});
 }
+
+function showCardIsTrump(card) {
+
+    $(card.el).css({"border-color": "gold", 
+    "border-width":"2px", 
+    "border-style":"solid"});
+
+}
+/*
+ * return true if input card is trump card and false otherwise
+*/
+function cardIsTrump(card) {
+    
+    // special case: this is the first non-joker led when the whoopie card is a joker. this card becomes the whoopie card
+    if (CurrentStanza.jokerWhoopie()) {
+        CurrentStanza.whoopieCard = card;
+        CurrentStanza.trumpSuit = card.suit; 
+        return(true);
+    } 
+
+    if (card.suit == CurrentStanza.trumpSuit)
+        return(true);
+    
+    return(false);
+
+}
+
+/*
+ * handle case where card played is a joker
+ */
+function handleJoker(playerID, card) {
+
+    CurrentStanza.scramble = true;
+    
+    if (CurrentTrick.cardsPlayed == 1) {
+         // joker led!
+        CurrentTrick.winningCard = card;
+        CurrentTrick.playerID = playerID;
+        CurrentTrick.jokerLed = true;  
+        // if whoopie card is a joker than we win this trick and the next card played is the whoopie card     
+        if (CurrentStanza.jokerWhoopie()) {
+            CurrentTrick.autoWin = true;            
+            CurrentStanza.scramble = false;     // special case is not a scramble
+        }   
+    } else {
+        if (!CurrentTrick.autoWin && (!CurrentTrick.winningCardisTrump || CurrentTrick.winningCard.rank < CurrentStanza.whoopieCard.rank)) {
+            // we're winning either if we're the first trump or a higher trump where our rank is the whoopiecard rank
+            CurrentTrick.winningCard = card;
+            CurrentTrick.playerID = playerID;
+        }
+        // CurrentTrick.trumpSuit = CurrentTrick.suitLed;      // whatever suit was led is trump from now on 
+        CurrentStanza.trumpSuit = CurrentTrick.suitLed;
+    }      
+    CurrentTrick.winningCardisTrump = true;
+}
+
+/*
+ * handle case where card played is a whoopiecard
+ */
+function handleWhoopie(playerID, card) {
+    // Whoopie card played 
+    // CurrentTrick.trumpSuit = card.suit;      // the suit of the whoopie card is trump from now on
+    CurrentStanza.trumpSuit = card.suit; 
+    
+    if (!CurrentTrick.autoWin && (!CurrentTrick.winningCardisTrump || CurrentTrick.winningCard.rank < card.rank)){
+        // we're winning either if we're the first trump or a higher trump where our rank 
+        CurrentTrick.winningCard = card;
+        CurrentTrick.playerID = playerID;
+    }
+    CurrentTrick.winningCardisTrump = true;
+    
+}
+
+
 function updateScore(stanza) {
     console.debug("updatescore - ", stanza);
 
@@ -1708,7 +1874,10 @@ function updateScore(stanza) {
             stanza.scores[i] = tricks+2;
         } else
             stanza.scores[i] = -1;
+
+        WhoopieStatus.scores[i] += stanza.scores[i];
     }
+   
     updateScoreTable(stanza);
 }
 
@@ -1723,13 +1892,16 @@ function updateScoreTable(stanza) {
     var scorebody = scoretable.tBodies[0];
     var scorerow = scorebody.insertRow(-1);
 
-    for (var i=0; i < WhoopieStatus.numPlayers; i++) {
-        scorerow.insertCell(i).innerHTML = stanza.bids[i];
-    } 
-    scorerow.insertCell(WhoopieStatus.numPlayers).innerHTML = "";
+    scorerow.insertCell(0).innerHTML = WhoopieStatus.handNumber;
 
     for (var i=0; i < WhoopieStatus.numPlayers; i++) {
-        scorerow.insertCell(i+1+WhoopieStatus.numPlayers).innerHTML = stanza.scores[i];
+        scorerow.insertCell(i+1).innerHTML = stanza.bids[i];
+        $("#totalsID"+i).html(WhoopieStatus.scores[i]);
+    } 
+    scorerow.insertCell(WhoopieStatus.numPlayers+1).innerHTML = "";
+
+    for (var i=0; i < WhoopieStatus.numPlayers; i++) {
+        scorerow.insertCell(i+2+WhoopieStatus.numPlayers).innerHTML = stanza.scores[i];
     }     
 
 }
@@ -1739,6 +1911,7 @@ function cleanUpHand(hand) {
     console.debug("cleanUpHand", len);
     for (var i = 0; i < len; i++) {
             var card = hand[i];
+            undoCardIsTrump(card);
             pos = $(WhoopieStatus.deck[WhoopieStatus.deck.length-1].el).position();
             console.debug("cleanUpHand", card, i, pos.top, pos.left);
             var props = {
@@ -1868,68 +2041,7 @@ function takeTrick(playerID) {
      }
  
 }
-/*
- * handle case where card played is a joker
- */
-function handleJoker(playerID, card) {
 
-    CurrentStanza.scramble = true;
-    
-    if (CurrentTrick.cardsPlayed == 1) {
-         // joker led!
-        CurrentTrick.winningCard = card;
-        CurrentTrick.playerID = playerID;
-        CurrentTrick.jokerLed = true;  
-        // if whoopie card is a joker than we win this trick and the next card played is the whoopie card     
-        if (CurrentStanza.jokerWhoopie()) {
-            CurrentTrick.autoWin = true;            
-            CurrentStanza.scramble = false;     // special case is not a scramble
-        }   
-    } else {
-        if (!CurrentTrick.autoWin && (!CurrentTrick.winningCardisTrump || CurrentTrick.winningCard.rank < CurrentStanza.whoopieCard.rank)) {
-            // we're winning either if we're the first trump or a higher trump where our rank is the whoopiecard rank
-            CurrentTrick.winningCard = card;
-            CurrentTrick.playerID = playerID;
-        }
-        CurrentTrick.trumpSuit = CurrentTrick.suitLed;      // whatever suit was led is trump from now on 
-    }      
-    
-}
-
-/*
- * handle case where card played is a whoopiecard
- */
-function handleWhoopie(playerID, card) {
-    // Whoopie card played 
-    CurrentTrick.trumpSuit = card.suit;      // the suit of the whoopie card is trump from now on
-    CurrentStanza.trumpSuit = card.suit; 
-    
-    if (!CurrentTrick.autoWin && (!CurrentTrick.winningCardisTrump || CurrentTrick.winningCard.rank < card.rank)){
-        // we're winning either if we're the first trump or a higher trump where our rank 
-        CurrentTrick.winningCard = card;
-        CurrentTrick.playerID = playerID;
-    }
-    
-}
-
-/*
- * return true if input card is trump card and false otherwise
-*/
-function cardIsTrump(card) {
-    
-    // special case: this is the first non-joker led when the whoopie card is a joker. this card becomes the whoopie card
-    if (CurrentStanza.jokerWhoopie()) {
-        CurrentStanza.whoopieCard = card;
-        CurrentTrick.trumpSuit = card.suit; 
-        return(true);
-    } 
-
-    if (card.suit == CurrentStanza.trumpSuit)
-        return(true);
-    
-    return(false);
-
-}
 /*
  * take a deck from the cloud and import into your deck (a deck is an index of cards in all.cards)
  */
@@ -1944,13 +2056,15 @@ function importDeck(deckIndex) {
 /*
  * play the card for the input playerID
  */
+SuitLongnames = {"d" : "diamonds", "s" : "spades", "c" : "clubs", "h" : "hearts"};
+
 function playCard(playerID, card) {
 
     console.debug("Playcard: playerID, handnumber, card", playerID, WhoopieStatus.handNumber, card);
     whoopieMessageOff();    // stop telling me it's my turn!
 
     if (CurrentTrick != null && (card.suit != CurrentTrick.suitLed && playerHasSuit(playerID, CurrentTrick.suitLed))) {
-        alert("You must follow suit (" + CurrentTrick.suitLed + ") - if you can!");
+        alert("You must follow suit (" + SuitLongnames[CurrentTrick.suitLed] + ") - if you can!");
         return(false);
     }
     WhoopieStatus.lastPlayerID = playerID;
@@ -1960,7 +2074,7 @@ function playCard(playerID, card) {
     // create a new trick
         CurrentTrick = new WhoopieTrickConstructor();
         CurrentTrick.hand = new WhoopieStatus.cards.Hand({faceUp:true, x:300, y:200});
-        CurrentTrick.trumpSuit = CurrentStanza.trumpSuit;
+        // CurrentTrick.trumpSuit = CurrentStanza.trumpSuit;
         CurrentTrick.suitLed = card.suit;
         CurrentStanza.allTricks[CurrentStanza.tricksPlayed] = CurrentTrick;   // we'll use this later to move the cards back to the deck
     }
@@ -1992,25 +2106,32 @@ function playerHasSuit(playerID, suit) {
  * returns true if you are next to bid or play a card, false otherwise
  */
 function myTurn() {
-    console.debug("myTurn: state myID, playerBeforeMe, lastPlayerID, tookturn", WhoopieStatus.state,
-            WhoopieStatus.playerID, WhoopieStatus.playerBeforeMe,WhoopieStatus.lastPlayerID, WhoopieStatus.thisPlayerTookTheirTurn);
+    console.debug("myTurn: (state myID, playerBeforeMe, lastPlayerID, tooktheirturn, alreadybid)", WhoopieStatus.state,
+            WhoopieStatus.playerID, WhoopieStatus.playerBeforeMe,WhoopieStatus.lastPlayerID, 
+            WhoopieStatus.thisPlayerTookTheirTurn, WhoopieStatus.thisPlayerAlreadyBid);
+
+    var retVal = false;
 
     if (WhoopieStatus.state == "newdeal") {
         if (WhoopieStatus.dealer == WhoopieStatus.playerBeforeMe)
-            return(true);
+            retVal = true;
     } else if (WhoopieStatus.state == "bidding") {
         if (WhoopieStatus.lastPlayerID == WhoopieStatus.playerBeforeMe && !WhoopieStatus.thisPlayerAlreadyBid)
-            return(true);
+            retVal = true;
     } else if (WhoopieStatus.state == "tricktaken") {
         if (WhoopieStatus.hasLead == ThisPlayer.playerID)
-            return(true);
+            retVal = true;
     } else if (WhoopieStatus.state == "playing") {
         if (WhoopieStatus.lastPlayerID == WhoopieStatus.playerBeforeMe && !WhoopieStatus.thisPlayerTookTheirTurn)
-            return(true);
+            retVal = true;
     } else  
-        return(false);
+        retVal = false;
 
-    if (WhoopieStatus.hasLead == WhoopieStatus.playerID)
+    console.debug("myturn returning: ", retVal);
+
+    return(retVal);
+
+    /*if (WhoopieStatus.hasLead == WhoopieStatus.playerID)
         return(true);     
     else if (WhoopieStatus.hasLead == -1 && WhoopieStatus.playerBeforeMe == WhoopieStatus.lastPlayerID) {
         // it's your move unless you already moved this turn
@@ -2018,7 +2139,7 @@ function myTurn() {
             return(true);
     } 
     
-    return(false);
+    return(false);*/
 }
 
 
@@ -2030,6 +2151,9 @@ function getYourBid() {
 
     
     $('#whoopieBid').empty();   // remove previous possible bids.
+    /*
+     * Allow add legal bids (dealer can't make bids come out to number of cards dealt)
+     */
     for (var i = 0; i <= numCards; i++) {
         if (WhoopieStatus.dealer != ThisPlayer.playerID || (CurrentStanza.bidTotal + i != numCards))
             $('#whoopieBid').append(`<option value="${i}"> ${i}</option>`);
@@ -2153,6 +2277,12 @@ function handleWhoopieResponse(resp) {
         // WhoopieStatus.lastEventID = Number(resp.lastID);  // I THINK THIS IS A RACE CONDITION WAITING TO HAPPEN!
         ThisPlayer = seatPlayer(WhoopieStatus.playerID, WhoopieStatus.playerName);
         
+    } if (resp.name == "gameReset") {
+        // do nothing, I think!
+    } else if (resp.name.includes("Error")) {
+        // assume an error
+        alert(resp.name);
+        window.location.href = "/whoopie.php";
     }
 }
 function whoopieTestStart() {
