@@ -66,10 +66,15 @@ class whoopie {
         $count = 0;
         while($l = mysqli_fetch_object($rows,"whoopieGameLog")) {
             $deck = unserialize($l->deck);
-            $events[$count] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerid, 
+            if ($l->name == "gameReset") {
+                $count = 0; // skip everything beforehand
+                $events = array();
+            } else {
+                $events[$count] = array("type"=>$l->name,  "gameID"=>$gameID, "playerID"=>$l->playerid, 
                                     "playerName"=>$l->playername, "lastEventID"=>$l->id, "cardPlayed"=>$l->cardplayed, 
                                     "bidMade"=>$l->bidmade, "deck"=>$deck );
-            $count++;
+                $count++;
+            }
         }
         return($count);
 
@@ -219,7 +224,7 @@ class whoopie {
             $game->playernames = "";
             $game->status = "wait";          
             // write gameOver event to gameLog
-            $gameLog->name = "gameOver";
+            $gameLog->name = "gameReset";
             $gameLog->playerid = 0;
             $gameLog->playername = $request->whoopieRequest->playerName;
             $gameLog->gameid = 1;
@@ -3038,7 +3043,7 @@ class whoopie_view extends angelview {
                                   <p></p>
                                          <table style='width:90%'>
                                                         <tr> <td style='text-align: center'>
-                                                                 <select onchange='verifyBid()' id='whoopieBid' name='whoopieBid'>
+                                                                 <select id='whoopieBid' name='whoopieBid'>
                                                                  <option value='' selected disabled>How many tricks will you take?</option>";
                                                                  
                                                             
@@ -5099,12 +5104,12 @@ class whoopie_view extends angelview {
         $body .= "<div id='scoreTableHeaderDiv' class='' style='width:400px;margin:0px 0px 0px 0px '>
                 <table class='whoopieScoringTable tr1 tr2 tr3 tr4 tr5 tc6 tr7 tr8 tr9 tr10' style='border: 2px solid black;'>
                 <thead>
-                <tr>         <th style='border-right: 2px solid gray;width:30px; text-align:center'>Hand</th>
+                <tr>         <th style='border-right: 2px solid gray; text-align:center'>Hand</th>
                              <th style='background-color: lightblue; text-align:center' colspan=4>Bids</th>
                              <th style='background-color: black;width:10px; '>&nbsp</th>
                              <th style='background-color: lightblue; text-align:center'colspan=4>Scores</th></tr>
                 <tr>   
-                    <th   valign=top style='border-right: 1px solid gray;width:30px'>No.</th>
+                    <th   valign=top style='border-right: 2px solid gray;'>No.</th>
                     <th   valign=top style='width:30px'>G</th>
                     <th   valign=top style='width:30px'>J</th>
                     <th   valign=top style='width:30px'>S</th>
@@ -5124,7 +5129,7 @@ class whoopie_view extends angelview {
 
         $body .= "  <thead>
                     <tr>
-                        <th valign=top style='border-right: 2px solid gray;width:30px'></th>
+                        <th valign=top style='border-right: 2px solid gray;'></th>
                         <th valign=top style='width:30px'></th>
                         <th valign=top style='width:30px'></th>
                         <th valign=top style='width:30px'></th>

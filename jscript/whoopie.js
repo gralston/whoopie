@@ -1976,10 +1976,15 @@ function cleanUpLastStanzaOLD() {
 }
 
 function nextDeal() {
+    var debug = 1;
+
     var nextDealer = nextPlayer(WhoopieStatus.dealer, WhoopieStatus.numPlayers);
     console.debug("nextDeal: handNumber current, next", WhoopieStatus.handNumber, WhoopieStatus.dealer, nextDealer );
 
-    WhoopieStatus.handNumber++;
+    if (debug)
+        WhoopieStatus.handNumber += 4;
+    else
+        WhoopieStatus.handNumber++;
 
     //console.debug("placing dealer button: ", lowHandIndex, Seats[lowHandIndex].buttonTop, Seats[lowHandIndex].buttonLeft);
     var top = Players[nextDealer].seat.buttonTop;
@@ -1988,7 +1993,7 @@ function nextDeal() {
     $("#dealerButton").css("display", "block");
 
     
-    if (WhoopieStatus.handNumber == lastHandNumber(WhoopieStatus.numPlayers)) {
+    if (WhoopieStatus.handNumber >= lastHandNumber(WhoopieStatus.numPlayers) + 1) {
         gameOver();
         return;
     } 
@@ -1999,6 +2004,21 @@ function nextDeal() {
         WhoopieStatus.dealer = ThisPlayer.playerID;
         yourDeal(WhoopieStatus.handNumber);
     }
+}
+function gameOver() {
+    var highScore = -1000;
+    var winningPlayerID = -1;
+
+    for (var i=0; i < WhoopieStatus.numPlayers; i++) {
+        var score = WhoopieStatus.scores[i];
+        if (score > highScore) {
+            winningPlayerID = i;
+            highScore = score;
+        }
+    }  
+
+    whoopieMessage("Game Over!  Congratulations " + Players[winningPlayerID].name + "!!");
+    clearTimeout(WhoopieStatus.timeoutID);
 }
 function lastHandNumber(numPlayers) {
     var stanzas = (Math.floor(54/numPlayers) * 2) - 1;
