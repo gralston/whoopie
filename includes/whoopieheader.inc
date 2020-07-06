@@ -34,7 +34,8 @@
                     <li><a href='$path/whoopie' >Home</a></li>
                     <li><a href='javascript:void(0);' NAME='HELP'  title=''
                         onClick=window.open('static/whoopieInstructions.html','Whoopie','width=1000,height=750,0,status=0,');>Help</a></li>
-                    <li><a href='$path/static/history.html' >History of Whoopie</a></li>
+                    <li><a href='javascript:void(0);' NAME='HISTORY'  title=''
+                        onClick=window.open('static/history.html','WhoopieHistory','width=1000,height=750,0,status=0,');>History of Whoopie</a></li>
                 ";
                 ?>
 

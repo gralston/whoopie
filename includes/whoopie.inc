@@ -5104,12 +5104,12 @@ class whoopie_view extends angelview {
         $body .= "<div id='scoreTableHeaderDiv' class='' style='width:400px;margin:0px 0px 0px 0px '>
                 <table class='whoopieScoringTable tr1 tr2 tr3 tr4 tr5 tc6 tr7 tr8 tr9 tr10' style='border: 2px solid black;'>
                 <thead>
-                <tr>         <th style='border-right: 2px solid gray; text-align:center'>Hand</th>
+                <tr>         <th style='border-right: 2px solid gray; text-align:center;width:35px'>Hand</th>
                              <th style='background-color: lightblue; text-align:center' colspan=4>Bids</th>
                              <th style='background-color: black;width:10px; '>&nbsp</th>
                              <th style='background-color: lightblue; text-align:center'colspan=4>Scores</th></tr>
                 <tr>   
-                    <th   valign=top style='border-right: 2px solid gray;'>No.</th>
+                    <th   valign=top style='border-right: 2px solid gray;width:35px'>No.</th>
                     <th   valign=top style='width:30px'>G</th>
                     <th   valign=top style='width:30px'>J</th>
                     <th   valign=top style='width:30px'>S</th>
@@ -5129,7 +5129,7 @@ class whoopie_view extends angelview {
 
         $body .= "  <thead>
                     <tr>
-                        <th valign=top style='border-right: 2px solid gray;'></th>
+                        <th valign=top style='border-right: 2px solid gray;width:35px'></th>
                         <th valign=top style='width:30px'></th>
                         <th valign=top style='width:30px'></th>
                         <th valign=top style='width:30px'></th>
@@ -5146,7 +5146,7 @@ class whoopie_view extends angelview {
 
         $body .= "  <tbody>
                     <tr>
-                        <td valign=top style='width:30px'></th>
+                        <td valign=top style='width:37px'></th>
                         <td valign=top style='width:30px'></th>
                         <td valign=top style='width:30px'></th>
                         <td valign=top style='width:30px'></th>

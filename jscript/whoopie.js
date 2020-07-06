@@ -1429,10 +1429,10 @@ function organizeHand(hand) {
         var card = hand[i];
         savedProps[savedProps.length] = $( card.el ).position();
 
-        if (card.suit == "c")
-             clubs[clubs.length] = card;
-        else if (card.suit == "d")
+        if (card.suit == "d")
              diamonds[diamonds.length] = card;
+        else if (card.suit == "c")
+             clubs[clubs.length] = card;      
         else if (card.suit == "h")
              hearts[hearts.length] = card;
         else if (card.suit == "s")
@@ -1444,15 +1444,34 @@ function organizeHand(hand) {
     hearts.sort(function(a,b) { return(a.rank - b.rank)});
     spades.sort(function(a,b) { return(a.rank - b.rank)});
 
+
     var index = 0;
-    for (var i = 0; i < clubs.length; i++)
-        newHand[index++] = clubs[i];
-    for (var i = 0; i < diamonds.length; i++)
-        newHand[index++] = diamonds[i];
-    for (var i = 0; i < hearts.length; i++)
-        newHand[index++] = hearts[i];
-    for (var i = 0; i < spades.length; i++)
-        newHand[index++] = spades[i];
+
+    if (clubs.length == 0) {
+        for (var i = 0; i < diamonds.length; i++)
+            newHand[index++] = diamonds[i];
+        for (var i = 0; i < spades.length; i++)
+            newHand[index++] = spades[i];
+        for (var i = 0; i < hearts.length; i++)
+            newHand[index++] = hearts[i];
+        
+    } else if (hearts.length == 0) {      
+        for (var i = 0; i < clubs.length; i++)
+            newHand[index++] = clubs[i];
+        for (var i = 0; i < diamonds.length; i++)
+            newHand[index++] = diamonds[i];
+        for (var i = 0; i < spades.length; i++)
+            newHand[index++] = spades[i];
+    } else {      
+        for (var i = 0; i < diamonds.length; i++)
+            newHand[index++] = diamonds[i];
+        for (var i = 0; i < clubs.length; i++)
+            newHand[index++] = clubs[i];
+        for (var i = 0; i < hearts.length; i++)
+            newHand[index++] = hearts[i];
+        for (var i = 0; i < spades.length; i++)
+            newHand[index++] = spades[i];
+    }
 
     if (hand.length > 3)
         console.debug("organizehand New: ", newHand.length, newHand[0].shortName, newHand[1].shortName, newHand[2].shortName, newHand[3].shortName);
@@ -1976,7 +1995,7 @@ function cleanUpLastStanzaOLD() {
 }
 
 function nextDeal() {
-    var debug = 1;
+    var debug = 0;
 
     var nextDealer = nextPlayer(WhoopieStatus.dealer, WhoopieStatus.numPlayers);
     console.debug("nextDeal: handNumber current, next", WhoopieStatus.handNumber, WhoopieStatus.dealer, nextDealer );
