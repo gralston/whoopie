@@ -3061,7 +3061,7 @@ class whoopie_view extends angelview {
      $body .= "
                         <div id='dialogYourDeal' title='Your Deal' style='display:none'>
                                 
-                                Deal <span id=whoopieDealerCardCount></span>, please!'
+                                Deal <span id=whoopieDealerCardCount></span>, please!
 
                                 <p></p>
                             </div>";

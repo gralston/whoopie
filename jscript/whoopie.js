@@ -1414,6 +1414,7 @@ function organizeHand(hand) {
     var spades = [];
     var diamonds = [];
     var hearts = [];
+    var jokers= [];
     var newHand = [];
     var savedProps = [];
     console.debug("organizehand...");
@@ -1427,8 +1428,9 @@ function organizeHand(hand) {
 
     for (var i = 0; i < hand.length; i++) {
         var card = hand[i];
-        savedProps[savedProps.length] = $( card.el ).position();
-
+        undoCardIsTrump(card);      // we already did this in cleanupstanza, but there's a timing issue so to be safe...
+        // savedProps[savedProps.length] = $( card.el ).position();
+        savedProps[savedProps.length] = {top: card.targetTop, left: card.targetLeft};
         if (card.suit == "d")
              diamonds[diamonds.length] = card;
         else if (card.suit == "c")
@@ -1436,7 +1438,9 @@ function organizeHand(hand) {
         else if (card.suit == "h")
              hearts[hearts.length] = card;
         else if (card.suit == "s")
-             spades[spades.length] = card;            
+             spades[spades.length] = card; 
+        else            
+            jokers[jokers.length] = card; 
     }
 
     clubs.sort(function(a,b) { return(a.rank - b.rank)});
@@ -1448,6 +1452,8 @@ function organizeHand(hand) {
     var index = 0;
 
     if (clubs.length == 0) {
+        for (var i = 0; i < jokers.length; i++)
+            newHand[index++] = jokers[i];
         for (var i = 0; i < diamonds.length; i++)
             newHand[index++] = diamonds[i];
         for (var i = 0; i < spades.length; i++)
@@ -1455,7 +1461,9 @@ function organizeHand(hand) {
         for (var i = 0; i < hearts.length; i++)
             newHand[index++] = hearts[i];
         
-    } else if (hearts.length == 0) {      
+    } else if (hearts.length == 0) {   
+        for (var i = 0; i < jokers.length; i++)
+            newHand[index++] = jokers[i];   
         for (var i = 0; i < clubs.length; i++)
             newHand[index++] = clubs[i];
         for (var i = 0; i < diamonds.length; i++)
@@ -1463,6 +1471,8 @@ function organizeHand(hand) {
         for (var i = 0; i < spades.length; i++)
             newHand[index++] = spades[i];
     } else {      
+        for (var i = 0; i < jokers.length; i++)
+            newHand[index++] = jokers[i];
         for (var i = 0; i < diamonds.length; i++)
             newHand[index++] = diamonds[i];
         for (var i = 0; i < clubs.length; i++)
@@ -1789,7 +1799,7 @@ function updateTrickStatus(playerID, card) {
         takeTrick(CurrentTrick.playerID);
         stanza.tricksPlayed++;
         stanza.tricksTaken[CurrentTrick.playerID]++;
-        whoopieMessage(Players[CurrentTrick.playerID].name + " took the trick");   
+        whoopieMessage(Players[CurrentTrick.playerID].name + " took the trick", "normal");   
         $("#trickID"+CurrentTrick.playerID).html(CurrentStanza.tricksTaken[CurrentTrick.playerID]);
 
         WhoopieStatus.hasLead = CurrentTrick.playerID;  // just won the trick
@@ -1995,7 +2005,7 @@ function cleanUpLastStanzaOLD() {
 }
 
 function nextDeal() {
-    var debug = 0;
+    var debug = 1;
 
     var nextDealer = nextPlayer(WhoopieStatus.dealer, WhoopieStatus.numPlayers);
     console.debug("nextDeal: handNumber current, next", WhoopieStatus.handNumber, WhoopieStatus.dealer, nextDealer );
@@ -2036,7 +2046,7 @@ function gameOver() {
         }
     }  
 
-    whoopieMessage("Game Over!  Congratulations " + Players[winningPlayerID].name + "!!");
+    whoopieMessage("Game Over!  Congratulations " + Players[winningPlayerID].name + "!!", "normal");
     clearTimeout(WhoopieStatus.timeoutID);
 }
 function lastHandNumber(numPlayers) {
@@ -2282,11 +2292,15 @@ function askForBid() {
 
 
 function getYourPlay() {
-    whoopieMessage("it's your turn!");
+    whoopieMessage("it's your turn!", "urgent");
     return(1);
 }
-function whoopieMessage(msg) {
+function whoopieMessage(msg, importance) {
     $("#whoopieMessageDiv").css("display", "block");
+    if (importance == "urgent") {
+        $("#whoopieMessage").css("color", "red"); 
+    } else if (importance == "normal")
+        $("#whoopieMessage").css("color", "black"); 
     $("#whoopieMessage").html(msg); 
 }
 
@@ -2323,7 +2337,7 @@ function handleWhoopieResponse(resp) {
 
     if (resp.name == "joinedGame") {
         console.debug("handleWhoopieResponse", resp.name, resp.lastID);
-        whoopieMessage("Waiting for players...");   
+        whoopieMessage("Waiting for players...", "normal");   
         WaitingForgame = true;
         WhoopieStatus.playerID = Number(resp.playerID);
         //WhoopieStatus.gameID = Number(resp.gameID);
