@@ -2005,7 +2005,7 @@ function cleanUpLastStanzaOLD() {
 }
 
 function nextDeal() {
-    var debug = 1;
+    var debug = 0;
 
     var nextDealer = nextPlayer(WhoopieStatus.dealer, WhoopieStatus.numPlayers);
     console.debug("nextDeal: handNumber current, next", WhoopieStatus.handNumber, WhoopieStatus.dealer, nextDealer );
