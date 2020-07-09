@@ -1861,6 +1861,8 @@ function cardIsTrump(card) {
  */
 function handleJoker(playerID, card) {
 
+    //whoopieMessage("Scramble!!!", "urgent", 5000);
+    displayScramble();
     CurrentStanza.scramble = true;
     
     if (CurrentTrick.cardsPlayed == 1) {
@@ -1891,6 +1893,7 @@ function handleJoker(playerID, card) {
 function handleWhoopie(playerID, card) {
     // Whoopie card played 
     // CurrentTrick.trumpSuit = card.suit;      // the suit of the whoopie card is trump from now on
+    displayWhoopie();
     CurrentStanza.trumpSuit = card.suit; 
     
     if (!CurrentTrick.autoWin && (!CurrentTrick.winningCardisTrump || CurrentTrick.winningCard.rank < card.rank)){
@@ -1903,6 +1906,36 @@ function handleWhoopie(playerID, card) {
     
 }
 
+function displayWhoopie() {
+    $( "#whoopiePlayedDiv" ).css("display", "block");
+    $( "#whoopiePlayedDiv" ).fadeOut(5000);
+
+    /*$( "#whoopiePlayedDiv" ).animate({
+        "right": "+=100px"
+      });*/
+     
+      //var pos = $("#whoopiePlayedDiv").position();
+      //var newtop = (pos.top + 200) + "px";
+
+      //$( "#whoopiePlayedDiv" ).css(pos);
+      //$("#whoopiePlayedDiv").animate({top: "200px", left: "300px", position:'absolute'}, 1000);
+
+      //$( "#whoopiePlayedDiv" ).animate(pos, "slow");
+      /*{
+        step: function( now, fx ) {
+            $( "#whoopiePlayedDiv" ).animate({
+                up: "+=50px"
+              }, "slow")
+        }
+      }*/
+      
+
+}
+
+function displayScramble() {
+    $( "#jokerPlayedDiv" ).css("display", "block");
+    $( "#jokerPlayedDiv" ).fadeOut(5000);
+}
 
 function updateScore(stanza) {
     console.debug("updatescore - ", stanza);
@@ -2295,16 +2328,21 @@ function getYourPlay() {
     whoopieMessage("it's your turn!", "urgent");
     return(1);
 }
-function whoopieMessage(msg, importance) {
+function whoopieMessage(msg, importance="normal", timeToLive=0) {
+    console.debug("calling whoopieMessage: ", msg, importance, timeToLive);
     $("#whoopieMessageDiv").css("display", "block");
     if (importance == "urgent") {
         $("#whoopieMessage").css("color", "red"); 
     } else if (importance == "normal")
         $("#whoopieMessage").css("color", "black"); 
     $("#whoopieMessage").html(msg); 
+
+    if (timeToLive != 0)
+        setTimeout(whoopieMessageOff, timeToLive);
 }
 
 function whoopieMessageOff() {
+    
     $("#whoopieMessageDiv").css("display", "none");
 }
 

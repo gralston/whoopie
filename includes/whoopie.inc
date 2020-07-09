@@ -5075,6 +5075,7 @@ class whoopie_view extends angelview {
         $body .= "   <img  src='img/dealerbutton2.jpg' height='30px' width='30px'>";
 
         $body .= "   </div>";
+        
 
 
 
@@ -5092,13 +5093,15 @@ class whoopie_view extends angelview {
             $body .= "</table></div>";
         }
         
-        $body .= "</div>";
+        $body .= "</div>";  // whoopieTable
+
+        
 
 
         /*
          * This div is where the game is scored
          */
-        $body .= "<div id='whoopieScore' style='display:none; border: 0px solid red; width:400px; height: 250; margin: 50px 0px 0px 20px;float:left '>";
+        $body .= "<div id='whoopieScore' style='display:none; border: 0px solid red; width:400px; height: 400px; margin: 50px 0px 0px 20px;float:left '>";
     
 
         $body .= "<div id='scoreTableHeaderDiv' class='' style='width:400px;margin:0px 0px 0px 0px '>
@@ -5158,14 +5161,27 @@ class whoopie_view extends angelview {
                         <td id='totalsID3' valign=top style='width:30px;color:blue'></th>
                     </tr></tbody></table></div>";
 
+
+        $body .= "<div id='whoopiePlayedDiv' class='' style='margin:0px 0px 0px 0px; display: none'>";
+        $body .= "<img height='150px'; width='150px' src='/img/whoopie!.png'>";
+        $body .= "</div>";
+
+        $body .= "<div id='jokerPlayedDiv' class='' style='margin:0px 0px 0px 0px; display: none'>";
+        $body .= "<img height='150px'; width='150px' src='/img/scramble!.gif'>";
+        $body .= "</div>";
+
+
         $body .= "</div>";  // whoopie score container
+        $body .= "<div id='whoopieMessageDiv2' style='clear:both; display:none; background-color: white; margin: 400px 0px 0px 20px;
+                               width:700px; height: 80px;'>
+                       <div id='whoopieMessageDiv' style='color:black;   
+                                        margin: 50px 0px 0px 275px;font-size:28px'><span id='whoopieMessage'></span>";
 
-        $body .= "<div id='whoopieMessageDiv2' style='clear:both; display:none; background-color: white; margin: 10px 0px 0px 20px;
-                                                      width:700px; height: 80px;'>
-        <div id='whoopieMessageDiv' style='color:black;   margin: 0px 0px 0px 275px;font-size:28px'><span id='whoopieMessage'></span>";
-        
 
-        $body .= "</div></div>";
+$body .= "</div></div>";    // message divs
+
+
+        $body .= "</div>";  // whoopie page
 
 
 
