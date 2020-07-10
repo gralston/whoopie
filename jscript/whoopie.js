@@ -989,6 +989,8 @@ function initializeWhoopie() {
       
     });
    
+    displayWhoopie();
+    //displayScramble();
     return;
 
     
@@ -1405,6 +1407,15 @@ function dealWhoopieStanza(handNumber, faceUp) {
      WhoopieStatus.deck.x = DeckLocation.x;      // standard deck location
      WhoopieStatus.deck.y = DeckLocation.y;
      WhoopieStatus.deck.render({immediate:true});
+     /*
+      * this is a hack. for some reason the border placed by making cards trump doesn't get
+      * cleaned up, althgouh I really try! So we are going to brute force make sure there is
+      * no border anywhere. 
+      */
+     for (var i = 0; i < WhoopieStatus.deck.length; i++) {
+        var card = WhoopieStatus.deck[i];
+        undoCardIsTrump(card);
+     }
 
 }
 
@@ -1430,6 +1441,7 @@ function organizeHand(hand) {
         var card = hand[i];
         undoCardIsTrump(card);      // we already did this in cleanupstanza, but there's a timing issue so to be safe...
         // savedProps[savedProps.length] = $( card.el ).position();
+        
         savedProps[savedProps.length] = {top: card.targetTop, left: card.targetLeft};
         if (card.suit == "d")
              diamonds[diamonds.length] = card;
@@ -1441,6 +1453,16 @@ function organizeHand(hand) {
              spades[spades.length] = card; 
         else            
             jokers[jokers.length] = card; 
+    }
+
+    // there is a mysterious bug where cards are 20px too low. i don't know why it happens, but i'm going to fix it here
+    for (var i = 0; i < hand.length; i++) {
+        var prop = savedProps[i];
+        console.debug("organizeHand: props top, left", prop.top, prop.left); 
+        if (prop.top != 303) {
+            console.debug("organizeHand: it's the bug!"); 
+            savedProp[i].top = 303;
+        }    
     }
 
     clubs.sort(function(a,b) { return(a.rank - b.rank)});
@@ -1907,8 +1929,14 @@ function handleWhoopie(playerID, card) {
 }
 
 function displayWhoopie() {
+    //$( "#whoopiePlayedDiv" ).css("display", "block");
+    //$( "#whoopiePlayedDiv" ).fadeOut(5000);
+   
     $( "#whoopiePlayedDiv" ).css("display", "block");
-    $( "#whoopiePlayedDiv" ).fadeOut(5000);
+    $( "#whoopiePlayedDiv" ).css("z-index", 10000);
+    $( "#whoopiePlayedDiv" ).css({top: "100px", left: "0px", position:'absolute'});
+    $( "#whoopiePlayedDiv" ).animate({top: "100px", left: "2000px", queue:'false'}, 8000);
+    
 
     /*$( "#whoopiePlayedDiv" ).animate({
         "right": "+=100px"
@@ -1934,7 +1962,11 @@ function displayWhoopie() {
 
 function displayScramble() {
     $( "#jokerPlayedDiv" ).css("display", "block");
-    $( "#jokerPlayedDiv" ).fadeOut(5000);
+    $( "#jokerPlayedDiv" ).css("z-index", 10000);
+    $( "#jokerPlayedDiv" ).css({top: "100px", left: "0px", position:'absolute'});
+    $( "#jokerPlayedDiv" ).animate({top: "100px", left: "2000px", queue:'false'}, 8000);
+
+    //$( "#jokerPlayedDiv" ).fadeOut(5000);
 }
 
 function updateScore(stanza) {
@@ -2038,7 +2070,7 @@ function cleanUpLastStanzaOLD() {
 }
 
 function nextDeal() {
-    var debug = 0;
+    var debug = 1;
 
     var nextDealer = nextPlayer(WhoopieStatus.dealer, WhoopieStatus.numPlayers);
     console.debug("nextDeal: handNumber current, next", WhoopieStatus.handNumber, WhoopieStatus.dealer, nextDealer );
@@ -2330,7 +2362,7 @@ function getYourPlay() {
 }
 function whoopieMessage(msg, importance="normal", timeToLive=0) {
     console.debug("calling whoopieMessage: ", msg, importance, timeToLive);
-    $("#whoopieMessageDiv").css("display", "block");
+    $("#whoopieMessageDiv").css("display", "inline-block");
     if (importance == "urgent") {
         $("#whoopieMessage").css("color", "red"); 
     } else if (importance == "normal")

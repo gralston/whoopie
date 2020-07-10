@@ -5163,19 +5163,19 @@ class whoopie_view extends angelview {
 
 
         $body .= "<div id='whoopiePlayedDiv' class='' style='margin:0px 0px 0px 0px; display: none'>";
-        $body .= "<img height='150px'; width='150px' src='/img/whoopie!.png'>";
+        $body .= "<img height='300px'; width='300px' src='/img/whoopie!.png'>";
         $body .= "</div>";
 
         $body .= "<div id='jokerPlayedDiv' class='' style='margin:0px 0px 0px 0px; display: none'>";
-        $body .= "<img height='150px'; width='150px' src='/img/scramble!.gif'>";
+        $body .= "<img height='300px'; width='300px' src='/img/scramble.png'>";
         $body .= "</div>";
 
 
         $body .= "</div>";  // whoopie score container
-        $body .= "<div id='whoopieMessageDiv2' style='clear:both; display:none; background-color: white; margin: 400px 0px 0px 20px;
+        $body .= "<div id='whoopieMessageDiv2' style='clear:both; display:none; background-color: white; margin: 0px 0px 0px 20px;
                                width:700px; height: 80px;'>
                        <div id='whoopieMessageDiv' style='color:black;   
-                                        margin: 50px 0px 0px 275px;font-size:28px'><span id='whoopieMessage'></span>";
+                                        margin: 20px 0px 0px 275px;font-size:28px;display:inline-block'><span id='whoopieMessage'></span>";
 
 
 $body .= "</div></div>";    // message divs

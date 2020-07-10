@@ -42,7 +42,7 @@ class angeldb {
         $this->dbname       = "whoopiedb";
         $this->dbuser       = "root";
         $this->dbpass       = "ralston";
-        $this->dbpass       = "g658pwwTJRCY";
+        //$this->dbpass       = "g658pwwTJRCY";
 
 
     }  // construct()
