@@ -989,7 +989,7 @@ function initializeWhoopie() {
       
     });
    
-    displayWhoopie();
+    //displayWhoopie();
     //displayScramble();
     return;
 
@@ -2076,7 +2076,7 @@ function nextDeal() {
     console.debug("nextDeal: handNumber current, next", WhoopieStatus.handNumber, WhoopieStatus.dealer, nextDealer );
 
     if (debug)
-        WhoopieStatus.handNumber += 4;
+        WhoopieStatus.handNumber += 1;
     else
         WhoopieStatus.handNumber++;
 
