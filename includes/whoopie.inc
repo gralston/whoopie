@@ -5072,9 +5072,10 @@ class whoopie_view extends angelview {
       
         $body .= "   <div id='dealerButton' style='display:none;'>";
 
-        $body .= "   <img  src='img/dealerbutton2.jpg' height='30px' width='30px'>";
+        $body .= "   <img  src='img/dealerbutton.png' height='30px' width='30px'>";
 
         $body .= "   </div>";
+        
         
 
 
