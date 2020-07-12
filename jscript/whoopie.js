@@ -708,6 +708,7 @@ function WhoopieStanzaConstructor()  {
     this.trumpSuit          = "";       // current trump suit for the stanza (note, may be different than for a trick at a moment in time)
 
     this.bids               = [];       // bids for this stanza per playerID
+    this.bidsMade           = 0;        // number of bids made in this stanza
     this.bidTotal           = 0;        // running total of bids
     this.tricksTaken        = [0,0,0,0,0,0,0,0,0,0];       // number of tricks taken for this stanza per playerID
     this.scores             = [0,0,0,0,0,0,0,0,0,0];       // scores for this stanza per playerID
@@ -836,6 +837,7 @@ var WhoopieStatus = {
     lastEventID : 0,            // id of the most recent event from the server
     playerBeforeMe : 0,         // id of the player who moves just before this player
     lastPlayerID : 0,           // id of the player who most recently played a card or bid.
+    wonLastTric : -1,           // if of player who won the most recent trick
     dealer : 0,                 // the current / most recent dealer
     thisPlayerTookTheirTurn: false, // set to true during playing if this player already played
     thisPlayerAlreadyBid: false,    // set to true during bidding if this player already bid
@@ -991,6 +993,8 @@ function initializeWhoopie() {
    
     //displayWhoopie();
     //displayScramble();
+    //addPlayersTurnEffect();
+
     return;
 
     
@@ -1365,6 +1369,7 @@ function dealWhoopieStanza(handNumber, faceUp) {
                     WhoopieStatus.thisPlayerTookTheirTurn = false;
                 whoopieSendRequest("cardPlayed", null, card);
                 whoopieMessageOff();
+                addPlayersTurnEffect();
             }
         } else {
             alert("It's not your turn, silly");
@@ -1647,21 +1652,24 @@ function getNextWhoopieEvent() {
                 importDeck(ev.deck);
                 chooseDealer();
                 WhoopieStatus.handNumber = 1;
+                addPlayersTurnEffect();
     
             } else if (ev.type == "yourDeal") {
                 // so get the deck and deal it locally and send it back
                 
 
             } else if (ev.type == "newDeal") {
-
+                    
                 // get the deck and deal the cards locally - if it wasn't you who already dealt
                 //if (ev.playerID != ThisPlayer.playerID) {
                     WhoopieStatus.state = "newdeal";
-                    if (WhoopieStatus.handNumber > 1)
+                    if (WhoopieStatus.handNumber > 1) 
                         cleanUpLastStanza();
                     importDeck(ev.deck);
                     WhoopieStatus.lastPlayerID = Number(ev.playerID);       // last person to do anything is dealer
                     WhoopieStatus.dealer = Number(ev.playerID);
+                   
+                    addPlayersTurnEffect();
                     dealWhoopieStanza(WhoopieStatus.handNumber, false);
                     //WhoopieStatus.handNumber++;   // have to figure out when to do this. not yet!
                 //}
@@ -1680,18 +1688,21 @@ function getNextWhoopieEvent() {
                 if (Number(ev.playerID) != ThisPlayer.playerID);
                     CurrentStanza.bidTotal += Number(ev.bidMade);
                 CurrentStanza.bids[Number(ev.playerID)] = Number(ev.bidMade);
+                CurrentStanza.bidsMade++;
 
                 WhoopieStatus.lastPlayerID = Number(ev.playerID);
                 if (WhoopieStatus.dealer == Number(ev.playerID))
                     WhoopieStatus.state = "playing";
 
+                addPlayersTurnEffect();
                 if (myTurn()) {
                     // it's either your bid or your play. 
                     if (WhoopieStatus.thisPlayerAlreadyBid) {
-                        bid = getYourPlay();
+                        bid = getYourPlay();                
                     } else {
                         bid = getYourBid();
                     }
+                    addPlayersTurnEffect();
                 }      
 
             } else if (ev.type == "cardPlayed") {
@@ -1703,8 +1714,11 @@ function getNextWhoopieEvent() {
                     var card = cardIndexToCard(cardIndex, playerID);
                     playCard(playerID, card);
                     WhoopieStatus.lastPlayerID = playerID;
+           
+                    addPlayersTurnEffect();
                     if (myTurn()) {
                         getYourPlay();
+                        addPlayersTurnEffect();
                     }
                 }   
             }    
@@ -1819,6 +1833,7 @@ function updateTrickStatus(playerID, card) {
 
         var stanza = CurrentStanza;
         takeTrick(CurrentTrick.playerID);
+        WhoopieStatus.wonLastTrick = CurrentTrick.playerID;
         stanza.tricksPlayed++;
         stanza.tricksTaken[CurrentTrick.playerID]++;
         whoopieMessage(Players[CurrentTrick.playerID].name + " took the trick", "normal");   
@@ -1830,6 +1845,7 @@ function updateTrickStatus(playerID, card) {
         if (stanza.tricksPlayed == stanza.cardsDealt) {
             // time for a new deal
             WhoopieStatus.state = "newdeal";
+            WhoopieStatus.wonLastTrick = -1;
             updateScore(stanza);
             nextDeal();
         } else if (CurrentTrick.playerID == ThisPlayer.playerID) {
@@ -2070,13 +2086,13 @@ function cleanUpLastStanzaOLD() {
 }
 
 function nextDeal() {
-    var debug = 1;
+    var debug = 0;
 
     var nextDealer = nextPlayer(WhoopieStatus.dealer, WhoopieStatus.numPlayers);
     console.debug("nextDeal: handNumber current, next", WhoopieStatus.handNumber, WhoopieStatus.dealer, nextDealer );
 
     if (debug)
-        WhoopieStatus.handNumber += 1;
+        WhoopieStatus.handNumber += 4;
     else
         WhoopieStatus.handNumber++;
 
@@ -2228,6 +2244,58 @@ function playerHasSuit(playerID, suit) {
     return(false);
 }
 
+/*
+ * returns playerID of next player to move or bid (eventually use in myTurn() below)
+ */
+function whoseTurnIsIt() {
+    var playerID = -1;
+
+    if (WhoopieStatus.state == "newdeal") {
+        playerID = nextPlayer(WhoopieStatus.dealer, WhoopieStatus.numPlayers);
+    } else if (WhoopieStatus.state == "bidding") {
+        // if everyone has bid, player to left of dealer's turn
+        if (CurrentStanza.bidsMade == WhoopieStatus.numPlayers)
+            playerID = nextPlayer(WhoopieStatus.dealer, WhoopieStatus.numPlayers);
+        else
+            playerID = nextPlayer(WhoopieStatus.lastPlayerID, WhoopieStatus.numPlayers);
+        
+    } else if (WhoopieStatus.state == "tricktaken") {
+         playerID = WhoopieStatus.wonLastTrick;
+    } else if (WhoopieStatus.state == "playing") {
+        if (CurrentTrick == null) {
+            if (WhoopieStatus.wonLastTrick >= 0)
+                playerID = WhoopieStatus.wonLastTrick;
+            else    
+                playerID = nextPlayer(WhoopieStatus.dealer, WhoopieStatus.numPlayers);
+        } else if (CurrentTrick.cardsPlayed != WhoopieStatus.numPlayers)
+            playerID = nextPlayer(WhoopieStatus.lastPlayerID, WhoopieStatus.numPlayers);
+    } 
+
+    console.debug("whoseturnisit returning: ", playerID, WhoopieStatus.state);
+
+    return(playerID);
+}
+
+
+function addPlayersTurnEffect() {
+    var playerID = whoseTurnIsIt();
+    for (var i = 0; i < WhoopieStatus.numPlayers; i++) {
+        if (i != playerID) {
+            // $("#player"+playerID).css( "border-width","0px");
+            $("#player"+i).css( "box-shadow", "none");
+        }
+    }
+
+    
+    /* in order: x offset, y offset, blur size, spread size, color */
+    /* blur size and spread size are optional (they default to 0) */
+
+    $("#player"+playerID).css("box-shadow", "0px 0px 40px 20px #f2f2c2");
+
+   /*$("#player"+playerID).css({"border-color": "red", 
+    "border-width":"15px", 
+    "border-style":"solid"}).animate({"border-width":"0px"}, 5000).animate({"border-width":"15px"}, 3000, addPlayersTurnEffect);*/
+}
 /*
  * returns true if you are next to bid or play a card, false otherwise
  */
